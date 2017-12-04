@@ -32,7 +32,6 @@ import os
 from pyvirtualdisplay import Display
 from django.conf import settings
 from selenium.common.exceptions import NoSuchElementException
-from selenium.webdriver.firefox.firefox_binary import FirefoxBinary
 from selenium.webdriver.firefox.webdriver import WebDriver as FirefoxDriver
 from selenium.webdriver.chrome.webdriver import WebDriver as ChromeDriver
 from base.tests.factories.person import PersonFactory
