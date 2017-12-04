@@ -25,9 +25,6 @@
 ##############################################################################
 
 from .local import *
-from selenium.webdriver.firefox.webdriver import WebDriver as FirefoxDriver
-from selenium.webdriver.chrome.webdriver import WebDriver as ChromeDriver
-
 
 INSTALLED_APPS += ('osis_common.tests', )
 
@@ -51,18 +48,14 @@ if SKIP_QUEUES_TESTS:
 
 SELENIUM = {
     'BASE': {
-        'BROWSERS': {
-            'FIREFOX': {
-                'driver': FirefoxDriver
-            },
-            'CHROME': {
-                'driver': ChromeDriver
-            },
-        },
         'SELENIUM_BROWSER':     os.environ.get('SELENIUM_BROWSER', 'FIREFOX').upper(),
         'VIRTUAL_DISPLAY':      os.environ.get('VIRTUAL_DISPLAY', 'True').lower() == 'true',
         'SCREENSHOT_DIR':       os.environ.get('SELENIUM_SCREENSHOT_DIR',
                                                os.path.join(BASE_DIR, 'base/tests/selenium/screenshots')),
+        'DRIVERS': {
+            'FIREFOX':  os.path.join(BASE_DIR, 'base/tests/selenium/drivers/geckodriver'),
+            'CHROME':   os.path.join(BASE_DIR, 'base/tests/selenium/drivers/chromedriver')
+        }
     },
     'HTML_ELEMENTS': {
         'MAIN': {

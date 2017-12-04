@@ -32,7 +32,9 @@ import os
 from pyvirtualdisplay import Display
 from django.conf import settings
 from selenium.common.exceptions import NoSuchElementException
-import time
+from selenium.webdriver.firefox.firefox_binary import FirefoxBinary
+from selenium.webdriver.firefox.webdriver import WebDriver as FirefoxDriver
+from selenium.webdriver.chrome.webdriver import WebDriver as ChromeDriver
 from base.tests.factories.person import PersonFactory
 from base.tests.factories.student import StudentFactory
 from base.tests.factories.tutor import TutorFactory
@@ -51,11 +53,10 @@ class SeleniumServerTestCase(StaticLiveServerTestCase):
             cls.display = Display(visible=0, size=(800, 600))
             cls.display.start()
         super().setUpClass()
-        cls.selenium = cls.base_elements.get('BROWSERS')\
-                                        .get(settings.SELENIUM.get('BASE').get('SELENIUM_BROWSER'))\
-                                        .get('driver')()
-
-
+        if 'CHROME' == cls.base_elements.get('SELENIUM_BROWSER').upper():
+            cls.selenium = ChromeDriver(executable_path=cls.base_elements.get('DRIVERS').get('CHROME'))
+        else:
+            cls.selenium = FirefoxDriver(executable_path=cls.base_elements.get('DRIVERS').get('FIREFOX'))
 
     @classmethod
     def tearDownClass(cls):
