@@ -16,9 +16,9 @@ before_install:
   - "phantomjs --version"
 
 install:
-  - "pip install -r requirements.txt"
+  - "pip install -r test-requirements.txt"
 
-script: "python3 manage.py compilemessages && python3 manage.py test"
+script: "python3 manage.py compilemessages && python3 manage.py test selenium"
 
 notifications:
   slack: osisteam:2M3DtIOGE4clU1DF8r6k8NQD
