@@ -26,6 +26,7 @@
 from django.conf.urls import include, url
 from django.contrib import admin
 from django.conf import settings
+from django.contrib.staticfiles.urls import staticfiles_urlpatterns
 from base.views import common
 from django.views.i18n import javascript_catalog
 
@@ -62,8 +63,8 @@ admin.site.site_header = 'OSIS'
 admin.site.site_title = 'OSIS'
 admin.site.index_title = 'Louvain'
 
-if settings.DEBUG and 'debug_toolbar' in settings.INSTALLED_APPS:
-    import debug_toolbar
-
-    urlpatterns += (url(r'^__debug__/', include(debug_toolbar.urls)),)
+if settings.DEBUG:
+    if 'debug_toolbar' in settings.INSTALLED_APPS:
+        import debug_toolbar
+        urlpatterns += (url(r'^__debug__/', include(debug_toolbar.urls)),)
 

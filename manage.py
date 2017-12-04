@@ -8,7 +8,11 @@ if __name__ == "__main__":
         os.environ.setdefault('TESTING', 'True')
     dotenv.read_dotenv()
 
-    SETTINGS_FILE = os.environ.get('DJANGO_SETTINGS_MODULE', 'backoffice.settings.local')
+    if 'test' in sys.argv:
+        SETTINGS_FILE = 'backoffice.settings.test'
+    else:
+        SETTINGS_FILE = os.environ.get('DJANGO_SETTINGS_MODULE', 'backoffice.settings.local')
+
     os.environ.setdefault("DJANGO_SETTINGS_MODULE", SETTINGS_FILE)
 
     from django.core.management import execute_from_command_line

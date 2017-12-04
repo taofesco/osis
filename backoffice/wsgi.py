@@ -38,7 +38,10 @@ sys.path.extend(os.environ.get('EXTRA_SYS_PATHS').split()) if os.environ.get('EX
 from django.core.wsgi import get_wsgi_application
 from pika.exceptions import ConnectionClosed, AMQPConnectionError, ChannelClosed
 
-SETTINGS_FILE = os.environ.get('DJANGO_SETTINGS_MODULE', 'backoffice.settings.local')
+if 'test' in sys.argv:
+    SETTINGS_FILE = 'backoffice.settings.test'
+else:
+    SETTINGS_FILE = os.environ.get('DJANGO_SETTINGS_MODULE', 'backoffice.settings.local')
 os.environ.setdefault("DJANGO_SETTINGS_MODULE", SETTINGS_FILE)
 
 try:

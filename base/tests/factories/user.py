@@ -31,6 +31,7 @@ class UserFactory(factory.DjangoModelFactory):
         model = 'auth.User'
 
     username = factory.Sequence(lambda n: 'username_{0}'.format(n))
+    password = factory.PostGenerationMethodCall('set_password', 'password')
 
 
 class SuperUserFactory(factory.DjangoModelFactory):
@@ -38,6 +39,7 @@ class SuperUserFactory(factory.DjangoModelFactory):
         model = 'auth.User'
 
     username = factory.Sequence(lambda n: 'username_{0}'.format(n))
+    password = factory.PostGenerationMethodCall('set_password', 'password')
     is_superuser = True
     is_staff = True
     is_active = True

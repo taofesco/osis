@@ -23,15 +23,3 @@
 #    see http://www.gnu.org/licenses/.
 #
 ##############################################################################
-from .base import *
-
-OPTIONAL_APPS = (
-    'attribution',
-    'assistant',
-    'dissertation',
-    'internship',
-    'assessments',
-    'cms',
-)
-
-INSTALLED_APPS += OPTIONAL_APPS
