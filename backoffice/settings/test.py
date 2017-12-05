@@ -68,11 +68,18 @@ SELENIUM = {
             'LOGIN_BUTTON':         os.environ.get('LP_LOGIN_BUTTON', 'post_login_btn')
         },
         'HOME_PAGE': {
+            'TITLE': 'homepage',
             'VERIFICATION_ELEMENT': os.environ.get('HP_VERIFICATION_ELEMENT', 'bt_user'),
             'ADMIN_LINKS': os.environ.get('HP_ADMINISTRATOR_LINKS', 'bt_administration').strip().split(' '),
             'STUDENTS_LINKS': os.environ.get('HP_STUDENTS_LINKS', '').split(' '),
             'TUTORS_LINKS': os.environ.get('HP_TUTORS_LINKS', 'lnk_home_catalog lnk_home_studies').split(' '),
             'PHD_LINKS': [],
+        },
+        'SCORE_ENCODING': {
+            'HOME_PAGE': {
+                'TITLE': 'score_encoding',
+                'OUT_OF_PERIOD_TITLE': 'score_encoding_out_of_period'
+            }
         }
 
     }

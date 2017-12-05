@@ -25,6 +25,10 @@
 * see http://www.gnu.org/licenses/.
 {% endcomment %}
 
+{% block page_title %}
+    {% trans 'score_encoding_out_of_period' %}
+{% endblock %}
+
 {% block breadcrumb %}
 <li><a href="{% url 'studies' %}" id="lnk_studies">{% trans 'student_path' %}</a></li>
 <li><a href="{% url 'assessments' %}" id="lnk_evaluations">{% trans 'evaluations' %}</a></li>

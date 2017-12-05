@@ -26,6 +26,9 @@
 * at the root of the source code of this program.  If not,
 * see http://www.gnu.org/licenses/.
 {% endcomment %}
+{% block page_title %}
+    {% trans 'scores_encoding' %}
+{% endblock %}
 {% block breadcrumb %}
 <li><a href="{% url 'studies' %}" id="lnk_studies">{% trans 'student_path' %}</a></li>
 <li><a href="{% url 'assessments' %}" id="lnk_evaluations">{% trans 'evaluations' %}</a></li>
@@ -109,7 +112,7 @@
                             <tr>
                                 <td>{{ note_detail.learning_unit_year_acronym }}</td>
                                 <td><a href="{% url 'online_encoding' note_detail.learning_unit_year_id %}?{{ request.GET.urlencode }}"
-                                           id="lnk_{{ note_detail.learning_unit_year_acronym }}">{{ note_detail.learning_unit_year_title }}</a>
+                                           id="lnk_learning_unit_{{ note_detail.learning_unit_year_acronym }}">{{ note_detail.learning_unit_year_title }}</a>
                                 </td>
                                 <td id="txt_progress_{{ note_detail.learning_unit_year_acronym }}" >
                                     <div class="progress">
@@ -238,7 +241,7 @@
         </div>
     </div>
 {% else %}
-    <div class="alert alert-warning">
+    <div id="alert_no_score" class="alert alert-warning">
       <p class="text-info" style="font-size: 130%">{% trans 'no_score_to_encode' %} </p>
     </div>
 {% endif %}

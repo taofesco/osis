@@ -23,10 +23,10 @@
 #    see http://www.gnu.org/licenses/.
 #
 ##############################################################################
-from base.tests.selenium.common.models import SeleniumServerTestCase
+from base.tests.selenium.selenium_models.base import SeleniumTestCase
 
 
-class HealthTestCase(SeleniumServerTestCase):
+class HealthTestCase(SeleniumTestCase):
 
     def test_health_test(self):
         self.selenium.get(self.live_server_url)
@@ -61,7 +61,7 @@ class HealthTestCase(SeleniumServerTestCase):
         self.element_id_should_be_present(self.html_emements.get('HOME_PAGE').get('VERIFICATION_ELEMENT'))
 
 
-class PermissionTestCase(SeleniumServerTestCase):
+class PermissionTestCase(SeleniumTestCase):
 
     def test_student_login(self):
         student = self.get_typed_person('STUDENT')

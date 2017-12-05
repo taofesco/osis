@@ -23,3 +23,30 @@
 #    see http://www.gnu.org/licenses/.
 #
 ##############################################################################
+from base.tests.selenium.selenium_models.score_encoding import ScoreEncodingTestCase
+
+
+class TestAcademicPeriod(ScoreEncodingTestCase):
+    """
+    When i go to the score encoding page
+    I should see:
+        - The 'out of encoding period' page if the encoding period is closed
+        - The score encoding main page if the encoding period is open
+    """
+
+    def setUp(self):
+        super(TestAcademicPeriod, self).setUp()
+        self.tutor = self.get_typed_person('TUTOR')
+
+    def test_period_is_closed(self):
+        self.get_url_by_name('login')
+        self.login(self.tutor.person.user.username)
+        self.get_url_by_name('scores_encoding')
+        self.page_title_should_be('score_encoding_out_of_period')
+
+    def test_period_is_open(self):
+        self.init_score_encoding_academic_config()
+        self.get_url_by_name('login')
+        self.login(self.tutor.person.user.username)
+        self.get_url_by_name('scores_encoding')
+        self.page_title_should_be('scores_encoding')

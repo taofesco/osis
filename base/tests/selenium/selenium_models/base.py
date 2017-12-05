@@ -34,14 +34,19 @@ from django.conf import settings
 from selenium.common.exceptions import NoSuchElementException
 from selenium.webdriver.firefox.webdriver import WebDriver as FirefoxDriver
 from selenium.webdriver.chrome.webdriver import WebDriver as ChromeDriver
+from base.models.enums import academic_calendar_type
+from base.tests.factories.academic_calendar import AcademicCalendarFactory
+from base.tests.factories.academic_year import AcademicYearFactory
 from base.tests.factories.person import PersonFactory
 from base.tests.factories.student import StudentFactory
 from base.tests.factories.tutor import TutorFactory
 from base.tests.factories.user import UserFactory, SuperUserFactory
+from django.utils.translation import ugettext as _
+from django.utils import translation
 
 
 @tag('selenium_tests')
-class SeleniumServerTestCase(StaticLiveServerTestCase):
+class SeleniumTestCase(StaticLiveServerTestCase):
 
     html_emements = settings.SELENIUM.get('HTML_ELEMENTS')
     base_elements = settings.SELENIUM.get('BASE')
@@ -108,6 +113,10 @@ class SeleniumServerTestCase(StaticLiveServerTestCase):
         admin = PersonFactory(user=admin_user)
         return admin
 
+    def _init_base_academic_config(self, calendar_type):
+        self._create_current_academic_year()
+        self._create_academic_calendar(calendar_type)
+
     def take_screenshot(self, screnshot_name):
         screen_shot_full_name = ''.join([str(datetime.datetime.today().timestamp()), '_', screnshot_name, '.png'])
         screen_shot_full_path = os.path.join(self.base_elements.get('SCREENSHOT_DIR'), screen_shot_full_name)
@@ -118,12 +127,16 @@ class SeleniumServerTestCase(StaticLiveServerTestCase):
         self.selenium.get(url)
 
     def page_title_should_be(self, expected_title):
+        expected_titles = []
+        for lang, name in settings.LANGUAGES:
+            translation.activate(lang)
+            expected_titles.append(_(expected_title))
+            translation.deactivate()
         try:
-            self.assertEqual(expected_title, self.selenium.title, 'Page title should be : {}'.format(expected_title))
+            self.assertIn(self.selenium.title, expected_titles, 'Page title should be in {}'.format(expected_titles))
         except AssertionError as ae:
-            raise ae
-        finally:
             self.take_screenshot(expected_title)
+            raise ae
 
     def element_id_should_be_present(self, expected_element_id):
         try:
@@ -159,5 +172,27 @@ class SeleniumServerTestCase(StaticLiveServerTestCase):
         input_element = self.selenium.find_element_by_id(input_id)
         input_element.clear()
         input_element.send_keys(input_txt)
+
+    def _create_current_academic_year(self):
+        date_cfg = self._get_valid_config_date()
+        self.academic_year = AcademicYearFactory(year=date_cfg.get('year'),
+                                                 start_date=date_cfg.get('start_date'),
+                                                 end_date=date_cfg.get('end_date'))
+
+    def _create_academic_calendar(self, calendar_type):
+        date_cfg = self._get_valid_config_date()
+        self.academic_calendar = AcademicCalendarFactory(academic_year=self.academic_year,
+                                                         start_date=date_cfg.get('start_date'),
+                                                         end_date=date_cfg.get('end_date'),
+                                                         reference=calendar_type)
+
+    def _get_valid_config_date(self):
+        now = datetime.datetime.today()
+        return {
+            'now':          now,
+            'year':         now.year,
+            'start_date':   now - datetime.timedelta(days=30),
+            'end_date':     now + datetime.timedelta(days=30)
+        }
 
 

@@ -2443,3 +2443,6 @@ msgstr "Entité académique"
 
 msgid "folder_number"
 msgstr "Dossier n°{}"
+
+msgid "homepage"
+msgstr "Page d'accueil"

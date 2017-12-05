@@ -422,3 +422,11 @@ def find_by_student(a_student):
         .order_by('-learning_unit_enrollment__learning_unit_year__academic_year__year',
                   'session_exam__number_session',
                   'learning_unit_enrollment__learning_unit_year__acronym')
+
+
+def find_by_offer_year(a_offer_year):
+    return ExamEnrollment.objects.filter(learning_unit_enrollment__offer_enrollment__offer_year=a_offer_year)
+
+
+def find_by_leaning_unit_year(learning_unit_year):
+    return ExamEnrollment.objects.filter(learning_unit_enrollment__learning_unit_year=learning_unit_year)
