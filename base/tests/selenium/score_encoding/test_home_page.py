@@ -23,10 +23,8 @@
 #    see http://www.gnu.org/licenses/.
 #
 ##############################################################################
-import time
-from selenium.webdriver.common.by import By
 from base.tests.selenium.selenium_models.score_encoding import ScoreEncodingTestCase
-from base.models.enums import academic_calendar_type
+
 
 class ScoreEncodingHomePageTestCase(ScoreEncodingTestCase):
     """
@@ -49,23 +47,34 @@ class ScoreEncodingHomePageTestCase(ScoreEncodingTestCase):
     def setUp(self):
         super(ScoreEncodingHomePageTestCase, self).setUp()
         self.tutor = self.get_typed_person('TUTOR')
+        self.tutor_2 = self.get_typed_person('TUTOR')
         self.init_score_encoding_academic_config()
         self.init_offers()
         self.init_students()
         self.init_students_enrollments()
         self.init_data_for_tutor(self.tutor)
+        self.init_data_for_tutor(self.tutor_2)
 
     def test_offers_list_as_tutor(self):
-        self.get_url_by_name('login')
-        self.login(self.tutor.person.user.username)
-        self.get_url_by_name('scores_encoding')
+        for tutor in [self.tutor, self.tutor_2]:
+            self.get_url_by_name('login')
+            self.login(tutor.person.user.username)
+            self.get_url_by_name('scores_encoding')
+            self._check_tutor_leaning_unit_years(tutor)
+            self.get_url_by_name('logout')
+
+    def _check_tutor_leaning_unit_years(self, tutor):
         given_learning_units_acronyms = [element.text for element
                                          in self.selenium.find_elements_by_css_selector('[id^=lnk_learning_unit_]')]
         expected_learning_unit_acronyms = [luy.title
                                            for luy
-                                           in self.get_tutor_learning_unit_years_if_enrollments(self.tutor)]
-        self.assertTrue(len(given_learning_units_acronyms) == len(expected_learning_unit_acronyms)
-                        and set(given_learning_units_acronyms).issubset(set(expected_learning_unit_acronyms)))
+                                           in self.get_tutor_learning_unit_years_if_enrollments(tutor)]
+        try:
+            self.assertTrue(len(given_learning_units_acronyms) == len(expected_learning_unit_acronyms)
+                            and set(given_learning_units_acronyms).issubset(set(expected_learning_unit_acronyms)))
+        except AssertionError as e:
+            self.take_screenshot('test_offers_list_as_tutor')
+            raise e
 
 
 

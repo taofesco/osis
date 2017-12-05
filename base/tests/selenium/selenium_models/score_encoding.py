@@ -24,6 +24,7 @@
 #
 ##############################################################################
 from random import randrange, randint
+
 from attribution.tests.factories.attribution import AttributionFactory
 from base.models.enums import number_session, academic_calendar_type, learning_container_year_types, \
     exam_enrollment_state, offer_enrollment_state, learning_unit_enrollment_state
@@ -39,7 +40,6 @@ from base.tests.factories.session_examen import SessionExamFactory
 from base.tests.factories.student import StudentFactory
 from base.tests.selenium.selenium_models.base import SeleniumTestCase
 import base.models.exam_enrollment as exam_enrol_mdl
-import base.models.learning_unit_enrollment as learning_unit_enrol_mdl
 import attribution.models.attribution as attribution_mdl
 from attribution.models.enums import function as attribution_function
 

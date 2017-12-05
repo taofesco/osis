@@ -24,7 +24,8 @@
 #
 ##############################################################################
 import datetime
-from django.contrib.auth.models import User, Group, Permission
+
+from django.contrib.auth.models import Group, Permission
 from django.contrib.staticfiles.testing import StaticLiveServerTestCase
 from django.test import tag
 from django.urls import reverse
@@ -34,15 +35,15 @@ from django.conf import settings
 from selenium.common.exceptions import NoSuchElementException
 from selenium.webdriver.firefox.webdriver import WebDriver as FirefoxDriver
 from selenium.webdriver.chrome.webdriver import WebDriver as ChromeDriver
-from base.models.enums import academic_calendar_type
+from django.utils.translation import ugettext as _
+from django.utils import translation
+
 from base.tests.factories.academic_calendar import AcademicCalendarFactory
 from base.tests.factories.academic_year import AcademicYearFactory
 from base.tests.factories.person import PersonFactory
 from base.tests.factories.student import StudentFactory
 from base.tests.factories.tutor import TutorFactory
 from base.tests.factories.user import UserFactory, SuperUserFactory
-from django.utils.translation import ugettext as _
-from django.utils import translation
 
 
 @tag('selenium_tests')
