@@ -45,7 +45,7 @@ class TestAcademicPeriod(ScoreEncodingTestCase):
         self.page_title_should_be('score_encoding_out_of_period')
 
     def test_period_is_open(self):
-        self.init_score_encoding_academic_config()
+        self.init_score_encoding_config()
         self.get_url_by_name('login')
         self.login(self.tutor.person.user.username)
         self.get_url_by_name('scores_encoding')

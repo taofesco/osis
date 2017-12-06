@@ -169,7 +169,7 @@
                     <td>{{ note_detail.learning_unit_year_acronym }}</td>
                     <td>
                         <a href="{% url 'online_encoding' note_detail.learning_unit_year_id %}?{{ request.GET.urlencode }}"
-                           id="lnk_{{ note_detail.learning_unit_year_acronym }}">
+                           id="lnk_learning_unit_{{ note_detail.learning_unit_year_acronym }}">
                             {{ note_detail.learning_unit_year_title }}
                         </a>
                     </td>

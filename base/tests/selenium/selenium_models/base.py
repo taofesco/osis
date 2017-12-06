@@ -82,6 +82,8 @@ class SeleniumTestCase(StaticLiveServerTestCase):
             return cls._make_tutor()
         elif 'ADMIN' == person_type.upper():
             return cls._make_admin()
+        elif 'PGM_MANAGER' == person_type.upper():
+            return cls._make_pgm_manager()
         return None
 
     @classmethod
@@ -113,6 +115,28 @@ class SeleniumTestCase(StaticLiveServerTestCase):
         admin_user = SuperUserFactory()
         admin = PersonFactory(user=admin_user)
         return admin
+
+    @classmethod
+    def _make_pgm_manager(cls):
+        person_user = UserFactory()
+        pgm_managers_group, created = Group.objects.get_or_create(name='program_managers')
+        if created:
+            # Add permissions to group
+            catalog_perm = Permission.objects.get(codename='can_access_catalog')
+            offer_perm = Permission.objects.get(codename='can_access_offer')
+            student_path_perm = Permission.objects.get(codename='can_access_student_path')
+            evaluation_perm = Permission.objects.get(codename='can_access_evaluation')
+            score_encoding_perm = Permission.objects.get(codename='can_access_scoreencoding')
+            academic_year_perm = Permission.objects.get(codename='can_access_academicyear')
+            academic_calendar_perm = Permission.objects.get(codename='can_access_academic_calendar')
+            pgm_managers_group.permissions.add(catalog_perm, student_path_perm, offer_perm,
+                                               evaluation_perm, score_encoding_perm,
+                                               academic_year_perm,academic_calendar_perm)
+
+        person_user.groups.add(pgm_managers_group)
+        person_user.save()
+        pgm_manager = PersonFactory(user=person_user)
+        return pgm_manager;
 
     def _init_base_academic_config(self, calendar_type):
         self._create_current_academic_year()

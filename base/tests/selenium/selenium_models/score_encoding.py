@@ -35,11 +35,13 @@ from base.tests.factories.learning_unit_enrollment import LearningUnitEnrollment
 from base.tests.factories.learning_unit_year import LearningUnitYearFactory
 from base.tests.factories.offer_enrollment import OfferEnrollmentFactory
 from base.tests.factories.offer_year import OfferYearFactory
+from base.tests.factories.program_manager import ProgramManagerFactory
 from base.tests.factories.session_exam_calendar import SessionExamCalendarFactory
 from base.tests.factories.session_examen import SessionExamFactory
 from base.tests.factories.student import StudentFactory
 from base.tests.selenium.selenium_models.base import SeleniumTestCase
 import base.models.exam_enrollment as exam_enrol_mdl
+import base.models.program_manager as pgm_manager_mdl
 import attribution.models.attribution as attribution_mdl
 from attribution.models.enums import function as attribution_function
 
@@ -53,18 +55,45 @@ class ScoreEncodingTestCase(SeleniumTestCase):
     def setUp(self):
         super(ScoreEncodingTestCase, self).setUp()
 
-    def init_score_encoding_academic_config(self):
+    def init_score_encoding_config(self):
         self._init_base_academic_config(academic_calendar_type.SCORES_EXAM_SUBMISSION)
         self._create_session_exam_calendar()
+        self._init_offers()
+        self._init_students()
+        self._init_students_enrollments()
 
-    def init_offers(self):
+    def init_data_for_tutor(self, tutor):
+        [self._create_tutor_attribution(lu, tutor, attribution_function.PROFESSOR)
+         for lu in self.learning_unit_years if randint(1, 100000) % 3 == 0]
+
+    def init_data_for_pgm_manager(self, pgm_manager):
+        [ProgramManagerFactory(person=pgm_manager, offer_year=offer_year)
+         for offer_year in self.offer_years if randint(1, 100000) % 3 == 0]
+
+    def get_learning_unit_years_for_offer_year(self, offer_year):
+        return [exam_enrollment.learning_unit_enrollment.learning_unit_year
+                for exam_enrollment in exam_enrol_mdl.find_by_offer_year(offer_year)]
+
+    def get_tutor_learning_unit_years_for_encoding(self, tutor):
+        return [lu for lu in attribution_mdl.find_by_tutor(tutor)
+                if exam_enrol_mdl.find_by_leaning_unit_year(lu)]
+
+    def get_pgm_manager_learning_unit_years_for_encoding(self, pgm_manager):
+        learning_unit_years = []
+        pgm_manager_offer_years = [pgm_manager.offer_year for pgm_manager in pgm_manager_mdl.find_by_person(pgm_manager)]
+        for offer_year in pgm_manager_offer_years:
+            learning_unit_years.extend([enroll.learning_unit_enrollment.learning_unit_year
+                                        for enroll in exam_enrol_mdl.find_by_offer_year(offer_year)])
+        return list(set(learning_unit_years))
+
+    def _init_offers(self):
         self.offer_years = list(map(lambda x: self._create_offer_year(), range(randrange(1, 10))))
         self.learning_unit_years = self._init_learning_units_for_offers()
 
-    def init_students(self):
+    def _init_students(self):
         self.students = list(map(lambda x: StudentFactory(), range(randrange(10, 30))))
 
-    def init_students_enrollments(self):
+    def _init_students_enrollments(self):
         date_cfg = self._get_valid_config_date()
         for offer_year in self.offer_years:
             for learning_unit_year in self.learning_unit_years:
@@ -74,21 +103,6 @@ class ScoreEncodingTestCase(SeleniumTestCase):
                                                       offer_year=offer_year)
                     [self._enroll_student(date_cfg, learning_unit_year, offer_year, session_exam, student)
                      for student in self.students if randint(1, 100000) % 5 == 0]
-
-    def init_data_for_tutor(self, tutor):
-        [self._create_tutor_attribution(lu, tutor, attribution_function.PROFESSOR)
-         for lu in self.learning_unit_years if randint(1, 100000) % 3 == 0]
-
-    def get_learning_unit_years_for_offer_year(self, offer_year):
-        return [exam_enrollment.learning_unit_enrollment.learning_unit_year
-                for exam_enrollment in exam_enrol_mdl.find_by_offer_year(offer_year)]
-
-    def get_tutor_learning_unit_years(self, tutor):
-        return [learning_unit_year for learning_unit_year in attribution_mdl.find_by_tutor(tutor)]
-
-    def get_tutor_learning_unit_years_if_enrollments(self, tutor):
-        return [lu for lu in self.get_tutor_learning_unit_years(tutor)
-                if exam_enrol_mdl.find_by_leaning_unit_year(lu)]
 
     def _init_learning_units_for_offers(self):
         learning_units_years = []
@@ -136,6 +150,8 @@ class ScoreEncodingTestCase(SeleniumTestCase):
     def _create_session_exam_calendar(self):
         self.session_exam_calendar = SessionExamCalendarFactory(number_session=number_session.ONE,
                                                                 academic_calendar=self.academic_calendar)
+
+
 
 
 

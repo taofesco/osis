@@ -27,6 +27,10 @@ from base.tests.selenium.selenium_models.base import SeleniumTestCase
 
 
 class HealthTestCase(SeleniumTestCase):
+    """
+        When i'm going to the application url
+        I should see the login page
+    """
 
     def test_health_test(self):
         self.selenium.get(self.live_server_url)
@@ -35,11 +39,48 @@ class HealthTestCase(SeleniumTestCase):
         self.element_id_should_be_present(self.html_emements.get('MAIN')
                                                             .get('VERIFICATION_ELEMENT'))
 
-    def test_non_registred_user(self):
+
+class PermissionTestCase(SeleniumTestCase):
+    """
+        Assuming i'm not logged in:
+        * As an unregistered user
+            I should not be able to login
+
+        * As a registered user
+            I should be able to login
+            I should be redirected to the main page after login
+
+
+        Assuming i'm logged in:
+        * I should be able to log out
+
+        * As a student i should not see :
+            - The tutor's links
+            - The administrators's links
+
+        * As a tutor
+            I should see:
+                - The tutor's links
+            I should not see
+                - The administrator's links
+
+        * As a program manager
+            I should see:
+                - The tutor's links
+            I should not see
+                - The administrator's links
+
+        * As an administrator
+            I should see:
+                - The tutor's links
+                - The administrator's links
+    """
+
+    def test_non_registered_user(self):
         self.get_url_by_name('login')
         self._check_cannot_login()
 
-    def test_registred_user(self):
+    def test_registered_user(self):
         user = self.create_user()
         self.get_url_by_name('login')
         self._check_can_login(user.username)
@@ -59,9 +100,6 @@ class HealthTestCase(SeleniumTestCase):
     def _check_can_login(self, username):
         self.login(username)
         self.element_id_should_be_present(self.html_emements.get('HOME_PAGE').get('VERIFICATION_ELEMENT'))
-
-
-class PermissionTestCase(SeleniumTestCase):
 
     def test_student_login(self):
         student = self.get_typed_person('STUDENT')
@@ -87,4 +125,12 @@ class PermissionTestCase(SeleniumTestCase):
         self.elements_ids_should_be_present(self.html_emements.get('HOME_PAGE').get('STUDENTS_LINKS'))
         self.elements_ids_should_be_present(self.html_emements.get('HOME_PAGE').get('TUTORS_LINKS'))
         self.elements_ids_should_be_present(self.html_emements.get('HOME_PAGE').get('ADMIN_LINKS'))
+        self.get_url_by_name('logout')
+
+    def test_pgm_manager_login(self):
+        pgm_manager = self.get_typed_person('PGM_MANAGER')
+        self.get_url_by_name('login')
+        self.login(pgm_manager.user.username)
+        self.elements_ids_should_be_present(self.html_emements.get('HOME_PAGE').get('TUTORS_LINKS'))
+        self.elements_ids_should_not_be_present(self.html_emements.get('HOME_PAGE').get('ADMIN_LINKS'))
         self.get_url_by_name('logout')
