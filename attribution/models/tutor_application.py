@@ -6,7 +6,7 @@
 #    The core business involves the administration of students, teachers,
 #    courses, programs and so on.
 #
-#    Copyright (C) 2015-2017 Université catholique de Louvain (http://www.uclouvain.be)
+#    Copyright (C) 2015-2018 Université catholique de Louvain (http://www.uclouvain.be)
 #
 #    This program is free software: you can redistribute it and/or modify
 #    it under the terms of the GNU General Public License as published by
@@ -24,16 +24,18 @@
 #
 ##############################################################################
 from django.db import models
+from django.contrib import admin
 from django.utils.translation import ugettext_lazy as _
 
-from osis_common.models.auditable_model import AuditableModelAdmin, AuditableModel
 from attribution.models.enums import function
 
 
-class TutorApplicationAdmin(AuditableModelAdmin):
+class TutorApplicationAdmin(admin.ModelAdmin):
     list_display = ('tutor', 'function', 'learning_container_year', 'volume_lecturing', 'volume_pratical_exercice', 'changed')
     list_filter = ('learning_container_year__academic_year', )
-    fieldsets = ((None, {'fields': ('learning_container_year', 'tutor', 'function', 'volume_lecturing', 'volume_pratical_exercice')}),)
+    fieldsets = ((None, {'fields': ('last_changed', 'learning_container_year',
+                                    'tutor', 'function', 'volume_lecturing', 'volume_pratical_exercice',
+                                    'remark', 'course_summary')}),)
     raw_id_fields = ('learning_container_year', 'tutor')
     search_fields = ['tutor__person__first_name', 'tutor__person__last_name', 'learning_container_year__acronym',
                      'tutor__person__global_id', 'function']
@@ -46,7 +48,7 @@ class TutorApplicationAdmin(AuditableModelAdmin):
     publish_application_to_portal.short_description = _("publish_application_to_portal")
 
 
-class TutorApplication(AuditableModel):
+class TutorApplication(models.Model):
     external_id = models.CharField(max_length=100, blank=True, null=True)
     changed = models.DateTimeField(null=True, auto_now=True)
     learning_container_year = models.ForeignKey('base.LearningContainerYear')
@@ -54,9 +56,26 @@ class TutorApplication(AuditableModel):
     function = models.CharField(max_length=35, blank=True, null=True, choices=function.FUNCTIONS, db_index=True)
     volume_lecturing = models.DecimalField(max_digits=6, decimal_places=1, blank=True, null=True)
     volume_pratical_exercice = models.DecimalField(max_digits=6, decimal_places=1, blank=True, null=True)
-
-    class Meta:
-        unique_together = ('learning_container_year', 'tutor', 'function')
+    remark = models.TextField(blank=True, null=True)
+    course_summary = models.TextField(blank=True, null=True)
+    last_changed = models.DateTimeField(null=True)
 
     def __str__(self):
         return u"%s - %s" % (self.tutor, self.function)
+
+
+def search(*args, **kwargs):
+    qs = TutorApplication.objects.all()
+    if "tutor" in kwargs:
+        qs = qs.filter(tutor=kwargs['tutor'])
+    if "learning_container_year" in kwargs:
+        if isinstance(kwargs['learning_container_year'], list):
+            qs = qs.filter(learning_container_year__in=kwargs['learning_container_year'])
+        else:
+            qs = qs.filter(learning_container_year=kwargs['learning_container_year'])
+    if "global_id" in kwargs:
+        if isinstance(kwargs['global_id'], list):
+            qs = qs.filter(tutor__person__global_id__in=kwargs['global_id'])
+        else:
+            qs = qs.filter(tutor__person__global_id=kwargs['global_id'])
+    return qs.select_related('tutor__person', 'learning_container_year')

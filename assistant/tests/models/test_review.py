@@ -6,7 +6,7 @@
 #    The core business involves the administration of students, teachers,
 #    courses, programs and so on.
 #
-#    Copyright (C) 2015-2017 Université catholique de Louvain (http://www.uclouvain.be)
+#    Copyright (C) 2015-2018 Université catholique de Louvain (http://www.uclouvain.be)
 #
 #    This program is free software: you can redistribute it and/or modify
 #    it under the terms of the GNU General Public License as published by
@@ -25,14 +25,31 @@
 ##############################################################################
 import factory
 from django.test import TestCase
+
+from assistant.tests.factories.assistant_mandate import AssistantMandateFactory
 from assistant.tests.factories import review
-from assistant.models.enums import review_advice_choices
+from assistant.models.enums import assistant_mandate_state
+from assistant.models.enums import review_status
 from assistant.models.review import find_by_reviewer_for_mandate
+from assistant.models.review import get_in_progress_for_mandate
 
 class TestReviewFactory(TestCase):
 
     def setUp(self):
-        self.review = review.ReviewFactory()
+
+        self.mandate = AssistantMandateFactory(state=assistant_mandate_state.RESEARCH)
+        self.review = review.ReviewFactory(status=review_status.DONE, mandate=self.mandate)
 
     def test_review_by_reviewer_for_mandate(self):
         self.assertEqual(self.review, find_by_reviewer_for_mandate(self.review.reviewer, self.review.mandate))
+
+    def test_find_in_progress_for_mandate(self):
+        self.assertFalse(get_in_progress_for_mandate(self.review.mandate))
+        self.review.status = review_status.IN_PROGRESS
+        self.review.save()
+        self.assertEqual(get_in_progress_for_mandate(self.review.mandate), self.review)
+        self.review.delete()
+        self.mandate.state = assistant_mandate_state.TRTS
+        self.assertFalse(get_in_progress_for_mandate(self.review.mandate))
+
+

@@ -6,7 +6,7 @@
 #    The core business involves the administration of students, teachers,
 #    courses, programs and so on.
 #
-#    Copyright (C) 2015-2017 Université catholique de Louvain (http://www.uclouvain.be)
+#    Copyright (C) 2015-2018 Université catholique de Louvain (http://www.uclouvain.be)
 #
 #    This program is free software: you can redistribute it and/or modify
 #    it under the terms of the GNU General Public License as published by
@@ -24,11 +24,12 @@
 #
 ##############################################################################
 from django import forms
-from django.forms import ModelForm
+
+from base.forms.bootstrap import BootstrapModelForm
 from base.models import offer_year_calendar
 
 
-class OfferYearCalendarForm(ModelForm):
+class OfferYearCalendarForm(BootstrapModelForm):
     start_date = forms.DateField(widget=forms.DateInput(format='%d/%m/%Y'),
                                  input_formats=('%d/%m/%Y', ),
                                  required=True)

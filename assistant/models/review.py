@@ -6,7 +6,7 @@
 #    The core business involves the administration of students, teachers,
 #    courses, programs and so on.
 #
-#    Copyright (C) 2015-2017 Université catholique de Louvain (http://www.uclouvain.be)
+#    Copyright (C) 2015-2018 Université catholique de Louvain (http://www.uclouvain.be)
 #
 #    This program is free software: you can redistribute it and/or modify
 #    it under the terms of the GNU General Public License as published by
@@ -25,6 +25,7 @@
 ##############################################################################
 from django.db import models
 from django.utils import timezone
+
 from assistant.models.enums import review_status, review_advice_choices
 
 
@@ -61,3 +62,10 @@ def find_by_reviewer_for_mandate(reviewer, mandate):
 
 def find_done_by_supervisor_for_mandate(mandate):
     return Review.objects.get(reviewer=None, mandate=mandate, status='DONE')
+
+
+def get_in_progress_for_mandate(mandate):
+    try:
+        return Review.objects.get(mandate=mandate, status=review_status.IN_PROGRESS)
+    except Review.DoesNotExist:
+        return None

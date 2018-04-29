@@ -6,7 +6,7 @@
 #    The core business involves the administration of students, teachers,
 #    courses, programs and so on.
 #
-#    Copyright (C) 2015-2017 Université catholique de Louvain (http://www.uclouvain.be)
+#    Copyright (C) 2015-2018 Université catholique de Louvain (http://www.uclouvain.be)
 #
 #    This program is free software: you can redistribute it and/or modify
 #    it under the terms of the GNU General Public License as published by
@@ -159,7 +159,7 @@ class ScoreSheetDataTest(TestCase):
         # Should be a dictionary
         self.assertIsInstance(data_computed, dict)
         # Publication date should be today
-        self.assertEqual(data_computed['publication_date'], timezone.now().strftime("%-d/%m/%Y"))
+        self.assertEqual(data_computed['publication_date'], timezone.now().strftime("%-d/%-m/%Y"))
         self.assertEqual(len(data_computed['learning_unit_years']), 1)
         self.assertFalse(data_computed['learning_unit_years'][0]['decimal_scores'])
         # Check the score responsible and the address

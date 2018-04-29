@@ -6,7 +6,7 @@
 #    The core business involves the administration of students, teachers,
 #    courses, programs and so on.
 #
-#    Copyright (C) 2015-2017 Université catholique de Louvain (http://www.uclouvain.be)
+#    Copyright (C) 2015-2018 Université catholique de Louvain (http://www.uclouvain.be)
 #
 #    This program is free software: you can redistribute it and/or modify
 #    it under the terms of the GNU General Public License as published by
@@ -33,7 +33,7 @@ from base.models.enums import learning_component_year_type, learning_unit_year_s
 from attribution.business import attribution_json
 from attribution.models.enums import function
 from attribution.tests.factories.attribution import AttributionNewFactory
-from attribution.tests.factories.attribution_charge import AttributionChargeFactory
+from attribution.tests.factories.attribution_charge_new import AttributionChargeNewFactory
 from base.tests.factories.academic_year import AcademicYearFactory
 from base.tests.factories.learning_component_year import LearningComponentYearFactory
 from base.tests.factories.learning_container_year import LearningContainerYearFactory
@@ -135,6 +135,19 @@ class AttributionJsonTest(TestCase):
         )
         self.assertEqual(len(attrib_tutor_2['attributions']), 1)
 
+    def test_with_multiple_global_id(self):
+        global_id = self.tutor_2.person.global_id
+        global_id_with_no_attributions = "4598989898"
+        attrib_list = attribution_json._compute_list(global_ids=[global_id, global_id_with_no_attributions])
+        self.assertIsInstance(attrib_list, list)
+        self.assertEqual(len(attrib_list), 2)
+
+        attribution_data = next(
+            (attrib for attrib in attrib_list if attrib['global_id'] == global_id_with_no_attributions),
+            None
+        )
+        self.assertFalse(attribution_data['attributions'])
+
 
 def _create_learning_unit_year_with_components(academic_year, l_container, acronym, subtype):
     l_unit_year = LearningUnitYearFactory(academic_year=academic_year, learning_container_year=l_container,
@@ -159,7 +172,7 @@ def _create_attribution_charge(academic_year, attribution, l_acronym, volume_cm=
             learning_unit_year__acronym=l_acronym,
             learning_unit_year__academic_year=academic_year,
             learning_component_year__type=learning_component_year_type.LECTURING).first()
-        AttributionChargeFactory(attribution=attribution,
+        AttributionChargeNewFactory(attribution=attribution,
                                  learning_component_year=l_unit_component.learning_component_year,
                                  allocation_charge=volume_cm)
 
@@ -168,6 +181,6 @@ def _create_attribution_charge(academic_year, attribution, l_acronym, volume_cm=
             learning_unit_year__acronym=l_acronym,
             learning_unit_year__academic_year=academic_year,
             learning_component_year__type=learning_component_year_type.PRACTICAL_EXERCISES).first()
-        AttributionChargeFactory(attribution=attribution,
+        AttributionChargeNewFactory(attribution=attribution,
                                  learning_component_year=l_unit_component.learning_component_year,
                                  allocation_charge=volume_tp)

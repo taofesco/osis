@@ -6,7 +6,7 @@
 #    The core business involves the administration of students, teachers,
 #    courses, programs and so on.
 #
-#    Copyright (C) 2015-2017 Université catholique de Louvain (http://www.uclouvain.be)
+#    Copyright (C) 2015-2018 Université catholique de Louvain (http://www.uclouvain.be)
 #
 #    This program is free software: you can redistribute it and/or modify
 #    it under the terms of the GNU General Public License as published by
@@ -23,6 +23,9 @@
 #    see http://www.gnu.org/licenses/.
 #
 ##############################################################################
+
+from django.contrib.auth.models import User
+from django.core.exceptions import ObjectDoesNotExist
 from django.db import IntegrityError
 from django.test import TestCase
 
@@ -58,7 +61,7 @@ class PersonEntityTest(TestCase):
         PersonEntityFactory(person=person, entity=self.root_entity, with_child=False)
         entities = person_entity.find_entities_by_person(person)
         self.assertIsInstance(entities, list)
-        self.assertEqual(len(entities), 1) # We take only root, no child
+        self.assertEqual(len(entities), 1)  # We take only root, no child
 
     def test_find_entities_by_person_with_child_true(self):
         person = PersonFactory()
@@ -94,6 +97,12 @@ class PersonEntityTest(TestCase):
         self.assertEqual(len(list_filtered), 2)
         list_filtered = list(person_entity_filter.filter_by_attached_entities(person_2, queryset))
         self.assertEqual(len(list_filtered), 1)
+
+    def test_filter_by_attached_entities_not_defined_model(self):
+        person_2 = PersonFactory()
+        queryset = User.objects.all()
+        with self.assertRaises(ObjectDoesNotExist):
+            person_entity_filter.filter_by_attached_entities(person_2, queryset)
 
     def _create_entity_structure(self):
         self.organization = OrganizationFactory(name="Université catholique de Louvain", acronym="UCL")

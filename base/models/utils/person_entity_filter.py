@@ -6,7 +6,7 @@
 #    The core business involves the administration of students, teachers,
 #    courses, programs and so on.
 #
-#    Copyright (C) 2015-2017 Université catholique de Louvain (http://www.uclouvain.be)
+#    Copyright (C) 2015-2018 Université catholique de Louvain (http://www.uclouvain.be)
 #
 #    This program is free software: you can redistribute it and/or modify
 #    it under the terms of the GNU General Public License as published by
@@ -23,12 +23,25 @@
 #    see http://www.gnu.org/licenses/.
 #
 ##############################################################################
+from django.core.exceptions import ObjectDoesNotExist
+
 from base.models import person_entity
+from base.models.entity_container_year import EntityContainerYear
+from base.models.entity_version import EntityVersion
+from base.models.person_entity import PersonEntity
+from osis_common.decorators.deprecated import deprecated
+
+MAP_ENTITY_FIELD = {
+    EntityVersion: 'entity',
+    PersonEntity: 'entity',
+    EntityContainerYear: 'entity'
+}
 
 
-def filter_by_attached_entities(person, queryset, default_field='entity'):
+def filter_by_attached_entities(person, entity_queryset):
     entities_attached = person_entity.find_entities_by_person(person)
-    if entities_attached:
-        field_filter = "{}__in".format(default_field)
-        return queryset.filter(**{field_filter: entities_attached})
-    return queryset
+    field_path = MAP_ENTITY_FIELD.get(entity_queryset.model)
+    if not field_path:
+        raise ObjectDoesNotExist
+    field_filter = "{}__in".format(field_path)
+    return entity_queryset.filter(**{field_filter: entities_attached})
