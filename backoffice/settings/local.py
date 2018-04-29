@@ -35,3 +35,6 @@ OPTIONAL_APPS = (
 )
 
 INSTALLED_APPS += OPTIONAL_APPS
+if TESTING:
+    APPS_TO_TEST += OPTIONAL_APPS
+    from .selenium_config import *

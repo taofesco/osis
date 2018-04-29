@@ -86,7 +86,15 @@ MIDDLEWARE = (
 
 # check if we are testing right now
 TESTING = 'test' in sys.argv
-
+if TESTING:
+    TEST_RUNNER = os.environ.get('TEST_RUNNER', 'osis_common.tests.runner.InstalledAppsTestRunner')
+    # add test packages that have specific models for tests
+    INSTALLED_APPS += ('osis_common.tests', )
+    APPS_TO_TEST = (
+        'osis_common',
+        'reference',
+        'base',
+    )
 
 TEMPLATES = [
     {

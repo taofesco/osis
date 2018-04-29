@@ -50,13 +50,6 @@ class AcademicCalendarFactory(factory.DjangoModelFactory):
     class Meta:
         model = 'base.AcademicCalendar'
 
-    @classmethod
-    def _create(cls, model_class, *args, **kwargs):
-        functions = kwargs.pop('functions', [])
-        obj = model_class(*args, **kwargs)
-        obj.save(functions=functions)
-        return obj
-
     external_id = factory.fuzzy.FuzzyText(length=10, chars=string.digits)
     changed = factory.fuzzy.FuzzyDateTime(datetime.datetime(2016, 1, 1, tzinfo=get_tzinfo()),
                                           datetime.datetime(2017, 3, 1, tzinfo=get_tzinfo()))
@@ -68,7 +61,3 @@ class AcademicCalendarFactory(factory.DjangoModelFactory):
     highlight_description = factory.Sequence(lambda n: 'Description - %d' % n)
     highlight_shortcut = factory.Sequence(lambda n: 'Shortcut Highlight - %d' % n)
     reference = None
-
-
-class AcademicCalendarExamSubmissionFactory(AcademicCalendarFactory):
-    reference = 'SCORES_EXAM_SUBMISSION'

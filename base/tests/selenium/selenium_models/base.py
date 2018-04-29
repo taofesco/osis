@@ -46,7 +46,7 @@ from base.tests.factories.tutor import TutorFactory
 from base.tests.factories.user import UserFactory, SuperUserFactory
 
 
-@tag('selenium_tests')
+@tag('selenium')
 class SeleniumTestCase(StaticLiveServerTestCase):
 
     html_emements = settings.SELENIUM.get('HTML_ELEMENTS')
