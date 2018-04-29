@@ -61,3 +61,7 @@ class AcademicCalendarFactory(factory.DjangoModelFactory):
     highlight_description = factory.Sequence(lambda n: 'Description - %d' % n)
     highlight_shortcut = factory.Sequence(lambda n: 'Shortcut Highlight - %d' % n)
     reference = None
+
+
+class AcademicCalendarExamSubmissionFactory(AcademicCalendarFactory):
+    reference = 'SCORES_EXAM_SUBMISSION'
