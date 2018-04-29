@@ -1,0 +1,8 @@
+behave
+selenium
+behave_django
+pyvirtualdisplay
+python-magic
+Faker
+parse
+pypom

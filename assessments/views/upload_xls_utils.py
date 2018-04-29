@@ -66,6 +66,7 @@ INFORMATIVE_JUSTIFICATION_ALIASES = {
 @login_required
 @require_http_methods(["POST"])
 def upload_scores_file(request, learning_unit_year_id=None):
+    # import pdb; pdb.set_trace()
     form = ScoreFileForm(request.POST, request.FILES)
     if form.is_valid():
         file_name = request.FILES['file']

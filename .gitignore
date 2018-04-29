@@ -25,7 +25,6 @@ dev.py
 ghostdriver.log
 .DS_Store
 .coveragerc
-/dev_requirements.txt
 report.html
 geckodriver.log
 output.xml

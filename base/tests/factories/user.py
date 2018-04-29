@@ -23,22 +23,38 @@
 #    see http://www.gnu.org/licenses/.
 #
 ##############################################################################
+import datetime
+
 import factory
 
+from osis_common.utils.datetime import get_tzinfo
 
-class UserFactory(factory.DjangoModelFactory):
+
+def generate_person_email(person, domain=None):
+    if domain is None:
+        domain = factory.Faker('domain_name').generate({})
+    return '{0.first_name}.{0.last_name}@{1}'.format(person, domain).lower()
+
+
+class UserFactory(factory.django.DjangoModelFactory):
     class Meta:
         model = 'auth.User'
+    username = factory.Sequence(lambda n: 'user{}'.format(n))
+    first_name = factory.Faker('first_name')
+    last_name = factory.Faker('last_name')
+    email = factory.LazyAttribute(generate_person_email)
+    password = factory.PostGenerationMethodCall('set_password', 'password123')
 
-    username = factory.Sequence(lambda n: 'username_{0}'.format(n))
-    password = factory.PostGenerationMethodCall('set_password', 'password')
+    is_active = True
+    is_staff = False
+    is_superuser = False
+
+    last_login = factory.LazyAttribute(lambda _o: datetime.datetime(2000, 1, 1, tzinfo=get_tzinfo()))
+    date_joined = factory.LazyAttribute(lambda _o: datetime.datetime(1999, 1, 1, tzinfo=get_tzinfo()))
 
 
-class SuperUserFactory(factory.DjangoModelFactory):
-    class Meta:
-        model = 'auth.User'
+class SuperUserFactory(UserFactory):
     username = factory.Sequence(lambda n: 'superusername_{0}'.format(n))
-    password = factory.PostGenerationMethodCall('set_password', 'password')
     is_superuser = True
     is_staff = True
     is_active = True

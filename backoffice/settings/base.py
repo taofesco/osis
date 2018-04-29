@@ -81,7 +81,7 @@ MIDDLEWARE = (
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
     'django.middleware.security.SecurityMiddleware',
-    'base.middlewares.extra_http_responses_midleware.ExtraHttpResponsesMiddleware'
+    'base.middlewares.extra_http_responses_midleware.ExtraHttpResponsesMiddleware',
 )
 
 # check if we are testing right now
@@ -293,6 +293,15 @@ ESB_AUTHORIZATION = os.environ.get('ESB_AUTHORIZATION')
 ESB_STUDENT_API = os.environ.get('ESB_STUDENT_API')
 
 RELEASE_TAG = os.environ.get('RELEASE_TAG')
+
+# Selenium Testing
+SELENIUM_SETTINGS = {
+    'WEB_BROWSER': os.environ.get('SELENIUM_WEB_BROWSER', 'FIREFOX'),
+    'GECKO_DRIVER': os.environ.get('SELENIUM_GECKO_DRIVER', os.path.join(BASE_DIR, "selenium/geckodriver")),
+    'VIRTUAL_DISPLAY': os.environ.get('SELENIUM_VIRTUAL_DISPLAY', 'True').lower() == 'true',
+    'SCREEN_WIDTH': int(os.environ.get('SELENIUM_SCREEN_WIDTH', 1920)),
+    'SCREEN_HIGH': int(os.environ.get('SELENIUM_SCREEN_HIGH', 1080))
+}
 
 # BOOTSTRAP3 Configuration
 BOOTSTRAP3 = {

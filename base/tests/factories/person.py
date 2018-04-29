@@ -33,20 +33,15 @@ from base.tests.factories.user import UserFactory
 from osis_common.utils.datetime import get_tzinfo
 
 
-def generate_person_email(person, domain=None):
-    if domain is None:
-        domain = factory.Faker('domain_name').generate({})
-    return '{0.first_name}.{0.last_name}@{1}'.format(person, domain).lower()
-
-
 class PersonFactory(factory.DjangoModelFactory):
     class Meta:
         model = 'base.Person'
 
-    first_name = factory.Faker('first_name')
-    last_name = factory.Faker('last_name')
+    first_name = factory.SelfAttribute('user.first_name')
+    last_name = factory.SelfAttribute('user.last_name')
+
     changed = factory.fuzzy.FuzzyDateTime(datetime.datetime(2016, 1, 1, tzinfo=get_tzinfo()))
-    email = factory.LazyAttribute(generate_person_email)
+    email = factory.SelfAttribute('user.email')
     phone = factory.Faker('phone_number')
     language = factory.Iterator(settings.LANGUAGES, getter=operator.itemgetter(0))
     gender = factory.Iterator(mdl.person.Person.GENDER_CHOICES, getter=operator.itemgetter(0))

@@ -95,6 +95,7 @@ def outside_period(request):
 @permission_required('assessments.can_access_scoreencoding', raise_exception=True)
 @user_passes_test(_is_inside_scores_encodings_period, login_url=reverse_lazy('outside_scores_encodings_period'))
 def scores_encoding(request):
+    # import pdb; pdb.set_trace()
     template_name = "scores_encoding.html"
     academic_yr = mdl.academic_year.current_academic_year()
     number_session = mdl.session_exam_calendar.find_session_exam_number()
@@ -106,6 +107,8 @@ def scores_encoding(request):
     offer_year_id = request.GET.get('offer', None)
     if offer_year_id:
         offer_year_id = int(offer_year_id)
+
+    # import pdb; pdb.set_trace()
 
     if mdl.program_manager.is_program_manager(request.user):
         template_name = "scores_encoding_by_learning_unit.html"
