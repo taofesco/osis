@@ -29,4 +29,4 @@ report.html
 geckodriver.log
 output.xml
 log.html
-screenshots/*.png
+base/tests/functionals/screenshots/*.png

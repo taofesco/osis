@@ -1,4 +1,6 @@
 import datetime
+from unittest import skip
+
 import time
 from urllib import request
 
@@ -69,6 +71,7 @@ class BusinessMixin:
 
 
 @tag('selenium')
+@skip
 class SeleniumTestCase(StaticLiveServerTestCase):
     @classmethod
     def setUpClass(cls):

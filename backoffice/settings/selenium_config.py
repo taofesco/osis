@@ -7,10 +7,10 @@ SELENIUM = {
         'SELENIUM_BROWSER':     os.environ.get('SELENIUM_BROWSER', 'FIREFOX').upper(),
         'VIRTUAL_DISPLAY':      os.environ.get('VIRTUAL_DISPLAY', 'True').lower() == 'true',
         'SCREENSHOT_DIR':       os.environ.get('SELENIUM_SCREENSHOT_DIR',
-                                               os.path.join(BASE_DIR, 'base/tests/selenium/screenshots')),
+                                               os.path.join(BASE_DIR, 'base/tests/functionals/screenshots')),
         'DRIVERS': {
-            'FIREFOX':  os.path.join(BASE_DIR, 'base/tests/selenium/drivers/geckodriver'),
-            'CHROME':   os.path.join(BASE_DIR, 'base/tests/selenium/drivers/chromedriver')
+            'FIREFOX':  os.path.join(BASE_DIR, 'base/tests/functionals/drivers/geckodriver'),
+            'CHROME':   os.path.join(BASE_DIR, 'base/tests/functionals/drivers/chromedriver')
         }
     },
     'HTML_ELEMENTS': {
