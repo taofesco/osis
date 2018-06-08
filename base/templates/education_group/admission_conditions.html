@@ -49,7 +49,7 @@
                         <th>{{ item.id }}</th>
                         <td>
 				            <a href="{% url 'education_group_type_admission_condition' admission_condition_id=item.id %}"
-                               id="lnk_admission_condition_{admission_condition.id}}">{{ item.education_group_type.name }}</a>
+                               id="lnk_admission_condition_{{item.id}}">{{ item.education_group_type.name }}</a>
 			            </td>
                     </tr>
                 {% endfor %}
