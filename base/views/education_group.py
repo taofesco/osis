@@ -468,6 +468,7 @@ class AdmissionConditionForm(forms.ModelForm):
             'description': CKEditorWidget(config_name='reddot', attrs={'cols': 10, 'rows': 5})
         }
 
+
 @login_required
 @permission_required('base.can_edit_educationgroup_pedagogy', raise_exception=True)
 def education_group_type_admission_condition(request, admission_condition_id):
@@ -498,6 +499,7 @@ def education_group_type_admission_condition(request, admission_condition_id):
         'formset': formset,
     }
     return layout.render(request, 'education_group/admission_condition.html', context)
+
 
 @login_required
 @permission_required('base.can_edit_educationgroup_pedagogy', raise_exception=True)

@@ -16,6 +16,7 @@ class AdmissionConditionAdmin(osis_model_admin.OsisModelAdmin):
     def education_group_type_name(self, obj):
         return obj.education_group_type.name
 
+
 class AdmissionConditionLine(models.Model):
     admission_condition = models.ForeignKey(AdmissionCondition)
 
