@@ -51,6 +51,11 @@
 				            <a href="{% url 'education_group_type_admission_condition' admission_condition_id=item.id %}"
                                id="lnk_admission_condition_{{item.id}}">{{ item.education_group_type.name }}</a>
 			            </td>
+                        <td>
+                            <a href="{% url 'education_group_type_admission_condition_delete' admission_condition_id=item.id %}"
+                               class="btn btn-warning"
+                               id="lnk_admission_condition_{{ item.id }}">{% trans 'Remove' %}</a>
+                        </td>
                     </tr>
                 {% endfor %}
                 </tbody>

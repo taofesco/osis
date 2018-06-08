@@ -231,7 +231,10 @@ urlpatterns = [
             name='education_group_type_admission_condition'),
         url(r'^admission_conditions/create/$',
             education_group.education_group_type_admission_condition_new,
-            name='education_group_type_admission_condition_new')
+            name='education_group_type_admission_condition_new'),
+        url(r'^admission_conditions/(?P<admission_condition_id>[0-9]+)/delete$',
+            education_group.education_group_type_admission_condition_delete,
+            name='education_group_type_admission_condition_delete'),
     ])),
 
     url(r'^offer_year_calendars/([0-9]+)/$', offer.offer_year_calendar_read, name='offer_year_calendar_read'),

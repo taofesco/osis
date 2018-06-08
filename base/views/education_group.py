@@ -538,3 +538,11 @@ def education_group_type_admission_condition_new(request):
         'formset': formset,
     }
     return layout.render(request, 'education_group/admission_condition.html', context)
+
+
+@login_required
+@permission_required('base.can_edit_educationgroup_pedagogy', raise_exception=True)
+def education_group_type_admission_condition_delete(request, admission_condition_id):
+    admission_condition = get_object_or_404(AdmissionCondition, pk=admission_condition_id)
+    admission_condition.delete()
+    return redirect('education_group_type_admission_conditions')
