@@ -227,7 +227,7 @@ urlpatterns = [
         ])),
         url(r'^admission_conditions/$', education_group.education_group_type_admission_conditions,
             name='education_group_type_admission_conditions'),
-        url(r'^admission_conditions/(?P<admission_condition_id>[0-9]+)/', education_group.education_group_type_admission_condition,
+        url(r'^admission_conditions/(?P<admission_condition_id>[0-9]+)/$', education_group.education_group_type_admission_condition,
             name='education_group_type_admission_condition'),
         url(r'^admission_conditions/create/$',
             education_group.education_group_type_admission_condition_new,
