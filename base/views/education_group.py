@@ -25,12 +25,14 @@
 ##############################################################################
 from collections import OrderedDict
 
+from ckeditor.widgets import CKEditorWidget
 from django.conf import settings
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required, permission_required
 from django.core.exceptions import PermissionDenied
 from django.db.models import Prefetch
-from django.forms import forms
+from django import forms
+from django.forms import inlineformset_factory, Textarea
 from django.http import HttpResponseRedirect, JsonResponse
 from django.shortcuts import get_object_or_404, redirect
 from django.urls import reverse
@@ -45,9 +47,11 @@ from base.forms.education_group_general_informations import EducationGroupGenera
 from base.forms.education_group_pedagogy_edit import EducationGroupPedagogyEditForm
 from base.forms.education_groups import EducationGroupFilter, MAX_RECORDS
 from base.forms.education_groups_administrative_data import CourseEnrollmentForm, AdministrativeDataFormset
+from base.models.admission_condition import AdmissionCondition, AdmissionConditionLine
 from base.models.education_group_year import EducationGroupYear
 from base.models.enums import academic_calendar_type
 from base.models.enums import education_group_categories
+from base.views.common import display_success_messages, display_error_messages
 from cms import models as mdl_cms
 from cms.enums import entity_name
 from cms.models import text_label
@@ -443,3 +447,94 @@ def translated_text_labels2dict(translated_text_label):
         'label': translated_text_label.text_label.label,
         'translation': translated_text_label.label
     }
+
+
+class AdmissionConditionForm(forms.ModelForm):
+    class Meta:
+        model = AdmissionCondition
+        fields = ('description', 'education_group_type')
+
+        labels = {
+            'education_group_type': 'Type',
+        }
+
+        error_messages = {
+            'education_group_type': {
+                'unique': _('There is already an admission condition for this type')
+            }
+        }
+
+        widgets = {
+            'description': CKEditorWidget(config_name='reddot', attrs={'cols': 10, 'rows': 5})
+        }
+
+@login_required
+@permission_required('base.can_edit_educationgroup_pedagogy', raise_exception=True)
+def education_group_type_admission_condition(request, admission_condition_id):
+    admission_condition = get_object_or_404(AdmissionCondition, pk=admission_condition_id)
+    post = request.POST or None
+    form = AdmissionConditionForm(post, instance=admission_condition)
+
+    FormSet = inlineformset_factory(AdmissionCondition,
+                                    AdmissionConditionLine,
+                                    max_num=1,
+                                    fields=('title',))
+
+    formset = FormSet(post, instance=admission_condition)
+
+    if form.is_valid() and formset.is_valid():
+        try:
+            form.save()
+            formset.save()
+
+            display_success_messages(request, 'saved')
+
+            return HttpResponseRedirect(request.path_info)
+        except ValueError as e:
+            display_error_messages(request, e.args[0])
+
+    context = {
+        'form': form,
+        'formset': formset,
+    }
+    return layout.render(request, 'education_group/admission_condition.html', context)
+
+@login_required
+@permission_required('base.can_edit_educationgroup_pedagogy', raise_exception=True)
+def education_group_type_admission_conditions(request):
+    context = {
+        'object_list': AdmissionCondition.objects.order_by('education_group_type__name')
+    }
+
+    return layout.render(request, 'education_group/admission_conditions.html', context)
+
+
+@login_required
+@permission_required('base.can_edit_educationgroup_pedagogy', raise_exception=True)
+def education_group_type_admission_condition_new(request):
+    post = request.POST or None
+    form = AdmissionConditionForm(post)
+
+    FormSet = inlineformset_factory(AdmissionCondition,
+                                    AdmissionConditionLine,
+                                    max_num=1,
+                                    fields=('title',))
+
+    formset = FormSet(post)
+
+    if request.method == 'POST' and form.is_valid() and formset.is_valid():
+        try:
+            form.save()
+            formset.save()
+
+            display_success_messages(request, _('The new admission condition has been saved'))
+
+            return HttpResponseRedirect(reverse('education_group_type_admission_conditions'))
+        except ValueError as e:
+            display_error_messages(request, e.args[0])
+
+    context = {
+        'form': form,
+        'formset': formset,
+    }
+    return layout.render(request, 'education_group/admission_condition.html', context)

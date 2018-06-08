@@ -1,0 +1,86 @@
+{% extends "layout.html" %}
+{% load staticfiles %}
+{% load i18n %}
+{% load bootstrap3 %}
+{% comment "License" %}
+    * OSIS stands for Open Student Information System. It's an application
+    * designed to manage the core business of higher education institutions,
+    * such as universities, faculties, institutes and professional schools.
+    * The core business involves the administration of students, teachers,
+    * courses, programs and so on.
+    *
+    * Copyright (C) 2015-2018 Université catholique de Louvain (http://www.uclouvain.be)
+    *
+    * This program is free software: you can redistribute it and/or modify
+    * it under the terms of the GNU General Public License as published by
+    * the Free Software Foundation, either version 3 of the License, or
+    * (at your option) any later version.
+    *
+    * This program is distributed in the hope that it will be useful,
+    * but WITHOUT ANY WARRANTY; without even the implied warranty of
+    * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    * GNU General Public License for more details.
+    *
+    * A copy of this license - GNU General Public License - is available
+    * at the root of the source code of this program.  If not,
+    * see http://www.gnu.org/licenses/.
+{% endcomment %}
+
+{% block breadcrumbarea %}
+{% endblock %}
+{% block content %}
+    <div class="container">
+        <div class="row">
+            <form method="post">
+                {% csrf_token %}
+
+                {% bootstrap_form form  %}
+
+                <div class="panel">
+                    <div class="panel-heading"><label>{% trans 'Sections' %}</label></div>
+
+                    <div class="panel-body">
+                        {{ formset.management_form }}
+                        <table class="table">
+                            {% for form in formset %}
+                                <tr class="link-formset">
+                                    {% for field in form.visible_fields %}
+                                        <td>
+                                            {# Include the hidden fields in the form #}
+                                            {% if forloop.first %}
+                                                {% for hidden in form.hidden_fields %}
+                                                    {{ hidden }}
+                                                {% endfor %}
+                                            {% endif %}
+                                            {% bootstrap_field field %}
+                                        </td>
+                                    {% endfor %}
+                                </tr>
+                            {% endfor %}
+                        </table>
+                    </div>
+                </div>
+                {% buttons %}
+                    {% if perms.base.can_edit_learningunit_pedagogy %}
+                        {% bootstrap_button _("save") button_type="submit" button_class="btn-primary pull-right"  icon="glyphicon glyphicon-floppy-save" %}
+                    {% endif %}
+                {% endbuttons %}
+            </form>
+        </div>
+    </div>
+{% endblock %}
+
+{% block script %}
+{#    <script src="{% url 'javascript-catalog' %}"></script>#}
+    <script src="{% static 'js/jquery.formset.js' %}"></script>
+    <script>
+    $('.link-formset').formset({
+        addText: gettext('Add another'),
+        deleteText: gettext('remove'),
+        addCssClass: 'btn btn-info btn-sm',
+        deleteCssClass: 'btn btn-warning btn-sm',
+        prefix: 'bibliography_set'
+    });
+    </script>
+
+{% endblock %}

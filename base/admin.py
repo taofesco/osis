@@ -26,6 +26,7 @@
 from base.models import *
 from django.contrib import admin
 
+from base.models import admission_condition
 from base.models.bibliography import Bibliography, BibliographyAdmin
 
 admin.site.register(academic_calendar.AcademicCalendar,
@@ -188,3 +189,6 @@ admin.site.register(synchronization.Synchronization,
 
 admin.site.register(tutor.Tutor,
                     tutor.TutorAdmin)
+
+admin.site.register(admission_condition.AdmissionCondition,
+                    admission_condition.AdmissionConditionAdmin)

@@ -224,7 +224,14 @@ urlpatterns = [
                 url(u'^edit/$', education_group.education_group_edit_administrative_data,
                     name='education_group_edit_administrative')])),
             url(r'^content/$', education_group.education_group_content, name='education_group_content'),
-        ]))
+        ])),
+        url(r'^admission_conditions/$', education_group.education_group_type_admission_conditions,
+            name='education_group_type_admission_conditions'),
+        url(r'^admission_conditions/(?P<admission_condition_id>[0-9]+)/', education_group.education_group_type_admission_condition,
+            name='education_group_type_admission_condition'),
+        url(r'^admission_conditions/create/$',
+            education_group.education_group_type_admission_condition_new,
+            name='education_group_type_admission_condition_new')
     ])),
 
     url(r'^offer_year_calendars/([0-9]+)/$', offer.offer_year_calendar_read, name='offer_year_calendar_read'),
