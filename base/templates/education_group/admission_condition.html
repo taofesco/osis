@@ -34,7 +34,7 @@
             <form method="post">
                 {% csrf_token %}
 
-                {% bootstrap_form form  %}
+                {% bootstrap_form form %}
 
                 <div class="panel">
                     <div class="panel-heading"><label>{% trans 'Sections' %}</label></div>
@@ -62,7 +62,7 @@
                 </div>
                 {% buttons %}
                     {% if perms.base.can_edit_learningunit_pedagogy %}
-                        {% bootstrap_button _("save") button_type="submit" button_class="btn-primary pull-right"  icon="glyphicon glyphicon-floppy-save" %}
+                        {% bootstrap_button _("save") button_type="submit" button_class="btn-primary pull-right" icon="glyphicon glyphicon-floppy-save" %}
                     {% endif %}
                 {% endbuttons %}
             </form>
@@ -71,16 +71,15 @@
 {% endblock %}
 
 {% block script %}
-{#    <script src="{% url 'javascript-catalog' %}"></script>#}
     <script src="{% static 'js/jquery.formset.js' %}"></script>
     <script>
-    $('.link-formset').formset({
-        addText: gettext('Add another'),
-        deleteText: gettext('remove'),
-        addCssClass: 'btn btn-info btn-sm',
-        deleteCssClass: 'btn btn-warning btn-sm',
-        prefix: 'bibliography_set'
-    });
+        $('.link-formset').formset({
+            addText: gettext('Add another'),
+            deleteText: gettext('remove'),
+            addCssClass: 'btn btn-info btn-sm',
+            deleteCssClass: 'btn btn-warning btn-sm',
+            prefix: 'admissionconditionline_set',
+        });
     </script>
 
 {% endblock %}

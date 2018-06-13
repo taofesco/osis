@@ -47,7 +47,8 @@ from base.forms.education_group_general_informations import EducationGroupGenera
 from base.forms.education_group_pedagogy_edit import EducationGroupPedagogyEditForm
 from base.forms.education_groups import EducationGroupFilter, MAX_RECORDS
 from base.forms.education_groups_administrative_data import CourseEnrollmentForm, AdministrativeDataFormset
-from base.models.admission_condition import AdmissionCondition, AdmissionConditionLine
+from base.models.admission_condition import AdmissionCondition, AdmissionConditionLine, AdmissionConditionSection
+from base.models.education_group_type import EducationGroupType
 from base.models.education_group_year import EducationGroupYear
 from base.models.enums import academic_calendar_type
 from base.models.enums import education_group_categories
@@ -452,9 +453,9 @@ def translated_text_labels2dict(translated_text_label):
 class AdmissionConditionForm(forms.ModelForm):
     class Meta:
         model = AdmissionCondition
-        fields = ('description', 'education_group_type')
+        fields = ('education_group_type',)
 
-        labels = {
+        lables = {
             'education_group_type': 'Type',
         }
 
@@ -464,9 +465,26 @@ class AdmissionConditionForm(forms.ModelForm):
             }
         }
 
+    # education_group_type = forms.ModelChoiceField(
+    #     label='Type',
+    #     # queryset=EducationGroupType.objects.exclude(pk__in=AdmissionCondition.objects.distinct('education_group_type'))[:10]
+    # )
+
+
+class AdmissionConditionLineForm(forms.ModelForm):
+    class Meta:
+        model = AdmissionConditionLine
+        fields = ('admission_condition_section', 'description',)
+
         widgets = {
-            'description': CKEditorWidget(config_name='reddot', attrs={'cols': 10, 'rows': 5})
+            'description': CKEditorWidget(config_name='reddot')
         }
+
+
+    admission_condition_section = forms.ModelChoiceField(
+        label='Section',
+        queryset=AdmissionConditionSection.objects.filter(parent=None).order_by('name')
+    )
 
 
 @login_required
@@ -478,12 +496,15 @@ def education_group_type_admission_condition(request, admission_condition_id):
 
     FormSet = inlineformset_factory(AdmissionCondition,
                                     AdmissionConditionLine,
-                                    max_num=1,
-                                    fields=('title',))
+                                    extra=1,
+                                    form=AdmissionConditionLineForm)                                    # fields=('admission_condition_section', 'description'))
 
     formset = FormSet(post, instance=admission_condition)
 
-    if form.is_valid() and formset.is_valid():
+    # import pdb;
+    # pdb.set_trace()
+
+    if request.method == 'POST' and form.is_valid() and formset.is_valid():
         try:
             form.save()
             formset.save()
@@ -519,20 +540,25 @@ def education_group_type_admission_condition_new(request):
 
     FormSet = inlineformset_factory(AdmissionCondition,
                                     AdmissionConditionLine,
-                                    max_num=1,
-                                    fields=('title',))
+                                    extra=1,
+                                    form=AdmissionConditionLineForm)
 
     formset = FormSet(post)
 
     if request.method == 'POST' and form.is_valid() and formset.is_valid():
+        form.full_clean()
+        formset.full_clean()
         try:
+            # import pdb; pdb.set_trace()
             form.save()
+            formset.instance = form.instance
             formset.save()
 
             display_success_messages(request, _('The new admission condition has been saved'))
 
             return HttpResponseRedirect(reverse('education_group_type_admission_conditions'))
         except ValueError as e:
+            print(e)
             display_error_messages(request, e.args[0])
 
     context = {
