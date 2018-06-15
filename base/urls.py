@@ -43,9 +43,12 @@ from base.views.learning_units.external import create as create_external
 from base.views.learning_units.external.search import filter_cities_by_country, filter_campus_by_city
 from base.views.learning_units.proposal import create, update
 from base.views.learning_units.update import update_learning_unit, learning_unit_edition_end_date
+from base.business.learning_units.educational_information import _teacher_mailing_for_summary_opened
 
 urlpatterns = [
     url(r'^$', common.home, name='home'),
+    url(r'^test/$', _teacher_mailing_for_summary_opened, name='test'),
+
 
     url(r'^academic_actors/$', institution.academic_actors, name='academic_actors'),
 

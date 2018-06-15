@@ -42,8 +42,10 @@ from base.models import person as person_mdl
 from osis_common.document import paper_sheet, xls_build
 
 EDUCATIONAL_INFORMATION_UPDATE_TXT = 'educational_information_update_txt'
-
 EDUCATIONAL_INFORMATION_UPDATE_HTML = 'educational_information_update_html'
+
+EDUCATIONAL_INFORMATION_UPDATE_PERIOD_OPEN_HTML = 'educational_information_update_period_open_txt'
+EDUCATIONAL_INFORMATION_UPDATE_PERIOD_OPEN_TXT = 'educational_information_update_period_open_html'
 
 
 def send_mail_after_scores_submission(persons, learning_unit_name, submitted_enrollments, all_encoded):
@@ -271,6 +273,17 @@ def send_mail_for_educational_information_update(teachers, learning_units_years)
     txt_template_ref = EDUCATIONAL_INFORMATION_UPDATE_TXT
     receivers = [message_config.create_receiver(teacher.id, teacher.email, teacher.language) for teacher in teachers]
     template_base_data = {'learning_unit_years': learning_units_years}
+
+    message_content = message_config.create_message_content(html_template_ref, txt_template_ref, None, receivers,
+                                                            template_base_data, {}, None)
+    return message_service.send_messages(message_content)
+
+
+def send_mail_for_educational_information_update_period_opening(teachers, an_entity):
+    html_template_ref = EDUCATIONAL_INFORMATION_UPDATE_PERIOD_OPEN_HTML
+    txt_template_ref = EDUCATIONAL_INFORMATION_UPDATE_PERIOD_OPEN_TXT
+    receivers = [message_config.create_receiver(teacher.id, teacher.email, teacher.language) for teacher in teachers]
+    template_base_data = {'entity': an_entity}
 
     message_content = message_config.create_message_content(html_template_ref, txt_template_ref, None, receivers,
                                                             template_base_data, {}, None)

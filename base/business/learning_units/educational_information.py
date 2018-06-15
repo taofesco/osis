@@ -23,6 +23,16 @@
 #    see http://www.gnu.org/licenses/.
 #
 ##############################################################################
+from django.utils import timezone
+
+from base.models.entity_calendar import find_by_reference_and_start_date
+from base.models.enums.academic_calendar_type import SUMMARY_COURSE_SUBMISSION
+from attribution.models.attribution import filter_summary_responsible
+from base.views.common import home
+from base.models.entity import Entity
+from base.utils.send_mail import send_mail_for_educational_information_update_period_opening
+from base.models.person import Person
+
 LEARNING_UNIT_YEARS = 'learning_unit_years'
 PERSON = 'person'
 
@@ -72,3 +82,19 @@ def _is_new_responsible(responsible_and_learning_unit_yr_list, a_person):
         if record_responsible_learning_units.get(PERSON) == a_person:
             return False
     return True
+
+
+def _teacher_mailing_for_summary_opened(request):
+    entity_calendars = find_by_reference_and_start_date(SUMMARY_COURSE_SUBMISSION, timezone.now().date())
+    # TODO Ajouter l'histoire des enfants
+    entities = Entity.objects.filter(id__in=entity_calendars).distinct('id')
+
+    if entities:
+        for ent in entities:
+            summary_responsible_attributions = filter_summary_responsible([ent], True)
+            send_mails(ent, Person.objects.filter(id__in=summary_responsible_attributions))
+    return home(request)
+
+
+def send_mails(ent, summary_responsible_attributions):
+    send_mail_for_educational_information_update_period_opening(summary_responsible_attributions, ent)
