@@ -30,10 +30,10 @@ class AdmissionConditionLine(models.Model):
 class AdmissionConditionSubLine(models.Model):
     admission_condition_line = models.ForeignKey(AdmissionConditionLine)
 
-    diplome = models.TextField(max_length=32)
-    condition = models.TextField(max_length=32)
+    diploma = models.TextField(max_length=32)
+    conditions = models.TextField(max_length=32)
     access = models.TextField(max_length=32)
-    remarques = models.TextField(max_length=32)
+    remarks = models.TextField(max_length=32)
 
 
 class AdmissionConditionAdmin(osis_model_admin.OsisModelAdmin):
@@ -61,9 +61,3 @@ class AdmissionConditionSectionAdmin(osis_model_admin.OsisModelAdmin):
         if obj.parent:
             return obj.parent.name
         return '-'
-
-    # def get_form(self, request, obj=None, **kwargs):
-    #     form = super().get_form(request, obj, **kwargs)
-    #     # import pdb; pdb.set_trace()
-    #     form.base_fields['parent'].queryset = AdmissionConditionSection.objects.filter(parent=None)
-    #     return form

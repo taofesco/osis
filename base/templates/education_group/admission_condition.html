@@ -31,41 +31,96 @@
 {% block content %}
     <div class="container">
         <div class="row">
-            <form method="post">
-                {% csrf_token %}
+            {% bootstrap_form form %}
+            <div>
+                <div>
+                    <h2>Bacheliers universitaires</h2>
+                    <table class="table table-bordered">
+                        <thead>
+                        <tr>
+                            <th width="30%">{% trans 'Diploma' %}</th>
+                            <th width="30%">{% trans 'Conditions' %}</th>
+                            <th width="150px">{% trans 'Access' %}</th>
+                            <th>{% trans 'Remarks' %}</th>
+                            <th>{% trans 'Actions' %}</th>
+                        </tr>
+                        </thead>
+                        <tbody>
+                        {% with section=records.bacheliers_ucl %}
+                        <tr>
+                            <td colspan="5" class="info">{{ section.name }} <a class="button line-add-btn" href="#"><span class="glyphicon glyphicon-plus" aria-hidden="true"></span></a></td>
+                        </tr>
+                        {% for record in section.records %}
+                        <tr>
+                            <td>{{ record.diploma }}</td>
+                            <td>{{ record.conditions }}</td>
+                            <td class="text-right">{{ record.access }}</td>
+                            <td>{{ record.remarks }}</td>
+                            <td class="text-right">
+                                <a href="#" role="button" class="button line-remove-btn">
+                                <span class="glyphicon glyphicon-remove-circle" style="font-size: 16px;" aria-hidden="true"></span>
+                                </a>
+                                <a href="#" role="button" class="button line-edit-btn">
+                                    <span class="glyphicon glyphicon-edit" style="font-size: 16px;" aria-hidden="true"></span>
+                                </a>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                        {% endwith %}
+                        </tbody>
+                    </table>
+                </div>
+                <div>
+                    <h2>Adultes en reprise d'études <a href="#" role="button"><span class="glyphicon glyphicon-edit" style="font-size: 16px;" aria-hidden="true"></span></a></h2>
+                    ...
+                </div>
+                <div>
+                    <h2>Accès personnalisé <a href="#" role="button"><span class="glyphicon glyphicon-edit" style="font-size: 16px;" aria-hidden="true"></span></a></h2>
+                    ...
+                </div>
+            </div>
+        </div>
+    </div>
 
-                {% bootstrap_form form %}
+    <div class="modal fade" id="add_term">
+        <div class="modal-dialog modal-lg" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">{% trans 'Add a new line' %}</h5>
+                </div>
+                <div class="modal-body">
+                    <ul class="nav nav-tabs" id="myTabs" role="tablist">
+                        <li role="presentation" class="active"><a href="#diploma">{% trans 'Diploma' %}</a></li>
+                        <li role="presentation"><a href="#conditions">{% trans 'Conditions' %}</a></li>
+                        <li role="presentation"><a href="#access">{% trans 'Access' %}</a></li>
+                        <li role="presentation"><a href="#remarks">{% trans 'Remarks' %}</a></li>
+                    </ul>
+                    <div class="tab-content">
+                        <div role="tabpanel" class="tab-pane" id="diploma">
+                            {% trans 'Diploma' %}
+                            <textarea name="diplome" id="diplome_editor"></textarea>
+                        </div>
+                        <div role="tabpanel" class="tab-pane" id="conditions">
+                            {% trans 'Conditions' %}
+                            <textarea name="conditions" id="conditions_editor"></textarea>
+                        </div>
+                        <div role="tabpanel" class="tab-pane" id="access">
+                            {% trans 'Access' %}
+                            <textarea name="access" id="access_editor"></textarea>
+                        </div>
+                        <div role="tabpanel" class="tab-pane" id="remarks">
+                            {% trans 'Remarks' %}
+                            <textarea name="remarks" id="remarks_editor"></textarea>
+                        </div>
 
-                <div class="panel">
-                    <div class="panel-heading"><label>{% trans 'Sections' %}</label></div>
-
-                    <div class="panel-body">
-                        {{ formset.management_form }}
-                        <table class="table">
-                            {% for form in formset %}
-                                <tr class="link-formset">
-                                    {% for field in form.visible_fields %}
-                                        <td>
-                                            {# Include the hidden fields in the form #}
-                                            {% if forloop.first %}
-                                                {% for hidden in form.hidden_fields %}
-                                                    {{ hidden }}
-                                                {% endfor %}
-                                            {% endif %}
-                                            {% bootstrap_field field %}
-                                        </td>
-                                    {% endfor %}
-                                </tr>
-                            {% endfor %}
-                        </table>
                     </div>
                 </div>
-                {% buttons %}
-                    {% if perms.base.can_edit_learningunit_pedagogy %}
-                        {% bootstrap_button _("save") button_type="submit" button_class="btn-primary pull-right" icon="glyphicon glyphicon-floppy-save" %}
-                    {% endif %}
-                {% endbuttons %}
-            </form>
+                <div class="modal-footer">
+                    <button id="pedagogy_remove_add_btn" type="submit" class="btn btn-primary" role="button"
+                            title="{% trans 'save' %}">{% trans 'save' %}</button>
+                    <button type="submit" class="btn" data-dismiss="modal">{% trans 'cancel' %}</button>
+                </div>
+            </div>
         </div>
     </div>
 {% endblock %}
@@ -80,6 +135,26 @@
             deleteCssClass: 'btn btn-warning btn-sm',
             prefix: 'admissionconditionline_set',
         });
+        $(".line-add-btn").click(function (evt) {
+            evt.preventDefault();
+            var modal = $('#add_term');
+            $('#diplome').tab('show');
+            modal.modal('show');
+        });
+        $('.line-edit-btn').click(function(evt) {
+           evt.preventDefault();
+           var modal = $('#add_term');
+           modal.modal('show');
+        });
+        $('#myTabs a').click(function (e) {
+            e.preventDefault()
+            $(this).tab('show')
+        })
+        CKEDITOR.replace('remarks_editor');
+        CKEDITOR.replace('access_editor');
+        CKEDITOR.replace('conditions_editor');
+        CKEDITOR.replace('diplome_editor');
     </script>
+
 
 {% endblock %}

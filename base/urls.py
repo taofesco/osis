@@ -224,6 +224,9 @@ urlpatterns = [
                 url(u'^edit/$', education_group.education_group_edit_administrative_data,
                     name='education_group_edit_administrative')])),
             url(r'^content/$', education_group.education_group_content, name='education_group_content'),
+            url(r'^admission_conditions/',
+                education_group.education_group_year_admission_condition_edit,
+                name='education_group_year_admission_condition_edit')
         ])),
 
         url(r'^admission_conditions/', include([

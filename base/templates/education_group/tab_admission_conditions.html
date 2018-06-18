@@ -1,0 +1,107 @@
+{% extends 'layout.html' %}
+{% load i18n %}
+{% load staticfiles %}
+{% block breadcrumb %}
+    {% include 'education_group/breadcrumb.html' %}
+{% endblock %}
+
+{% block content %}
+    {% include 'education_group/header.html' %}
+
+    <div class="panel panel-default">
+        <div class="panel-body" id="tabs">
+            <div class="tab-content" id="tab_content">
+                <div role="tabpanel" class="tab-pane active" id="admission_conditions">
+                    <div class="row">
+                        {% include "education_group/training_tree.html" %}
+                        <div id="panel-data" class="col-md-9">
+                            {% include "education_group/tabs.html" %}
+                            <br/>
+
+                            <div class="row" style="margin-top: 10px">
+                                {{ info }}
+
+                                {% if info.is_bachelor %}
+                                    <textarea></textarea>
+                                {% else %}
+                                    {% if info.is_first_group %}
+                                        <textarea></textarea>
+                                        <hr/>
+                                    {% endif %}
+                                    {% if info.is_second_group %}
+                                        <textarea></textarea>
+                                        <hr/>
+                                    {% endif %}
+                                    {% if info.is_third_group %}
+                                        <div>
+                                            <h2>Bacheliers universitaires</h2>
+                                            <table class="table table-bordered">
+                                                <thead>
+                                                <tr>
+                                                    <th width="30%">{% trans 'Diploma' %}</th>
+                                                    <th width="30%">{% trans 'Conditions' %}</th>
+                                                    <th width="150px">{% trans 'Access' %}</th>
+                                                    <th>{% trans 'Remarks' %}</th>
+                                                    <th>{% trans 'Actions' %}</th>
+                                                </tr>
+                                                </thead>
+                                                <tbody>
+                                                {% with section=records.bacheliers_ucl %}
+                                                    <tr>
+                                                        <td colspan="5" class="info">{{ section.name }} <a
+                                                                class="button line-add-btn" href="#"><span
+                                                                class="glyphicon glyphicon-plus"
+                                                                aria-hidden="true"></span></a></td>
+                                                    </tr>
+                                                    {% for record in section.records %}
+                                                        <tr>
+                                                            <td>{{ record.diploma }}</td>
+                                                            <td>{{ record.conditions }}</td>
+                                                            <td class="text-right">{{ record.access }}</td>
+                                                            <td>{{ record.remarks }}</td>
+                                                            <td class="text-right">
+                                                                <a href="#" role="button"
+                                                                   class="button line-remove-btn">
+                                                                    <span class="glyphicon glyphicon-remove-circle"
+                                                                          style="font-size: 16px;"
+                                                                          aria-hidden="true"></span>
+                                                                </a>
+                                                                <a href="#" role="button" class="button line-edit-btn">
+                                                                    <span class="glyphicon glyphicon-edit"
+                                                                          style="font-size: 16px;"
+                                                                          aria-hidden="true"></span>
+                                                                </a>
+                                                            </td>
+                                                        </tr>
+                                                    {% endfor %}
+                                                {% endwith %}
+                                                </tbody>
+                                            </table>
+                                        </div>
+                                        <div>
+                                            <h2>Adultes en reprise d'études</h2>
+                                            <textarea></textarea>
+                                        </div>
+                                        <div>
+                                            <h2>Accès personnalisé</h2>
+                                            <textarea></textarea>
+                                        </div>
+                                        <div>
+                                            <h2>Procedures d'admission et d'inscription</h2>
+                                            <textarea></textarea>
+                                        </div>
+                                    {% endif %}
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+{% endblock %}
+
+{% block script %}
+    <script src="{% static 'js/education_group/education_group_tree.js' %}"></script>
+{% endblock %}

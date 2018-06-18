@@ -501,9 +501,6 @@ def education_group_type_admission_condition(request, admission_condition_id):
 
     formset = FormSet(post, instance=admission_condition)
 
-    # import pdb;
-    # pdb.set_trace()
-
     if request.method == 'POST' and form.is_valid() and formset.is_valid():
         try:
             form.save()
@@ -515,9 +512,22 @@ def education_group_type_admission_condition(request, admission_condition_id):
         except ValueError as e:
             display_error_messages(request, e.args[0])
 
+    records = {
+        'bacheliers_ucl': {
+            'name': 'Bacheliers UCL',
+            'records': [{
+                'diploma': 'Bachelier en droit {}'.format(counter),
+                'conditions': '',
+                'access': 'Acces direct',
+                'remarks': "Diplômés bachelier en droit de l'ULG: prendre contact avec la faculté (info-drt@uclouvain.be)"
+            } for counter in range(1, 5)]
+        }
+    }
+
     context = {
         'form': form,
         'formset': formset,
+        'records': records,
     }
     return layout.render(request, 'education_group/admission_condition.html', context)
 
@@ -574,3 +584,35 @@ def education_group_type_admission_condition_delete(request, admission_condition
     admission_condition = get_object_or_404(AdmissionCondition, pk=admission_condition_id)
     admission_condition.delete()
     return redirect('education_group_type_admission_conditions')
+
+
+@login_required
+@permission_required('base.can_edit_educationgroup_pedagogy', raise_exception=True)
+def education_group_year_admission_condition_edit(request, education_group_year_id):
+    education_group_year = get_object_or_404(EducationGroupYear, pk=education_group_year_id)
+
+    education_group_year_root_id = request.GET.get('root')
+    parent = _get_education_group_root(education_group_year_root_id, education_group_year)
+
+    acronym = education_group_year.acronym.lower()
+
+    is_bachelor = education_group_year.education_group_type.name == 'Bachelier'
+
+    first_group = acronym.endswith(('2m', '2m1'))
+    use_standard_text = acronym.endswith(('2a', '2mc'))
+    second_group = True
+    third_group = acronym.endswith(('2m', '2m1'))
+
+    context = {
+        'education_group_year': education_group_year,
+        'parent': parent,
+        'info': {
+            'is_bachelor': is_bachelor,
+            'is_first_group': first_group,
+            'is_second_group': second_group,
+            'is_third_group': third_group,
+            'use_standard_text': use_standard_text,
+        }
+    }
+
+    return layout.render(request, 'education_group/tab_admission_conditions.html', context)
