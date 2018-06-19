@@ -29,7 +29,6 @@ from base.models.entity_version import find_latest_version_by_entity
 from base.models.entity_calendar import find_by_reference_and_start_date, find_by_reference_and_entity
 from base.models.enums.academic_calendar_type import SUMMARY_COURSE_SUBMISSION
 from attribution.models.attribution import filter_summary_responsible
-from base.views.common import home
 from base.models.entity import Entity
 from base.utils.send_mail import send_mail_for_educational_information_update_period_opening
 from base.models.person import Person, find_by_id
@@ -89,12 +88,11 @@ def _is_new_responsible(responsible_and_learning_unit_yr_list, a_person):
     return True
 
 
-def _teacher_mailing_for_summary_opened(request):
+def _teacher_mailing_for_summary_opened():
     entities = Entity.objects.filter(organization__type=MAIN)
     now_date = timezone.now().date()
     summary_responsible = get_summary_responsibles_with_entities(entities, now_date)
     send_mail_for_educational_information_update_period_opening(summary_responsible)
-    return home(request)
 
 
 def get_summary_responsibles_with_entities(entities, now_date):
