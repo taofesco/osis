@@ -279,12 +279,14 @@ def send_mail_for_educational_information_update(teachers, learning_units_years)
     return message_service.send_messages(message_content)
 
 
-def send_mail_for_educational_information_update_period_opening(teachers, an_entity):
+def send_mail_for_educational_information_update_period_opening(summary_responsible):
     html_template_ref = EDUCATIONAL_INFORMATION_UPDATE_PERIOD_OPEN_HTML
     txt_template_ref = EDUCATIONAL_INFORMATION_UPDATE_PERIOD_OPEN_TXT
-    receivers = [message_config.create_receiver(teacher.id, teacher.email, teacher.language) for teacher in teachers]
-    template_base_data = {'entity': an_entity}
 
-    message_content = message_config.create_message_content(html_template_ref, txt_template_ref, None, receivers,
-                                                            template_base_data, {}, None)
-    return message_service.send_messages(message_content)
+    for teacher, entities in summary_responsible.items():
+        receivers = [message_config.create_receiver(teacher.id, teacher.email, teacher.language) ]
+        template_base_data = {'entities': entities}
+
+        message_content = message_config.create_message_content(html_template_ref, txt_template_ref, None, receivers,
+                                                                template_base_data, {}, None)
+        message_service.send_messages(message_content)

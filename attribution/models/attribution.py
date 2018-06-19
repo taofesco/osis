@@ -248,4 +248,4 @@ def filter_summary_responsible(entities, responsible):
 
     queryset = _prefetch_entity_version(queryset)
 
-    return queryset.select_related('tutor').distinct("tutor__person").values('tutor__person')
+    return queryset.select_related('tutor').distinct("tutor__person")
