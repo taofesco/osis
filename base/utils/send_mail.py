@@ -286,8 +286,19 @@ def send_mail_for_educational_information_update_period_opening(summary_responsi
 
     for teacher, entities in summary_responsible.items():
         receivers = [message_config.create_receiver(teacher.id, teacher.email, teacher.language) ]
-        template_base_data = {'entities': entities}
-
+        template_base_data = {'entities': _entities_acronyms_concatenation(entities)}
         message_content = message_config.create_message_content(html_template_ref, txt_template_ref, None, receivers,
                                                                 template_base_data, {}, None)
         message_service.send_messages(message_content)
+
+
+def _entities_acronyms_concatenation(entities):
+    str_entities = ''
+
+    for index, entity in enumerate(entities):
+        if index == 0:
+            str_entities = '{}'.format(entity.most_recent_acronym)
+        else:
+            str_entities = '{}, {}'.format(str_entities, entity.most_recent_acronym)
+
+    return str_entities

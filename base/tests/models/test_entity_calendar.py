@@ -40,10 +40,10 @@ class TestFindByReferenceForCurrentAcademicYear(TestCase):
         cls.previous_academic_year = AcademicYearFactory(year=cls.current_academic_year.year-1)
 
         cls.current_entity_calendar = EntityCalendarFactory(academic_calendar__academic_year=cls.current_academic_year,
-                                                        academic_calendar__reference=A_REFERENCE)
-        previous_entity_calendar = EntityCalendarFactory(academic_calendar__academic_year=cls.previous_academic_year,
-                                                         academic_calendar__reference=A_REFERENCE,
-                                                         entity=cls.current_entity_calendar.entity)
+                                                            academic_calendar__reference=A_REFERENCE)
+        EntityCalendarFactory(academic_calendar__academic_year=cls.previous_academic_year,
+                              academic_calendar__reference=A_REFERENCE,
+                              entity=cls.current_entity_calendar.entity)
 
     def test_when_no_data_match_criteria(self):
         entity_calendar_obj = find_by_entity_and_reference_for_current_academic_year(
@@ -59,7 +59,7 @@ class TestFindByReferenceForCurrentAcademicYear(TestCase):
         a_start_date = self.current_entity_calendar.start_date
 
         entity_calendars = find_by_reference_and_start_date(A_REFERENCE, a_start_date)
-        self.assertCountEqual(entity_calendars, [self.current_entity_calendar])
+        self.assertCountEqual(entity_calendars, [{'entity': self.current_entity_calendar.entity.id}])
 
         a_previous_start_date = self.previous_academic_year.start_date
         entity_calendars = find_by_reference_and_start_date(A_REFERENCE, a_previous_start_date)

@@ -67,7 +67,7 @@ def find_by_reference_and_start_date(a_reference, a_start_date):
 def find_by_reference_and_entity(a_reference, an_entity):
     try:
         return EntityCalendar.objects.get(academic_calendar__academic_year=current_academic_year(),
-                                             academic_calendar__reference=a_reference,
-                                             entity=an_entity)
+                                          academic_calendar__reference=a_reference,
+                                          entity=an_entity)
     except ObjectDoesNotExist:
         return None

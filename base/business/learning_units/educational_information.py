@@ -26,7 +26,7 @@
 from django.utils import timezone
 from datetime import datetime
 from base.models.entity_version import find_latest_version_by_entity
-from base.models.entity_calendar import find_by_reference_and_start_date,find_by_reference_and_entity
+from base.models.entity_calendar import find_by_reference_and_start_date, find_by_reference_and_entity
 from base.models.enums.academic_calendar_type import SUMMARY_COURSE_SUBMISSION
 from attribution.models.attribution import filter_summary_responsible
 from base.views.common import home
@@ -90,18 +90,14 @@ def _is_new_responsible(responsible_and_learning_unit_yr_list, a_person):
 
 
 def _teacher_mailing_for_summary_opened(request):
-    ids=[3103]
-    entities = Entity.objects.filter(organization__type=MAIN, id__in=ids)
+    entities = Entity.objects.filter(organization__type=MAIN)
     now_date = timezone.now().date()
-
-    summary_responsible = get_list_of_summary_responsibles_with_entities(entities, now_date)
-    print(summary_responsible)
+    summary_responsible = get_summary_responsibles_with_entities(entities, now_date)
     send_mail_for_educational_information_update_period_opening(summary_responsible)
-
     return home(request)
 
 
-def get_list_of_summary_responsibles_with_entities(entities, now_date):
+def get_summary_responsibles_with_entities(entities, now_date):
     summary_responsible = {}
     for an_entity in entities:
         opened_now = _is_updating_period_opening_today(an_entity, now_date)
@@ -117,13 +113,9 @@ def get_summary_responsible_list(an_entity, summary_responsible_param):
     if summary_responsible_attributions:
         for attribution in summary_responsible_attributions:
             id_person = attribution.tutor.person
-            # id_person = attribution.get('tutor__person')
             if id_person not in summary_responsible:
-                print('if')
                 summary_responsible.update({id_person: [an_entity]})
             else:
-                print('else')
-
                 entities_list = summary_responsible.get(id_person)
                 entities_list.append(an_entity)
                 summary_responsible.update({id_person: entities_list})
@@ -145,12 +137,13 @@ def find_parent_calendar(an_entity, now_date):
     if an_entity_version:
         if an_entity_version.parent:
             entity_calendar = find_by_reference_and_entity(SUMMARY_COURSE_SUBMISSION,
-                                                                          an_entity_version.parent)
+                                                           an_entity_version.parent)
             if entity_calendar:
                 return True if entity_calendar.start_date.date() == now_date else False
             else:
-                ev_papy = find_latest_version_by_entity(an_entity_version.parent, now_date)
-                return find_parent_calendar(ev_papy.entity, now_date) if ev_papy else get_default_calendar(now_date)
+                ent_vers_parent_up = find_latest_version_by_entity(an_entity_version.parent, now_date)
+                return find_parent_calendar(ent_vers_parent_up.entity,
+                                            now_date) if ent_vers_parent_up else get_default_calendar(now_date)
         else:
             return get_default_calendar(now_date)
 
@@ -159,7 +152,3 @@ def get_default_calendar(now_date):
     current_academic_yr = current_academic_year()
     ac_cal = get_by_reference_and_academic_year(SUMMARY_COURSE_SUBMISSION, current_academic_yr)
     return True if ac_cal and ac_cal.start_date == now_date else False
-
-
-def send_mails(ent, summary_responsible_attributions):
-    send_mail_for_educational_information_update_period_opening(summary_responsible_attributions, ent)

@@ -115,17 +115,6 @@ class TestOpenedPeriod(TestCase):
                                                                   end_date=timezone.now())
         self.an_academic_calendar.save()
 
-        #
-        #
-        # self.a_children_entity = EntityFactory()
-        # a_children_entity_version = EntityVersionFactory(entity=self.a_children_entity,
-        #                                                  start_date=self.current_academic_year.start_date,
-        #                                                  end_date=self.current_academic_year.end_date,
-        #                                                  parent=a_parent_entity)
-        # a_children_entity_calendar = EntityCalendarFactory(entity=self.a_children_entity,
-        #                                                    academic_calendar=self.an_academic_calendar,
-        #                                                    start_date=self.an_academic_calendar.start_date)
-
     def test_no_entity_calendar(self):
         an_orphan_entity = EntityFactory()
         EntityVersionFactory(entity=an_orphan_entity,
