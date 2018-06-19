@@ -49,7 +49,7 @@ def is_person_linked_to_entity_in_charge_of_learning_unit(learning_unit_year, pe
 
 
 def _any_existing_proposal_in_epc(learning_unit_year, _):
-    return not learning_unit_year.existing_proposal_in_epc
+    return not learning_unit_year.learning_unit.existing_proposal_in_epc
 
 
 def is_eligible_for_modification(learning_unit_year, person):

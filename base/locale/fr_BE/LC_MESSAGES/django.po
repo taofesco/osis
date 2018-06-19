@@ -1866,7 +1866,7 @@ msgid "end_date_gt_begin_date"
 msgstr "L'année de fin doit etre égale ou supérieur à l'année de départ"
 
 msgid "session_title"
-msgstr "Sessions dérogations"
+msgstr "Session dérogation"
 
 msgid "remarks_title"
 msgstr "Remarques"
@@ -2856,7 +2856,7 @@ msgid "COURSE_ENROLLMENT"
 msgstr "Inscription aux cours"
 
 msgid "vol_global"
-msgstr "Vol.global"
+msgstr "Vol. global"
 
 msgid "volume_global"
 msgstr "volume total global"
@@ -2984,8 +2984,35 @@ msgstr "Produire un fichier Excel avec la liste des unités d'enseignement"
 msgid "produce_xls_attributions_desc"
 msgstr "Produire un fichier Excel avec la liste des unités d'enseignement et les attributions"
 
+msgid "hourly volume total annual"
+msgstr "volume horaire total annuel"
+
+msgid "hourly volume partial q1"
+msgstr "volume horaire partiel q1"
+
+msgid "hourly volume partial q2"
+msgstr "volume horaire partiel q2"
+
+msgid "volume declared vacant"
+msgstr "volume déclaré vacant"
+
+msgid "Xls with education groups"
+msgstr "Xls avec les formations"
+
+msgid "education_groups_filename"
+msgstr "formations"
+
+msgid "list_education_groups"
+msgstr "Liste d'organisations de formation"
+
 msgid "Q1 and Q2"
 msgstr "Q1 et Q2"
 
 msgid "Q1 or Q2"
 msgstr "Q1 ou Q2"
+
+msgid "The repartition volume of %(col_name)s has been already modified. ({%(new_value)s} instead of {%(current_value)s})"
+msgstr "La répartition de volume de %(col_name)s a déjà été modifiée. ({%(new_value)s} a la place de {%(current_value)s})"
+
+msgid "untyped"
+msgstr "Non-typée"

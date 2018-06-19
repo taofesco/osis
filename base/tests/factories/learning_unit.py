@@ -40,6 +40,7 @@ class LearningUnitFactory(DjangoModelFactory):
     class Meta:
         model = "base.LearningUnit"
 
+    existing_proposal_in_epc = False
     learning_container = factory.SubFactory(LearningContainerFactory)
     external_id = factory.fuzzy.FuzzyText(length=10, chars=string.digits)
     changed = factory.fuzzy.FuzzyDateTime(datetime.datetime(2016, 1, 1, tzinfo=get_tzinfo()),
@@ -54,6 +55,7 @@ class LearningUnitFakerFactory(DjangoModelFactory):
     class Meta:
         model = "base.LearningUnit"
 
+    existing_proposal_in_epc = False
     learning_container = factory.SubFactory(LearningContainerFactory)
     external_id = factory.fuzzy.FuzzyText(length=10, chars=string.digits)
     changed = fake.date_time_this_decade(before_now=True, after_now=True, tzinfo=get_tzinfo())

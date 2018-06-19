@@ -56,7 +56,6 @@ class LearningUnitYearFactory(DjangoModelFactory):
     class Meta:
         model = "base.LearningUnitYear"
 
-    existing_proposal_in_epc = False
     external_id = factory.fuzzy.FuzzyText(length=10, chars=string.digits)
     academic_year = factory.SubFactory(AcademicYearFactory)
     learning_unit = factory.SubFactory(LearningUnitFactory)

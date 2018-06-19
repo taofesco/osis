@@ -28,7 +28,8 @@ from django.utils.translation import ugettext_lazy as _
 
 from osis_common.document import xls_build
 from attribution.business import attribution_charge_new
-from base.business.learning_unit import extract_xls_data_from_learning_unit, LEARNING_UNIT_TITLES, get_name_or_username
+from base.business.learning_unit import extract_xls_data_from_learning_unit, LEARNING_UNIT_TITLES
+from base.business.xls import get_name_or_username
 
 WORKSHEET_TITLE = 'learning_units'
 XLS_FILENAME = 'learning_units_and_attributions_filename'

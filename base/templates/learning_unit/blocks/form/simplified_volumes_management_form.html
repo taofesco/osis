@@ -28,7 +28,7 @@
 {% for form in simplified_volume_management_form %}
         {% bootstrap_field form.id %}
 {% endfor %}
-{% if not learning_unit_year %}
+{% if not is_update %}
 <table class="table volumes_read">
     <thead>
         <tr>

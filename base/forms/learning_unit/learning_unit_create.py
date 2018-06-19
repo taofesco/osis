@@ -41,8 +41,8 @@ from base.models.learning_unit_year import LearningUnitYear, MAXIMUM_CREDITS
 from reference.models.language import find_all_languages
 
 DEFAULT_ACRONYM_COMPONENT = {
-    LECTURING: "CM1",
-    PRACTICAL_EXERCISES: "TP1",
+    LECTURING: "PM1",
+    PRACTICAL_EXERCISES: "PP1",
     None: "NT1"
 }
 
@@ -102,8 +102,13 @@ class LearningUnitYearModelForm(forms.ModelForm):
             self.fields['specific_title'].label = _('official_title_proper_to_partim')
             self.fields['specific_title_english'].label = _('official_english_title_proper_to_partim')
 
-        if kwargs.get('instance'):
+        # Disabled fields when it's an update
+        if self.instance.pk:
             self.fields['academic_year'].disabled = True
+
+            # we cannot edit the internship subtype if the container_type is not internship
+            if self.instance.learning_container_year.container_type != INTERNSHIP:
+                self.fields['internship_subtype'].disabled = True
 
         self.fields['campus'].queryset = find_main_campuses()
         self.fields['language'].queryset = find_all_languages()

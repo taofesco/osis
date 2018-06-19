@@ -39,7 +39,7 @@
 </div>
 <div class="panel panel-default">
     <div class="panel-body">
-        <form method="get" action="{% url 'education_groups'%}">
+        <form method="get" action="{% url 'education_groups'%}" id="search_form">
             <div class="row">
                 <div class="col-md-2">
                     <label for="slt_academic_year">{% trans 'academic_year_small'%}</label>
@@ -89,20 +89,38 @@
                     </button>
                 </div>
             </div>
+            <input type="hidden" id="xls_status" name="xls_status">
+            <input type="hidden" id="xls_order_col" name="xls_order_col">
+            <input type="hidden" id="xls_order" name="xls_order">
         </form>
         <hr style="margin:10px -15px 10px -15px;">
         <div class="row">
             {% if object_list %}
-            <strong style="margin-left:10px;color:grey;"> {{object_list|length}} {% trans 'education_groups'|lower %} </strong>
+                <div class="row">
+                <div class="col-md-6">
+                    <strong style="margin-left:10px;color:grey;"> {{object_list|length}} {% trans 'education_groups'|lower %} </strong>
+                </div>
+                <div class="col-md-6">
+                    <a id="btn_produce_xls"
+                       class="btn btn-default pull-right"
+                       style="margin-right:10px;"
+                       title="{% trans 'Export' %}" >
+                        <span class="glyphicon glyphicon-download-alt" aria-hidden="true"></span>
+                        &nbsp;{% trans 'education_groups' %}
+                    </a>
+                </div>
+                </div>
+
+
             <table id="table_education_groups" class="table table-striped table-hover">
                 <thead>
                     <tr>
-                        <th>{% trans 'academic_year_small'%}</th>
-                        <th>{% trans 'acronym'%}</th>
-                        <th>{% trans 'title'%}</th>
-                        <th>{% trans 'type'%}</th>
-                        <th>{% trans 'entity'%}</th>
-                        <th>{% trans 'code'%}</th>
+                        <th id="th_0_academic_year.year">{% trans 'academic_year_small'%}</th>
+                        <th id="th_1_acronym">{% trans 'acronym'%}</th>
+                        <th id="th_2_title">{% trans 'title'%}</th>
+                        <th id="th_3_education_group_type.name">{% trans 'type'%}</th>
+                        <th id="th_4_entity_management.acronym">{% trans 'entity'%}</th>
+                        <th id="th_5_partial_acronym">{% trans 'code'%}</th>
                     </tr>
                 </thead>
                 {% for education_group_year in object_list %}
@@ -184,5 +202,29 @@
 
         $('#id_education_group_type').filterTypeByCategory($('#id_category'));
     });
+
+    $("#btn_produce_xls").click(function(e) {
+        e.preventDefault();
+        var status = $("#xls_status");
+        status.val('xls');
+        var table = $('#table_education_groups').DataTable();
+        var order = table.order();
+        $("#xls_order_col").val(get_ordering_column(order));
+        $("#xls_order").val(order[0][1]);
+        $("#search_form").submit();
+        status.val('');
+        $("#xls_order").val('');
+        $("#xls_order_col").val('');
+    });
+
+    function get_ordering_column(order){
+        var id_search = 'th_' + order[0][0] + '_';
+        var id_string = '[id^='+ id_search+']';
+        var element = document.querySelector(id_string).id;
+        var field_name = element.replace(id_search, "");
+        return field_name;
+    }
+
+
 </script>
 {% endblock %}

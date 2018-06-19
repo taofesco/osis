@@ -32,6 +32,7 @@ from attribution.models import attribution
 from base import models as mdl_base
 from base.business.entity import get_entity_calendar
 from base.business.learning_unit_year_with_context import volume_learning_component_year
+from base.business.xls import get_name_or_username
 from base.models import entity_container_year
 from base.models import learning_achievement
 from base.models.academic_year import find_academic_year_by_year
@@ -180,30 +181,19 @@ def extract_xls_data_from_learning_unit(learning_unit_yr):
     ]
 
 
-def prepare_xls_parameters_list(user, workingsheets_data):
-    return {xls_build.LIST_DESCRIPTION_KEY: _(XLS_DESCRIPTION),
-            xls_build.FILENAME_KEY: _(XLS_FILENAME),
-            xls_build.USER_KEY: get_name_or_username(user),
-            xls_build.WORKSHEETS_DATA:
-                [{xls_build.CONTENT_KEY: workingsheets_data,
-                  xls_build.HEADER_TITLES_KEY: LEARNING_UNIT_TITLES,
-                  xls_build.WORKSHEET_TITLE_KEY: _(WORKSHEET_TITLE),
-                  }
-                 ]}
-
-
-def get_name_or_username(a_user):
-    person = mdl_base.person.find_by_user(a_user)
-    return "{}, {}".format(person.last_name, person.first_name) if person else a_user.username
-
-
 def get_entity_acronym(an_entity):
     return an_entity.acronym if an_entity else None
 
 
 def create_xls(user, found_learning_units, filters):
     working_sheets_data = prepare_xls_content(found_learning_units)
-    return xls_build.generate_xls(prepare_xls_parameters_list(user, working_sheets_data), filters)
+    parameters = {xls_build.DESCRIPTION: XLS_DESCRIPTION,
+                  xls_build.USER: get_name_or_username(user),
+                  xls_build.FILENAME: XLS_FILENAME,
+                  xls_build.HEADER_TITLES: LEARNING_UNIT_TITLES,
+                  xls_build.WS_TITLE: WORKSHEET_TITLE}
+
+    return xls_build.generate_xls(xls_build.prepare_xls_parameters_list(working_sheets_data, parameters), filters)
 
 
 def is_summary_submission_opened():

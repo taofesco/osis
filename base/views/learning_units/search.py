@@ -47,6 +47,7 @@ from base.models.proposal_learning_unit import ProposalLearningUnit
 from base.views import layout
 from base.views.common import check_if_display_message, display_error_messages, display_messages_by_level
 from base.business import learning_unit_proposal as proposal_business
+from base.forms.search.search_form import get_research_criteria
 
 SIMPLE_SEARCH = 1
 SERVICE_COURSES_SEARCH = 2
@@ -119,7 +120,7 @@ def learning_units_proposal_search(request):
     research_criteria = []
     try:
         if search_form.is_valid():
-            research_criteria = search_form.get_research_criteria()
+            research_criteria = get_research_criteria(search_form)
             proposals = search_form.get_proposal_learning_units()
             check_if_display_message(request, proposals)
     except TooManyResultsException:
@@ -168,7 +169,7 @@ def apply_action_on_proposals(proposals, author, post_data, research_criteria):
 
 
 def _get_filter(form, search_type):
-    criterias = itertools.chain([(_('search_type'), _get_search_type_label(search_type))], form.get_research_criteria())
+    criterias = itertools.chain([(_('search_type'), _get_search_type_label(search_type))], get_research_criteria(form))
     return collections.OrderedDict(criterias)
 
 

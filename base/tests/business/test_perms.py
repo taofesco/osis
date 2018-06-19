@@ -129,7 +129,7 @@ class PermsTestCase(TestCase):
             self.assertFalse(perms.is_eligible_for_modification(luy, self.create_person_with_permission_and_group(FACULTY_MANAGER_GROUP)))
 
     def test_when_existing_proposal_in_epc(self):
-        luy = LearningUnitYearFactory(academic_year=self.academic_yr, existing_proposal_in_epc=True)
+        luy = LearningUnitYearFactory(academic_year=self.academic_yr, learning_unit__existing_proposal_in_epc=True)
         self.assertFalse(perms.is_eligible_for_modification(luy, None))
         self.assertFalse(perms.is_eligible_for_modification_end_date(luy, None))
         self.assertFalse(perms.is_eligible_to_create_partim(luy, None))

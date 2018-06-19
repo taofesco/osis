@@ -63,21 +63,21 @@ class LearningUnitTagTest(TestCase):
         learning_unit = LearningUnitFactory()
         dict_learning_unit_year = create_learning_units_year(2013, 2016, learning_unit)
 
-        l_unit_1 = dict_learning_unit_year.get(2013)
-        l_unit_1.acronym = "LBIR1212"
-        l_unit_1.save()
+        lu_yr_1 = dict_learning_unit_year.get(2013)
+        lu_yr_1.acronym = "LBIR1212"
+        lu_yr_1.save()
 
-        l_unit_2 = dict_learning_unit_year.get(2014)
-        l_unit_2.acronym = "LBIR1213"
-        l_unit_2.save()
+        lu_yr_2 = dict_learning_unit_year.get(2014)
+        lu_yr_2.acronym = "LBIR1213"
+        lu_yr_2.save()
 
-        l_unit_3 = dict_learning_unit_year.get(2015)
-        l_unit_3.acronym = "LBIR1214"
-        l_unit_3.save()
+        lu_yr_3 = dict_learning_unit_year.get(2015)
+        lu_yr_3.acronym = "LBIR1214"
+        lu_yr_3.save()
 
-        self.assertEqual(get_previous_acronym(l_unit_3), 'LBIR1213')
-        self.assertEqual(get_previous_acronym(l_unit_2), 'LBIR1212')
-        self.assertIsNone(get_previous_acronym(l_unit_1))
+        self.assertEqual(get_previous_acronym(lu_yr_3), 'LBIR1213')
+        self.assertEqual(get_previous_acronym(lu_yr_2), 'LBIR1212')
+        self.assertIsNone(get_previous_acronym(lu_yr_1))
 
     def test_previous_acronym_with_acronym(self):
         learning_unit = LearningUnitFactory()

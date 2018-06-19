@@ -119,6 +119,7 @@ def update_learning_unit(request, learning_unit_year_id):
 
     context = postponement_form.get_context()
     context["learning_unit_year"] = learning_unit_year
+    context["is_update"] = True
     return render(request, 'learning_unit/simple/update.html', context)
 
 

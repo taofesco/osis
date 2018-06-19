@@ -62,7 +62,7 @@ class ExternalLearningUnitYear(models.Model):
         ]
     )
 
-    url = models.URLField(max_length=255, blank=True, null=True)
+    url = models.URLField(max_length=255, blank=True, null=True, verbose_name=_('url of the learning unit'))
     learning_unit_year = models.OneToOneField('LearningUnitYear')
     requesting_entity = models.ForeignKey('Entity', verbose_name=_('requesting_entity'))
 

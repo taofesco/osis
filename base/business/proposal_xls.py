@@ -27,7 +27,8 @@
 from django.utils.translation import ugettext_lazy as _
 
 from osis_common.document import xls_build
-from base.business.learning_unit import get_name_or_username, get_entity_acronym
+from base.business.learning_unit import get_entity_acronym
+from base.business.xls import get_name_or_username
 
 WORKSHEET_TITLE = 'Proposals'
 XLS_FILENAME = 'Proposals'
@@ -72,8 +73,18 @@ def prepare_xls_parameters_list(user, working_sheets_data):
 
 def create_xls(user, proposals, filters):
     working_sheets_data = prepare_xls_content(proposals)
-    return xls_build.generate_xls(prepare_xls_parameters_list(user, working_sheets_data), filters)
+    return xls_build.generate_xls(
+        xls_build.prepare_xls_parameters_list(working_sheets_data, configure_parameters(user)), filters)
 
 
 def create_xls_proposal(user, proposals, filters):
-    return xls_build.generate_xls(prepare_xls_parameters_list(user, prepare_xls_content(proposals)), filters)
+    return xls_build.generate_xls(prepare_xls_parameters_list(prepare_xls_content(proposals),
+                                                              configure_parameters(user)), filters)
+
+
+def configure_parameters(user):
+    return {xls_build.DESCRIPTION: XLS_DESCRIPTION,
+            xls_build.USER: get_name_or_username(user),
+            xls_build.FILENAME: XLS_FILENAME,
+            xls_build.HEADER_TITLES: PROPOSAL_TITLES,
+            xls_build.WS_TITLE: WORKSHEET_TITLE}

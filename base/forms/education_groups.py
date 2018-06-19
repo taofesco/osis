@@ -67,16 +67,18 @@ class ModelChoiceFieldWithData(forms.ModelChoiceField):
 
 class EducationGroupFilter(BootstrapForm):
     academic_year = forms.ModelChoiceField(queryset=academic_year.find_academic_years(), required=False,
-                                           empty_label=_('all_label'))
+                                           empty_label=_('all_label'), label=_('academic_year_small'))
 
     category = forms.ChoiceField(choices=[("", _('all_label'))] + list(education_group_categories.CATEGORIES),
-                                 required=False)
+                                 required=False, label=_('category'))
 
     education_group_type = ModelChoiceFieldWithData(queryset=EducationGroupType.objects.all(), required=False,
-                                                    empty_label=_('all_label'))
+                                                    empty_label=_('all_label'), label=_('type'))
 
-    acronym = title = requirement_entity_acronym = partial_acronym = forms.CharField(max_length=20, required=False)
-
+    acronym = forms.CharField(max_length=40, required=False, label=_('acronym'))
+    title = forms.CharField(max_length=255, required=False, label=_('title'))
+    requirement_entity_acronym = forms.CharField(max_length=20, required=False, label=_('entity'))
+    partial_acronym = forms.CharField(max_length=15, required=False, label=_('code'))
     with_entity_subordinated = forms.BooleanField(required=False)
 
     def clean_category(self):

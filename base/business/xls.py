@@ -23,39 +23,15 @@
 #    see http://www.gnu.org/licenses/.
 #
 ##############################################################################
-from django import forms
+
+from base import models as mdl_base
+
+DESCRIPTION = "description"
+FILENAME = "filename"
+TITLES = "titles"
+WS_TITLE = "ws_title"
 
 
-class BaseSearchForm(forms.Form):
-
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        for field in self.fields.values():
-            # In a search form, the fields are never required
-            field.required = False
-
-    # Should be implemented
-    def search(self):
-        pass
-
-    def _has_criteria(self):
-        criteria_present = False
-        for name in self.fields:
-            if self.cleaned_data[name]:
-                criteria_present = True
-                break
-        return criteria_present
-
-
-def get_research_criteria(search_form):
-    tuples_label_value = []
-    for field_name, field in search_form.fields.items():
-        if not search_form.cleaned_data[field_name]:
-            continue
-        tuple_to_append = (str(field.label), search_form.cleaned_data[field_name])
-        if type(field) == forms.ChoiceField:
-            dict_choices = {str(key): value for key, value in field.choices}
-            label_choice = dict_choices[search_form.cleaned_data[field_name]]
-            tuple_to_append = (str(field.label), label_choice)
-        tuples_label_value.append(tuple_to_append)
-    return tuples_label_value
+def get_name_or_username(a_user):
+    person = mdl_base.person.find_by_user(a_user)
+    return "{}, {}".format(person.last_name, person.first_name) if person else a_user.username
