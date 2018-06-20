@@ -21,6 +21,7 @@
 
                             <div class="row">
                                 <pre>{{ info }}</pre>
+                                <pre>{{ records }}</pre>
 
                                 {% if info.is_bachelor %}
                                     <span>Text for Bachelor</span>
@@ -83,12 +84,43 @@
                                                         aria-hidden="true"></span></a>
                                                     </td>
                                                 </tr>
-                                                {% for record in records.bacheliers_ucl.records %}
+                                                {% for record in records.bacheliers_ucl %}
                                                 <tr id="bacheliers_ucl_{{ record.id }}">
-                                                    <td>{{ record.diploma }}</td>
-                                                    <td>{{ record.conditions }}</td>
-                                                    <td class="text-right">{{ record.access }}</td>
-                                                    <td>{{ record.remarks }}</td>
+                                                    <td>{{ record.diploma|safe }}</td>
+                                                    <td>{{ record.conditions|safe }}</td>
+                                                    <td class="text-right">{{ record.access|safe}}</td>
+                                                    <td>{{ record.remarks|safe }}</td>
+                                                    <td class="text-right">
+                                                        <a href="#" role="button"
+                                                           data-record-id="{{ record.id }}"
+                                                           data-section="bacheliers_ucl"
+                                                           class="button line-remove-btn">
+                                                            <span class="glyphicon glyphicon-remove-circle"
+                                                                  style="font-size: 16px;"
+                                                                  aria-hidden="true"></span>
+                                                        </a>
+                                                        <a href="#" role="button" class="button line-edit-btn"
+                                                        data-record-id="{{ record.id }}"
+                                                        data-section="bacheliers_ucl">
+                                                            <span class="glyphicon glyphicon-edit"
+                                                                  style="font-size: 16px;"
+                                                                  aria-hidden="true"></span>
+                                                        </a>
+                                                    </td>
+                                                </tr>
+                                                {% endfor %}
+                                                <tr id="autres_bacheliers_fr">
+                                                    <td colspan="5" class="info">Autres Bacheliers Communauté Française<a
+                                                            class="button line-add-btn" href="#"><span
+                                                            class="glyphicon glyphicon-plus"
+                                                            aria-hidden="true"></span></a></td>
+                                                </tr>
+                                                {% for record in records.autres_bacheliers_fr %}
+                                                <tr id="autres_bacheliers_fr_{{ record.id }}">
+                                                    <td>{{ record.diploma|safe }}</td>
+                                                    <td>{{ record.conditions|safe }}</td>
+                                                    <td class="text-right">{{ record.access|safe}}</td>
+                                                    <td>{{ record.remarks|safe }}</td>
                                                     <td class="text-right">
                                                         <a href="#" role="button"
                                                            class="button line-remove-btn">
@@ -104,42 +136,18 @@
                                                     </td>
                                                 </tr>
                                                 {% endfor %}
-                                                <tr>
-                                                    <td colspan="5" class="info">Autres Bacheliers Communauté Française<a
-                                                            class="button line-add-btn" href="#"><span
-                                                            class="glyphicon glyphicon-plus"
-                                                            aria-hidden="true"></span></a></td>
-                                                </tr>
-                                                <tr>
-                                                    <td>{{ record.diploma }}</td>
-                                                    <td>{{ record.conditions }}</td>
-                                                    <td class="text-right">{{ record.access }}</td>
-                                                    <td>{{ record.remarks }}</td>
-                                                    <td class="text-right">
-                                                        <a href="#" role="button"
-                                                           class="button line-remove-btn">
-                                                            <span class="glyphicon glyphicon-remove-circle"
-                                                                  style="font-size: 16px;"
-                                                                  aria-hidden="true"></span>
-                                                        </a>
-                                                        <a href="#" role="button" class="button line-edit-btn">
-                                                            <span class="glyphicon glyphicon-edit"
-                                                                  style="font-size: 16px;"
-                                                                  aria-hidden="true"></span>
-                                                        </a>
-                                                    </td>
-                                                </tr>
-                                                <tr>
+                                                <tr id="bacheliers_flamand">
                                                     <td colspan="5" class="info">Bacheliers Communauté Flamande<a
                                                             class="button line-add-btn" href="#"><span
                                                             class="glyphicon glyphicon-plus"
                                                             aria-hidden="true"></span></a></td>
                                                 </tr>
-                                                <tr>
-                                                    <td>{{ record.diploma }}</td>
-                                                    <td>{{ record.conditions }}</td>
-                                                    <td class="text-right">{{ record.access }}</td>
-                                                    <td>{{ record.remarks }}</td>
+                                                {% for record in records.bacheliers_flamand %}
+                                                <tr id="bacheliers_flamand_{{ record.id }}">
+                                                    <td>{{ record.diploma|safe }}</td>
+                                                    <td>{{ record.conditions|safe }}</td>
+                                                    <td class="text-right">{{ record.access|safe}}</td>
+                                                    <td>{{ record.remarks|safe }}</td>
                                                     <td class="text-right">
                                                         <a href="#" role="button"
                                                            class="button line-remove-btn">
@@ -154,17 +162,19 @@
                                                         </a>
                                                     </td>
                                                 </tr>
-                                                <tr>
+                                                {% endfor %}
+                                                <tr id="bacheliers_etrangers">
                                                     <td colspan="5" class="info">Bacheliers Étrangers<a
                                                             class="button line-add-btn" href="#"><span
                                                             class="glyphicon glyphicon-plus"
                                                             aria-hidden="true"></span></a></td>
                                                 </tr>
-                                                <tr>
-                                                    <td>{{ record.diploma }}</td>
-                                                    <td>{{ record.conditions }}</td>
-                                                    <td class="text-right">{{ record.access }}</td>
-                                                    <td>{{ record.remarks }}</td>
+                                                {% for record in records.bacheliers_etrangers %}
+                                                <tr id="bacheliers_etrangers_{{ record.id }}">
+                                                    <td>{{ record.diploma|safe }}</td>
+                                                    <td>{{ record.conditions|safe }}</td>
+                                                    <td class="text-right">{{ record.access|safe}}</td>
+                                                    <td>{{ record.remarks|safe }}</td>
                                                     <td class="text-right">
                                                         <a href="#" role="button"
                                                            class="button line-remove-btn">
@@ -179,6 +189,7 @@
                                                         </a>
                                                     </td>
                                                 </tr>
+                                                {% endfor %}
                                                 </tbody>
                                             </table>
                                         </div>
@@ -337,23 +348,16 @@
                     </ul>
                     <div class="tab-content">
                         <div role="tabpanel" class="tab-pane fade" id="diploma">
-{#                            <textarea name="diplome" id="diplome_editor"></textarea>#}
-                            {{ form.diploma }}
+                            {{ section_modal_form.diploma }}
                         </div>
                         <div role="tabpanel" class="tab-pane fade" id="conditions">
-                            {{ form.conditions }}
-{#                            {% trans 'Conditions' %}#}
-{#                            <textarea name="conditions" id="conditions_editor"></textarea>#}
+                            {{ section_modal_form.conditions }}
                         </div>
                         <div role="tabpanel" class="tab-pane fade" id="access">
-                            {{ form.access }}
-{#                            {% trans 'Access' %}#}
-{#                            <textarea name="access" id="access_editor"></textarea>#}
+                            {{ section_modal_form.access }}
                         </div>
                         <div role="tabpanel" class="tab-pane fade" id="remarks">
-                            {{ form.remarks }}
-{#                            {% trans 'Remarks' %}#}
-{#                            <textarea name="remarks" id="remarks_editor"></textarea>#}
+                            {{ section_modal_form.remarks }}
                         </div>
 
                     </div>
@@ -382,7 +386,32 @@
             var diploma = modal.find("a[href='#diploma']");
             modal.modal('show');
             diploma.tab('show');
-            return false
+            return false;
+        });
+
+        $('div#panel-data').on('click', 'a.line-remove-btn', function (evt) {
+        {#$(".line-remove-btn").click(function (evt) {#}
+            evt.preventDefault();
+
+            var section = $(this).data('section');
+            var record_id = $(this).data('record-id');
+
+            var url = "{% url 'education_group_year_admission_condition_remove_line' education_group_year_id=education_group_year.id %}";
+
+            $.ajax(url, {
+                data: JSON.stringify({'id': record_id, 'section': section}),
+                type: 'post',
+                dataType: 'json',
+                success: function (data) {
+                    var element = $("tr#" + section + "_" + record_id);
+                    element.remove();
+                },
+                error: function(jqXHR, textStatus, errorThrown) {
+                    alert("We can't remove this line of the section")
+                }
+            });
+
+            return false;
         });
 
         $('.modify-text-btn').click(function (evt) {
@@ -454,8 +483,15 @@
                     '<td>', record.conditions, '</td>',
                     '<td>', record.access, '</td>',
                     '<td>', record.remarks, '</td>',
+                    '<td>',
+                        '<a href="#" class="button line-remove-btn" data-record-id="', record.id,'" data-section="',section,'">',
+                            '<span class="glyphicon glyphicon-remove-circle" style="font-size: 16px;" aria-hidden="true" />',
+                        '</a>',
+                        '<a href="#" class="button line-edit-btn" data-record-id="', record.id, '" data-section="', section, '">',
+                            '<span class="glyphicon glyphicon-edit" style="font-size: 16px;" aria-hidden="true" />',
+                        '</a>',
+                    '</td>',
                 '</tr>'
-
             ].join('')
         }
     </script>

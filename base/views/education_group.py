@@ -33,7 +33,7 @@ from django.contrib.auth.decorators import login_required, permission_required
 from django.core.exceptions import PermissionDenied
 from django.db.models import Prefetch
 from django import forms
-from django.forms import inlineformset_factory, Textarea
+from django.forms import inlineformset_factory, Textarea, model_to_dict
 from django.http import HttpResponseRedirect, JsonResponse
 from django.shortcuts import get_object_or_404, redirect
 from django.urls import reverse
@@ -48,7 +48,8 @@ from base.forms.education_group_general_informations import EducationGroupGenera
 from base.forms.education_group_pedagogy_edit import EducationGroupPedagogyEditForm
 from base.forms.education_groups import EducationGroupFilter, MAX_RECORDS
 from base.forms.education_groups_administrative_data import CourseEnrollmentForm, AdministrativeDataFormset
-from base.models.admission_condition import AdmissionCondition, AdmissionConditionLine, AdmissionConditionSection
+# from base.models.admission_condition import AdmissionCondition, AdmissionConditionLine, AdmissionConditionSection
+from base.models.admission_condition import AdmissionConditionLine, AdmissionCondition
 from base.models.education_group_type import EducationGroupType
 from base.models.education_group_year import EducationGroupYear
 from base.models.enums import academic_calendar_type
@@ -451,141 +452,141 @@ def translated_text_labels2dict(translated_text_label):
     }
 
 
-class AdmissionConditionForm(forms.ModelForm):
-    class Meta:
-        model = AdmissionCondition
-        fields = ('education_group_type',)
+# class AdmissionConditionForm(forms.ModelForm):
+#     class Meta:
+#         model = AdmissionCondition
+#         fields = ('education_group_type',)
+#
+#         lables = {
+#             'education_group_type': 'Type',
+#         }
+#
+#         error_messages = {
+#             'education_group_type': {
+#                 'unique': _('There is already an admission condition for this type')
+#             }
+#         }
+#
+#     # education_group_type = forms.ModelChoiceField(
+#     #     label='Type',
+#     #     # queryset=EducationGroupType.objects.exclude(pk__in=AdmissionCondition.objects.distinct('education_group_type'))[:10]
+#     # )
+#
+#
+# class AdmissionConditionLineForm(forms.ModelForm):
+#     class Meta:
+#         model = AdmissionConditionLine
+#         fields = ('admission_condition_section', 'description',)
+#
+#         widgets = {
+#             'description': CKEditorWidget(config_name='reddot')
+#         }
+#
+#
+#     admission_condition_section = forms.ModelChoiceField(
+#         label='Section',
+#         queryset=AdmissionConditionSection.objects.filter(parent=None).order_by('name')
+#     )
+#
+#
+# @login_required
+# @permission_required('base.can_edit_educationgroup_pedagogy', raise_exception=True)
+# def education_group_type_admission_condition(request, admission_condition_id):
+#     admission_condition = get_object_or_404(AdmissionCondition, pk=admission_condition_id)
+#     post = request.POST or None
+#     form = AdmissionConditionForm(post, instance=admission_condition)
+#
+#     FormSet = inlineformset_factory(AdmissionCondition,
+#                                     AdmissionConditionLine,
+#                                     extra=1,
+#                                     form=AdmissionConditionLineForm)                                    # fields=('admission_condition_section', 'description'))
+#
+#     formset = FormSet(post, instance=admission_condition)
+#
+#     if request.method == 'POST' and form.is_valid() and formset.is_valid():
+#         try:
+#             form.save()
+#             formset.save()
+#
+#             display_success_messages(request, 'saved')
+#
+#             return HttpResponseRedirect(request.path_info)
+#         except ValueError as e:
+#             display_error_messages(request, e.args[0])
+#
+#     records = {
+#         'bacheliers_ucl': {
+#             'name': 'Bacheliers UCL',
+#             'records': [{
+#                 'id': 1,
+#                 'diploma': 'Bachelier en droit {}'.format(counter),
+#                 'conditions': '',
+#                 'access': 'Acces direct',
+#                 'remarks': "Diplômés bachelier en droit de l'ULG: prendre contact avec la faculté (info-drt@uclouvain.be)"
+#             } for counter in range(1, 5)]
+#         }
+#     }
+#
+#     context = {
+#         'form': form,
+#         'formset': formset,
+#         'records': records,
+#     }
+#     return layout.render(request, 'education_group/admission_condition.html', context)
+#
 
-        lables = {
-            'education_group_type': 'Type',
-        }
-
-        error_messages = {
-            'education_group_type': {
-                'unique': _('There is already an admission condition for this type')
-            }
-        }
-
-    # education_group_type = forms.ModelChoiceField(
-    #     label='Type',
-    #     # queryset=EducationGroupType.objects.exclude(pk__in=AdmissionCondition.objects.distinct('education_group_type'))[:10]
-    # )
-
-
-class AdmissionConditionLineForm(forms.ModelForm):
-    class Meta:
-        model = AdmissionConditionLine
-        fields = ('admission_condition_section', 'description',)
-
-        widgets = {
-            'description': CKEditorWidget(config_name='reddot')
-        }
-
-
-    admission_condition_section = forms.ModelChoiceField(
-        label='Section',
-        queryset=AdmissionConditionSection.objects.filter(parent=None).order_by('name')
-    )
-
-
-@login_required
-@permission_required('base.can_edit_educationgroup_pedagogy', raise_exception=True)
-def education_group_type_admission_condition(request, admission_condition_id):
-    admission_condition = get_object_or_404(AdmissionCondition, pk=admission_condition_id)
-    post = request.POST or None
-    form = AdmissionConditionForm(post, instance=admission_condition)
-
-    FormSet = inlineformset_factory(AdmissionCondition,
-                                    AdmissionConditionLine,
-                                    extra=1,
-                                    form=AdmissionConditionLineForm)                                    # fields=('admission_condition_section', 'description'))
-
-    formset = FormSet(post, instance=admission_condition)
-
-    if request.method == 'POST' and form.is_valid() and formset.is_valid():
-        try:
-            form.save()
-            formset.save()
-
-            display_success_messages(request, 'saved')
-
-            return HttpResponseRedirect(request.path_info)
-        except ValueError as e:
-            display_error_messages(request, e.args[0])
-
-    records = {
-        'bacheliers_ucl': {
-            'name': 'Bacheliers UCL',
-            'records': [{
-                'id': 1,
-                'diploma': 'Bachelier en droit {}'.format(counter),
-                'conditions': '',
-                'access': 'Acces direct',
-                'remarks': "Diplômés bachelier en droit de l'ULG: prendre contact avec la faculté (info-drt@uclouvain.be)"
-            } for counter in range(1, 5)]
-        }
-    }
-
-    context = {
-        'form': form,
-        'formset': formset,
-        'records': records,
-    }
-    return layout.render(request, 'education_group/admission_condition.html', context)
-
-
-@login_required
-@permission_required('base.can_edit_educationgroup_pedagogy', raise_exception=True)
-def education_group_type_admission_conditions(request):
-    context = {
-        'object_list': AdmissionCondition.objects.order_by('education_group_type__name')
-    }
-
-    return layout.render(request, 'education_group/admission_conditions.html', context)
-
-
-@login_required
-@permission_required('base.can_edit_educationgroup_pedagogy', raise_exception=True)
-def education_group_type_admission_condition_new(request):
-    post = request.POST or None
-    form = AdmissionConditionForm(post)
-
-    FormSet = inlineformset_factory(AdmissionCondition,
-                                    AdmissionConditionLine,
-                                    extra=1,
-                                    form=AdmissionConditionLineForm)
-
-    formset = FormSet(post)
-
-    if request.method == 'POST' and form.is_valid() and formset.is_valid():
-        form.full_clean()
-        formset.full_clean()
-        try:
-            # import pdb; pdb.set_trace()
-            form.save()
-            formset.instance = form.instance
-            formset.save()
-
-            display_success_messages(request, _('The new admission condition has been saved'))
-
-            return HttpResponseRedirect(reverse('education_group_type_admission_conditions'))
-        except ValueError as e:
-            print(e)
-            display_error_messages(request, e.args[0])
-
-    context = {
-        'form': form,
-        'formset': formset,
-    }
-    return layout.render(request, 'education_group/admission_condition.html', context)
-
-
-@login_required
-@permission_required('base.can_edit_educationgroup_pedagogy', raise_exception=True)
-def education_group_type_admission_condition_delete(request, admission_condition_id):
-    admission_condition = get_object_or_404(AdmissionCondition, pk=admission_condition_id)
-    admission_condition.delete()
-    return redirect('education_group_type_admission_conditions')
+# @login_required
+# @permission_required('base.can_edit_educationgroup_pedagogy', raise_exception=True)
+# def education_group_type_admission_conditions(request):
+#     context = {
+#         'object_list': AdmissionCondition.objects.order_by('education_group_type__name')
+#     }
+#
+#     return layout.render(request, 'education_group/admission_conditions.html', context)
+#
+#
+# @login_required
+# @permission_required('base.can_edit_educationgroup_pedagogy', raise_exception=True)
+# def education_group_type_admission_condition_new(request):
+#     post = request.POST or None
+#     form = AdmissionConditionForm(post)
+#
+#     FormSet = inlineformset_factory(AdmissionCondition,
+#                                     AdmissionConditionLine,
+#                                     extra=1,
+#                                     form=AdmissionConditionLineForm)
+#
+#     formset = FormSet(post)
+#
+#     if request.method == 'POST' and form.is_valid() and formset.is_valid():
+#         form.full_clean()
+#         formset.full_clean()
+#         try:
+#             # import pdb; pdb.set_trace()
+#             form.save()
+#             formset.instance = form.instance
+#             formset.save()
+#
+#             display_success_messages(request, _('The new admission condition has been saved'))
+#
+#             return HttpResponseRedirect(reverse('education_group_type_admission_conditions'))
+#         except ValueError as e:
+#             print(e)
+#             display_error_messages(request, e.args[0])
+#
+#     context = {
+#         'form': form,
+#         'formset': formset,
+#     }
+#     return layout.render(request, 'education_group/admission_condition.html', context)
+#
+#
+# @login_required
+# @permission_required('base.can_edit_educationgroup_pedagogy', raise_exception=True)
+# def education_group_type_admission_condition_delete(request, admission_condition_id):
+#     admission_condition = get_object_or_404(AdmissionCondition, pk=admission_condition_id)
+#     admission_condition.delete()
+#     return redirect('education_group_type_admission_conditions')
 
 
 @login_required
@@ -605,16 +606,26 @@ def education_group_year_admission_condition_edit(request, education_group_year_
     second_group = True
     third_group = acronym.endswith(('2m', '2m1'))
 
-    class Form(forms.Form):
+    class SectionModalForm(forms.Form):
         diploma = forms.CharField(widget=CKEditorWidget())
         conditions = forms.CharField(widget=CKEditorWidget())
         access = forms.CharField(widget=CKEditorWidget())
         remarks = forms.CharField(widget=CKEditorWidget())
 
-    form = Form()
+    section_modal_form = SectionModalForm()
+
+    admission_condition, created = AdmissionCondition.objects.get_or_create(education_group_year=education_group_year)
+
+    records = {
+        'bacheliers_ucl': list(
+            map(model_to_dict,
+                AdmissionConditionLine.objects.filter(admission_condition=admission_condition,
+                                                      section='bacheliers_ucl'))
+        ),
+    }
 
     context = {
-        'form': form,
+        'section_modal_form': section_modal_form,
         'education_group_year': education_group_year,
         'parent': parent,
         'info': {
@@ -623,7 +634,8 @@ def education_group_year_admission_condition_edit(request, education_group_year_
             'is_second_group': second_group,
             'is_third_group': third_group,
             'use_standard_text': use_standard_text,
-        }
+        },
+        'records': records,
     }
 
     return layout.render(request, 'education_group/tab_admission_conditions.html', context)
@@ -636,13 +648,45 @@ def education_group_year_admission_condition_add_line(request, education_group_y
     import json
     info = json.loads(request.body.decode('utf-8'))
     print(info)
-    import random
-    record_id = random.randint(0, 100)
+
+    admission_condition, created = AdmissionCondition.objects.get_or_create(education_group_year=education_group_year)
+
+    admission_condition_line = AdmissionConditionLine.objects.create(
+        admission_condition=admission_condition,
+        section=info['section'],
+        diploma=info['diploma'],
+        conditions=info['conditions'],
+        access=info['access'],
+        remarks=info['remarks']
+    )
+
     record = {
-        'id': record_id,
-        'diploma': info['diploma'],
-        'conditions': info['conditions'],
-        'access': info['access'],
-        'remarks': info['remarks'],
+        'id': admission_condition_line.id,
+        'section': admission_condition_line.section,
+        'diploma': admission_condition_line.diploma,
+        'conditions': admission_condition_line.conditions,
+        'access': admission_condition_line.access,
+        'remarks': admission_condition_line.remarks,
     }
     return JsonResponse({'message': 'added', 'record': record})
+
+@login_required
+@ajax_required
+@permission_required('base.can_edit_educationgroup_pedagogy', raise_exception=True)
+def education_group_year_admission_condition_remove_line(request, education_group_year_id):
+
+    import json
+    info = json.loads(request.body.decode('utf-8'))
+    print(info)
+
+    admission_condition_line_id = info['id']
+
+    education_group_year = get_object_or_404(EducationGroupYear, pk=education_group_year_id)
+    admission_condition = get_object_or_404(AdmissionCondition, education_group_year=education_group_year)
+    admission_condition_line = get_object_or_404(AdmissionConditionLine,
+                                                 admission_condition=admission_condition,
+                                                 pk=admission_condition_line_id)
+    admission_condition_line.delete()
+    return JsonResponse({'message': 'deleted'})
+
+

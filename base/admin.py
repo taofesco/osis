@@ -190,7 +190,7 @@ admin.site.register(synchronization.Synchronization,
 admin.site.register(tutor.Tutor,
                     tutor.TutorAdmin)
 
-admin.site.register(admission_condition.AdmissionCondition,
-                    admission_condition.AdmissionConditionAdmin)
-
-admin.site.register(admission_condition.AdmissionConditionSection, admission_condition.AdmissionConditionSectionAdmin)
+# admin.site.register(admission_condition.AdmissionCondition,
+#                     admission_condition.AdmissionConditionAdmin)
+#
+# admin.site.register(admission_condition.AdmissionConditionSection, admission_condition.AdmissionConditionSectionAdmin)
