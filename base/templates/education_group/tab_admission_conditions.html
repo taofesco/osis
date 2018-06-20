@@ -1,4 +1,5 @@
 {% extends 'layout.html' %}
+{% load bootstrap3 %}
 {% load i18n %}
 {% load staticfiles %}
 {% block breadcrumb %}
@@ -13,28 +14,193 @@
             <div class="tab-content" id="tab_content">
                 <div role="tabpanel" class="tab-pane active" id="admission_conditions">
                     <div class="row">
-                        {% include "education_group/training_tree.html" %}
-                        <div id="panel-data" class="col-md-9">
+{#                        {% include "education_group/training_tree.html" %}#}
+                        <div id="panel-data" class="col-md-12">
                             {% include "education_group/tabs.html" %}
                             <br/>
 
-                            <div class="row" style="margin-top: 10px">
-                                {{ info }}
+                            <div class="row">
+                                <pre>{{ info }}</pre>
 
                                 {% if info.is_bachelor %}
-                                    <textarea></textarea>
+                                    <span>Text for Bachelor</span>
+                                    <a href="#" title="" class="btn btn-primary" role="button"
+                                       id="bt_organization_edit">
+                                        <span class="glyphicon glyphicon-edit" aria-hidden="true"></span>
+                                    </a>
+                                    <pre>{{ admission_condition.text_for_bachelor }}</pre>
+                                    <textarea class="ckeditor"></textarea>
                                 {% else %}
                                     {% if info.is_first_group %}
-                                        <textarea></textarea>
-                                        <hr/>
+                                        <div>
+                                            <span>Text 1st Group</span>
+                                            <a href="#" role="button" class="modify-text-btn button">
+                                                <span class="glyphicon glyphicon-edit"
+                                                      style="font-size: 16px;"
+                                                      aria-hidden="true"></span>
+                                            </a>
+
+
+                                            <pre>{{ admission_condition.text_for_first_group|default:"Undefined Text" }}</pre>
+                                        </div>
                                     {% endif %}
                                     {% if info.is_second_group %}
-                                        <textarea></textarea>
-                                        <hr/>
+                                        <div>
+                                            <span>Text 2nd Group</span>
+                                            <a href="#" role="button" class="modify-text-btn button">
+                                                <span class="glyphicon glyphicon-edit"
+                                                      style="font-size: 16px;"
+                                                      aria-hidden="true"></span>
+                                            </a>
+                                            <pre>{{ admission_condition.text_for_second_group|default:"Undefined Text" }}</pre>
+                                        </div>
                                     {% endif %}
                                     {% if info.is_third_group %}
                                         <div>
-                                            <h2>Bacheliers universitaires</h2>
+                                            <h3>Bacheliers universitaires</h3>
+                                            <a href="#" role="button" class="modify-text-btn button">
+                                                <span class="glyphicon glyphicon-edit"
+                                                      style="font-size: 16px;"
+                                                      aria-hidden="true"></span>
+                                            </a>
+                                            <pre>Texte libre</pre>
+
+                                            <table class="table table-bordered">
+                                                <thead>
+                                                <tr>
+                                                    <th width="30%">{% trans 'Diploma' %}</th>
+                                                    <th width="30%">{% trans 'Conditions' %}</th>
+                                                    <th width="150px">{% trans 'Access' %}</th>
+                                                    <th>{% trans 'Remarks' %}</th>
+                                                    <th width="5%">{% trans 'Actions' %}</th>
+                                                </tr>
+                                                </thead>
+                                                <tbody>
+                                                <tr id="bacheliers_ucl">
+                                                    <td colspan="5" class="info">Bacheliers UCL<a
+                                                        class="button line-add-btn" data-section="bacheliers_ucl" href="#"><span
+                                                        class="glyphicon glyphicon-plus"
+                                                        aria-hidden="true"></span></a>
+                                                    </td>
+                                                </tr>
+                                                {% for record in records.bacheliers_ucl.records %}
+                                                <tr id="bacheliers_ucl_{{ record.id }}">
+                                                    <td>{{ record.diploma }}</td>
+                                                    <td>{{ record.conditions }}</td>
+                                                    <td class="text-right">{{ record.access }}</td>
+                                                    <td>{{ record.remarks }}</td>
+                                                    <td class="text-right">
+                                                        <a href="#" role="button"
+                                                           class="button line-remove-btn">
+                                                            <span class="glyphicon glyphicon-remove-circle"
+                                                                  style="font-size: 16px;"
+                                                                  aria-hidden="true"></span>
+                                                        </a>
+                                                        <a href="#" role="button" class="button line-edit-btn">
+                                                            <span class="glyphicon glyphicon-edit"
+                                                                  style="font-size: 16px;"
+                                                                  aria-hidden="true"></span>
+                                                        </a>
+                                                    </td>
+                                                </tr>
+                                                {% endfor %}
+                                                <tr>
+                                                    <td colspan="5" class="info">Autres Bacheliers Communauté Française<a
+                                                            class="button line-add-btn" href="#"><span
+                                                            class="glyphicon glyphicon-plus"
+                                                            aria-hidden="true"></span></a></td>
+                                                </tr>
+                                                <tr>
+                                                    <td>{{ record.diploma }}</td>
+                                                    <td>{{ record.conditions }}</td>
+                                                    <td class="text-right">{{ record.access }}</td>
+                                                    <td>{{ record.remarks }}</td>
+                                                    <td class="text-right">
+                                                        <a href="#" role="button"
+                                                           class="button line-remove-btn">
+                                                            <span class="glyphicon glyphicon-remove-circle"
+                                                                  style="font-size: 16px;"
+                                                                  aria-hidden="true"></span>
+                                                        </a>
+                                                        <a href="#" role="button" class="button line-edit-btn">
+                                                            <span class="glyphicon glyphicon-edit"
+                                                                  style="font-size: 16px;"
+                                                                  aria-hidden="true"></span>
+                                                        </a>
+                                                    </td>
+                                                </tr>
+                                                <tr>
+                                                    <td colspan="5" class="info">Bacheliers Communauté Flamande<a
+                                                            class="button line-add-btn" href="#"><span
+                                                            class="glyphicon glyphicon-plus"
+                                                            aria-hidden="true"></span></a></td>
+                                                </tr>
+                                                <tr>
+                                                    <td>{{ record.diploma }}</td>
+                                                    <td>{{ record.conditions }}</td>
+                                                    <td class="text-right">{{ record.access }}</td>
+                                                    <td>{{ record.remarks }}</td>
+                                                    <td class="text-right">
+                                                        <a href="#" role="button"
+                                                           class="button line-remove-btn">
+                                                            <span class="glyphicon glyphicon-remove-circle"
+                                                                  style="font-size: 16px;"
+                                                                  aria-hidden="true"></span>
+                                                        </a>
+                                                        <a href="#" role="button" class="button line-edit-btn">
+                                                            <span class="glyphicon glyphicon-edit"
+                                                                  style="font-size: 16px;"
+                                                                  aria-hidden="true"></span>
+                                                        </a>
+                                                    </td>
+                                                </tr>
+                                                <tr>
+                                                    <td colspan="5" class="info">Bacheliers Étrangers<a
+                                                            class="button line-add-btn" href="#"><span
+                                                            class="glyphicon glyphicon-plus"
+                                                            aria-hidden="true"></span></a></td>
+                                                </tr>
+                                                <tr>
+                                                    <td>{{ record.diploma }}</td>
+                                                    <td>{{ record.conditions }}</td>
+                                                    <td class="text-right">{{ record.access }}</td>
+                                                    <td>{{ record.remarks }}</td>
+                                                    <td class="text-right">
+                                                        <a href="#" role="button"
+                                                           class="button line-remove-btn">
+                                                            <span class="glyphicon glyphicon-remove-circle"
+                                                                  style="font-size: 16px;"
+                                                                  aria-hidden="true"></span>
+                                                        </a>
+                                                        <a href="#" role="button" class="button line-edit-btn">
+                                                            <span class="glyphicon glyphicon-edit"
+                                                                  style="font-size: 16px;"
+                                                                  aria-hidden="true"></span>
+                                                        </a>
+                                                    </td>
+                                                </tr>
+                                                </tbody>
+                                            </table>
+                                        </div>
+                                        <div>
+                                            <h3>{% trans 'Bacheliers non-universitaires' %}</h3>
+                                            <a href="#" role="button" class="modify-text-btn button">
+                                                <span class="glyphicon glyphicon-edit"
+                                                      style="font-size: 16px;"
+                                                      aria-hidden="true"></span>
+                                            </a>
+
+                                            <pre>First text</pre>
+                                            <a href="#" role="button" class="modify-text-btn button">
+                                                <span class="glyphicon glyphicon-edit"
+                                                      style="font-size: 16px;"
+                                                      aria-hidden="true"></span>
+                                            </a>
+
+                                            <pre>Second text</pre>
+                                        </div>
+                                        <div>
+                                            <h3>Diplomés du 2em cycle universitaire</h3>
                                             <table class="table table-bordered">
                                                 <thead>
                                                 <tr>
@@ -46,49 +212,87 @@
                                                 </tr>
                                                 </thead>
                                                 <tbody>
-                                                {% with section=records.bacheliers_ucl %}
-                                                    <tr>
-                                                        <td colspan="5" class="info">{{ section.name }} <a
-                                                                class="button line-add-btn" href="#"><span
-                                                                class="glyphicon glyphicon-plus"
-                                                                aria-hidden="true"></span></a></td>
-                                                    </tr>
-                                                    {% for record in section.records %}
-                                                        <tr>
-                                                            <td>{{ record.diploma }}</td>
-                                                            <td>{{ record.conditions }}</td>
-                                                            <td class="text-right">{{ record.access }}</td>
-                                                            <td>{{ record.remarks }}</td>
-                                                            <td class="text-right">
-                                                                <a href="#" role="button"
-                                                                   class="button line-remove-btn">
+                                                <tr>
+                                                    <td colspan="5" class="info">Licenciés <a
+                                                            class="button line-add-btn" href="#"><span
+                                                            class="glyphicon glyphicon-plus"
+                                                            aria-hidden="true"></span></a></td>
+                                                </tr>
+                                                <tr>
+                                                    <td>{{ record.diploma }}</td>
+                                                    <td>{{ record.conditions }}</td>
+                                                    <td class="text-right">{{ record.access }}</td>
+                                                    <td>{{ record.remarks }}</td>
+                                                    <td class="text-right">
+                                                        <a href="#" role="button"
+                                                           class="button line-remove-btn">
                                                                     <span class="glyphicon glyphicon-remove-circle"
                                                                           style="font-size: 16px;"
                                                                           aria-hidden="true"></span>
-                                                                </a>
-                                                                <a href="#" role="button" class="button line-edit-btn">
+                                                        </a>
+                                                        <a href="#" role="button" class="button line-edit-btn">
                                                                     <span class="glyphicon glyphicon-edit"
                                                                           style="font-size: 16px;"
                                                                           aria-hidden="true"></span>
-                                                                </a>
-                                                            </td>
-                                                        </tr>
-                                                    {% endfor %}
-                                                {% endwith %}
+                                                        </a>
+                                                    </td>
+                                                </tr>
+                                                <tr>
+                                                    <td colspan="5" class="info">Masters <a
+                                                            class="button line-add-btn" href="#"><span
+                                                            class="glyphicon glyphicon-plus"
+                                                            aria-hidden="true"></span></a></td>
+                                                </tr>
+                                                <tr>
+                                                    <td>{{ record.diploma }}</td>
+                                                    <td>{{ record.conditions }}</td>
+                                                    <td class="text-right">{{ record.access }}</td>
+                                                    <td>{{ record.remarks }}</td>
+                                                    <td class="text-right">
+                                                        <a href="#" role="button"
+                                                           class="button line-remove-btn">
+                                                                    <span class="glyphicon glyphicon-remove-circle"
+                                                                          style="font-size: 16px;"
+                                                                          aria-hidden="true"></span>
+                                                        </a>
+                                                        <a href="#" role="button" class="button line-edit-btn">
+                                                                    <span class="glyphicon glyphicon-edit"
+                                                                          style="font-size: 16px;"
+                                                                          aria-hidden="true"></span>
+                                                        </a>
+                                                    </td>
+                                                </tr>
                                                 </tbody>
                                             </table>
                                         </div>
                                         <div>
-                                            <h2>Adultes en reprise d'études</h2>
-                                            <textarea></textarea>
+                                            <h3>{% trans 'Diplomés du 2eme cycle non universitaire' %} <a href="#" class="modify-text-btn button" role="button"><span class="glyphicon glyphicon-edit" style="font-size: 16px;" aria-hidden="true"></span></a></h3>
+                                            <div>
+                                                <pre>{{ admission_condition.free_text|default:"Undefined Text" }}</pre>
+                                            </div>
+                                        </div>
+
+                                        <div>
+                                            <h3>{% trans "Adultes en reprise d'études" %} <a href="#" class="modify-text-btn button" role="button"><span class="glyphicon glyphicon-edit" style="font-size: 16px;" aria-hidden="true"></span></a></h3>
+
+                                            <div>
+                                                <pre>{{ admission_condition.adultes|default:"Undefined Text" }}</pre>
+                                            </div>
                                         </div>
                                         <div>
-                                            <h2>Accès personnalisé</h2>
-                                            <textarea></textarea>
+                                            <h3>{% trans 'Accès personnalisé' %} <a href="#" class="modify-text-btn button" role="button"><span class="glyphicon glyphicon-edit" style="font-size: 16px;" aria-hidden="true"></span></a></h3>
+                                            <div>
+                                                <pre>{{ admission_condition.custom_access|default:"Undefined Text" }}</pre>
+                                            </div>
                                         </div>
                                         <div>
-                                            <h2>Procedures d'admission et d'inscription</h2>
-                                            <textarea></textarea>
+                                            <h3>{% trans "Procedures d'admission et d'inscription" %} <a href="#" class="modify-text-btn button" role="button"><span class="glyphicon glyphicon-edit" style="font-size: 16px;" aria-hidden="true"></span></a></h3>
+                                            <div>
+                                                <pre>{{ admission_condition.procedures_admission_inscription|default:"Undefined Text" }}</pre>
+                                            </div>
+                                            <div>
+                                                <pre>{{ admission_condition.procedures_admission_inscription_compl|default:"Undefined Text" }}</pre>
+                                            </div>
                                         </div>
                                     {% endif %}
                                 {% endif %}
@@ -100,8 +304,159 @@
         </div>
     </div>
 
+    <div class="modal fade" id="modify_text">
+        <div class="modal-dialog modal-lg" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">{% trans 'Modify text' %}</h5>
+                </div>
+                <div class="modal-body">
+
+                </div>
+                <div class="modal-footer">
+                    <button id="pedagogy_remove_add_btn" type="submit" class="btn btn-primary" role="button"
+                            title="{% trans 'save' %}">{% trans 'save' %}</button>
+                    <button type="submit" class="btn" data-dismiss="modal">{% trans 'cancel' %}</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal fade" id="add_term">
+        <div class="modal-dialog modal-lg" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">{% trans 'Add a new line' %}</h5>
+                </div>
+                <div class="modal-body">
+                    <ul class="nav nav-tabs" id="myTabs" role="tablist">
+                        <li role="presentation" class="active"><a href="#diploma">{% trans 'Diploma' %}</a></li>
+                        <li role="presentation"><a href="#conditions">{% trans 'Conditions' %}</a></li>
+                        <li role="presentation"><a href="#access">{% trans 'Access' %}</a></li>
+                        <li role="presentation"><a href="#remarks">{% trans 'Remarks' %}</a></li>
+                    </ul>
+                    <div class="tab-content">
+                        <div role="tabpanel" class="tab-pane fade" id="diploma">
+{#                            <textarea name="diplome" id="diplome_editor"></textarea>#}
+                            {{ form.diploma }}
+                        </div>
+                        <div role="tabpanel" class="tab-pane fade" id="conditions">
+                            {{ form.conditions }}
+{#                            {% trans 'Conditions' %}#}
+{#                            <textarea name="conditions" id="conditions_editor"></textarea>#}
+                        </div>
+                        <div role="tabpanel" class="tab-pane fade" id="access">
+                            {{ form.access }}
+{#                            {% trans 'Access' %}#}
+{#                            <textarea name="access" id="access_editor"></textarea>#}
+                        </div>
+                        <div role="tabpanel" class="tab-pane fade" id="remarks">
+                            {{ form.remarks }}
+{#                            {% trans 'Remarks' %}#}
+{#                            <textarea name="remarks" id="remarks_editor"></textarea>#}
+                        </div>
+
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button id="add_term_btn" type="submit"
+                            class="btn btn-primary" role="button"
+                            title="{% trans 'save' %}">{% trans 'save' %}</button>
+                    <button type="submit" class="btn" data-dismiss="modal">{% trans 'cancel' %}</button>
+                </div>
+            </div>
+        </div>
+    </div>
 {% endblock %}
 
 {% block script %}
     <script src="{% static 'js/education_group/education_group_tree.js' %}"></script>
+    <script>
+        $(".line-add-btn").click(function (evt) {
+            evt.preventDefault();
+            var section = $(this).data('section');
+            var modal = $("#add_term");
+
+            var button = modal.find('#add_term_btn');
+            button.data('section', section);
+            var diploma = modal.find("a[href='#diploma']");
+            modal.modal('show');
+            diploma.tab('show');
+            return false
+        });
+
+        $('.modify-text-btn').click(function (evt) {
+           evt.preventDefault();
+           var modal = $("#modify_text");
+           modal.modal('show');
+           return false;
+        });
+
+        $('#myTabs a').click(function (e) {
+            e.preventDefault();
+            $(this).tab('show');
+        });
+
+        $('#add_term_btn').click(function(evt) {
+            var modal = $('#add_term');
+            var url = "{% url 'education_group_year_admission_condition_add_line' education_group_year_id=education_group_year.id %}";
+            var section = $(this).data('section');
+
+            var diploma_ptr = CKEDITOR.instances['id_diploma'],
+                conditions_ptr = CKEDITOR.instances['id_conditions'],
+                access_ptr = CKEDITOR.instances['id_access'],
+                remarks_ptr = CKEDITOR.instances['id_remarks'];
+
+            var data = {
+                section: section,
+                diploma: diploma_ptr.getData(),
+                conditions: conditions_ptr.getData(),
+                access: access_ptr.getData(),
+                remarks: remarks_ptr.getData()
+            };
+
+            $.ajax(url, {
+                data: JSON.stringify(data),
+                type: 'post',
+                dataType: 'json',
+                success: function(data) {
+                    var html = create_html_for_record(section, data.record);
+                    var pointer = $('#' + section);
+
+                    var css_selector = "tr[id^='"+section+"_']";
+                    var number_of_lines = $(css_selector).length;
+
+                    if (number_of_lines > 0) {
+                        pointer = $(css_selector + ':last');
+                    }
+
+                    pointer.after(html);
+
+                    diploma_ptr.setData('');
+                    conditions_ptr.setData('');
+                    access_ptr.setData('');
+                    remarks_ptr.setData('');
+
+                    modal.modal('hide');
+                },
+                error: function(jqXHR, textStatus, errorThrown) {
+                    alert('Error');
+                }
+            });
+
+            modal.modal('hide');
+        });
+
+        function create_html_for_record(section, record) {
+            return [
+                '<tr id="', section, '_',record.id,'">',
+                    '<td>', record.diploma, '</td>',
+                    '<td>', record.conditions, '</td>',
+                    '<td>', record.access, '</td>',
+                    '<td>', record.remarks, '</td>',
+                '</tr>'
+
+            ].join('')
+        }
+    </script>
 {% endblock %}

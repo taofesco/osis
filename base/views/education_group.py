@@ -25,6 +25,7 @@
 ##############################################################################
 from collections import OrderedDict
 
+from ckeditor.fields import RichTextField
 from ckeditor.widgets import CKEditorWidget
 from django.conf import settings
 from django.contrib import messages
@@ -516,6 +517,7 @@ def education_group_type_admission_condition(request, admission_condition_id):
         'bacheliers_ucl': {
             'name': 'Bacheliers UCL',
             'records': [{
+                'id': 1,
                 'diploma': 'Bachelier en droit {}'.format(counter),
                 'conditions': '',
                 'access': 'Acces direct',
@@ -603,7 +605,16 @@ def education_group_year_admission_condition_edit(request, education_group_year_
     second_group = True
     third_group = acronym.endswith(('2m', '2m1'))
 
+    class Form(forms.Form):
+        diploma = forms.CharField(widget=CKEditorWidget())
+        conditions = forms.CharField(widget=CKEditorWidget())
+        access = forms.CharField(widget=CKEditorWidget())
+        remarks = forms.CharField(widget=CKEditorWidget())
+
+    form = Form()
+
     context = {
+        'form': form,
         'education_group_year': education_group_year,
         'parent': parent,
         'info': {
@@ -616,3 +627,22 @@ def education_group_year_admission_condition_edit(request, education_group_year_
     }
 
     return layout.render(request, 'education_group/tab_admission_conditions.html', context)
+
+@login_required
+@ajax_required
+@permission_required('base.can_edit_educationgroup_pedagogy', raise_exception=True)
+def education_group_year_admission_condition_add_line(request, education_group_year_id):
+    education_group_year = get_object_or_404(EducationGroupYear, pk=education_group_year_id)
+    import json
+    info = json.loads(request.body.decode('utf-8'))
+    print(info)
+    import random
+    record_id = random.randint(0, 100)
+    record = {
+        'id': record_id,
+        'diploma': info['diploma'],
+        'conditions': info['conditions'],
+        'access': info['access'],
+        'remarks': info['remarks'],
+    }
+    return JsonResponse({'message': 'added', 'record': record})
