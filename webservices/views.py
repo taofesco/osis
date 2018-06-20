@@ -33,6 +33,7 @@ from rest_framework.generics import get_object_or_404
 from rest_framework.renderers import JSONRenderer
 from rest_framework.response import Response
 
+from base.models.admission_condition import AdmissionCondition, AdmissionConditionLine
 from base.models.education_group_year import EducationGroupYear
 from cms.enums.entity_name import OFFER_YEAR
 from cms.models.text_label import TextLabel
@@ -105,6 +106,7 @@ def ws_catalog_offer(request, year, language, acronym):
     sections = process_message(context, education_group_year, items)
 
     context.description['sections'] = convert_sections_to_list_of_dict(sections)
+    context.description['sections'].append(insert_admission_condition_section(context, education_group_year))
     return Response(context.description, content_type='application/json')
 
 
@@ -182,3 +184,65 @@ def insert_section_if_checked(context, education_group_year, text_label):
     if education_group_year and text_label:
         return insert_section(context, education_group_year, text_label)
     return {'label': None, 'content': None}
+
+
+def admission_condition_line_to_dict(admission_condition_line):
+    return {
+        'diploma': admission_condition_line.diploma,
+        'conditions': admission_condition_line.conditions,
+        'access': admission_condition_line.access,
+        'remarks': admission_condition_line.remarks,
+    }
+
+def insert_admission_condition_section(context, education_group_year):
+    admission_condition = AdmissionCondition.objects.get(education_group_year=education_group_year)
+
+    admission_condition_lines = AdmissionConditionLine.objects.filter(admission_condition=admission_condition)
+
+    group_by_section_name = collections.defaultdict(list)
+
+    for item in admission_condition_lines:
+        group_by_section_name[item.section].append(admission_condition_line_to_dict(item))
+
+    return {
+        "label": "conditions_admissions",
+        "content": {
+            "alert_message": admission_condition.text_first_group,
+            "text": "",
+            "sections": {
+                "university_bachelors": {
+                    "text": admission_condition.text_bachelor_university,
+                    "records": {
+                        "ucl_bachelors": group_by_section_name['ucl_bachelors'],
+                        "others_bachelors_french": group_by_section_name['others_bachelors_french'],
+                        "bachelors_dutch": group_by_section_name['bachelors_dutch'],
+                        "foreign_bachelors": group_by_section_name['foreign_bachelors'],
+                    }
+                },
+                "non_university_bachelors": {
+                    "text": admission_condition.text_first_bachelor_non_university,
+                    "text-common": admission_condition.text_second_bachelor_non_university,
+                },
+                "holders_second_university_degree": {
+                    "text": admission_condition.text_diploma_second_cycle,
+                    "records": {
+                        "graduates": group_by_section_name['graduates'],
+                        "masters": group_by_section_name['masters']
+                    }
+                },
+                "holders_non_university_second_degree": {
+                    "text": admission_condition.text_diploma_second_cycle_non_university,
+                },
+                "adults_taking_up_university_training": {
+                    "text": admission_condition.text_adult,
+                },
+                "personalized_access": {
+                    "text": admission_condition.text_custom_access,
+                },
+                "admission_enrollment_procedures": {
+                    "text": admission_condition.text_first_procedure,
+                    "text-common": admission_condition.text_second_procedure,
+                }
+            }
+        }
+    }

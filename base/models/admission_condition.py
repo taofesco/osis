@@ -17,6 +17,8 @@ class AdmissionCondition(models.Model):
     text_second_bachelor_non_university = models.TextField(default='')
 
     text_diploma_second_cycle = models.TextField(default='')
+    text_diploma_second_cycle_non_university = models.TextField(default='')
+
     text_adult = models.TextField(default='')
     text_custom_access = models.TextField(default='')
     text_first_procedure = models.TextField(default='')
