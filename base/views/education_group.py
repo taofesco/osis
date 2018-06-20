@@ -612,7 +612,12 @@ def education_group_year_admission_condition_edit(request, education_group_year_
         access = forms.CharField(widget=CKEditorWidget())
         remarks = forms.CharField(widget=CKEditorWidget())
 
+    class AdmissionConditionForm(forms.Form):
+        text_field = forms.CharField(widget=CKEditorWidget())
+        second_text_field = forms.CharField(widget=CKEditorWidget())
+
     section_modal_form = SectionModalForm()
+    admission_condition_form = AdmissionConditionForm()
 
     admission_condition, created = AdmissionCondition.objects.get_or_create(education_group_year=education_group_year)
 
@@ -626,6 +631,7 @@ def education_group_year_admission_condition_edit(request, education_group_year_
 
     context = {
         'section_modal_form': section_modal_form,
+        'admission_condition_form': admission_condition_form,
         'education_group_year': education_group_year,
         'parent': parent,
         'info': {
@@ -635,6 +641,7 @@ def education_group_year_admission_condition_edit(request, education_group_year_
             'is_third_group': third_group,
             'use_standard_text': use_standard_text,
         },
+        'admission_condition': admission_condition,
         'records': records,
     }
 
@@ -689,4 +696,32 @@ def education_group_year_admission_condition_remove_line(request, education_grou
     admission_condition_line.delete()
     return JsonResponse({'message': 'deleted'})
 
+@login_required
+@ajax_required
+@permission_required('base.can_edit_educationgroup_pedagogy', raise_exception=True)
+def education_group_year_admission_condition_modify_text(request, education_group_year_id):
+
+    import json
+    info = json.loads(request.body.decode('utf-8'))
+    print(info)
+
+    education_group_year = get_object_or_404(EducationGroupYear, pk=education_group_year_id)
+    admission_condition, created = AdmissionCondition.objects.get_or_create(education_group_year=education_group_year)
+
+    setattr(admission_condition, 'text_' + info['section'], info['text'])
+    admission_condition.save()
+
+    return JsonResponse({'message': 'modified'})
+
+@login_required
+@ajax_required
+@permission_required('base.can_edit_educationgroup_pedagogy', raise_exception=True)
+def education_group_year_admission_condition_get_text(request, education_group_year_id):
+    education_group_year = get_object_or_404(EducationGroupYear, pk=education_group_year_id)
+    admission_condition, created = AdmissionCondition.objects.get_or_create(education_group_year=education_group_year)
+    import json
+    info = json.loads(request.body.decode('utf-8'))
+    print(info)
+    text = getattr(admission_condition, 'text_' + info['section'], '')
+    return JsonResponse({'message': 'read', 'section': info['section'], 'text': text})
 

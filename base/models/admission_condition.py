@@ -6,17 +6,28 @@ from osis_common.models import osis_model_admin
 class AdmissionCondition(models.Model):
     education_group_year = models.ForeignKey('base.EducationGroupYear', unique=True, null=True)
 
+    text_bachelor = models.TextField(default='')
+
+    text_first_group = models.TextField(default='')
+    text_second_group = models.TextField(default='')
+
+    text_bachelor_university = models.TextField(default='')
+
+    text_first_bachelor_non_university = models.TextField(default='')
+    text_second_bachelor_non_university = models.TextField(default='')
+
+    text_diploma_second_cycle = models.TextField(default='')
+    text_adult = models.TextField(default='')
+    text_custom_access = models.TextField(default='')
+    text_first_procedure = models.TextField(default='')
+    text_second_procedure = models.TextField(default='')
 
 class AdmissionConditionAdmin(osis_model_admin.OsisModelAdmin):
-    actions = None
 
-    list_display = ('education_group_type_name',)
+    list_display = ('name',)
 
-    def education_group_type_name(self, obj):
-        if obj.education_group_type:
-            return obj.education_group_type.name
-        return '-'
-
+    def name(self, obj):
+        return obj.education_group_year.acronym
 
 class AdmissionConditionLine(models.Model):
     admission_condition = models.ForeignKey(AdmissionCondition)

@@ -230,6 +230,15 @@ urlpatterns = [
             url(r'^admission_conditions/add_line$',
                 education_group.education_group_year_admission_condition_add_line,
                 name='education_group_year_admission_condition_add_line'),
+
+            url(r'^admission_conditions/modify_text$',
+                education_group.education_group_year_admission_condition_modify_text,
+                name='education_group_year_admission_condition_modify_text'),
+
+            url(r'^admission_conditions/get_text$',
+                education_group.education_group_year_admission_condition_get_text,
+                name='education_group_year_admission_condition_get_text'),
+
             url(r'^admission_conditions/remove_line$',
                 education_group.education_group_year_admission_condition_remove_line,
                 name='education_group_year_admission_condition_remove_line')

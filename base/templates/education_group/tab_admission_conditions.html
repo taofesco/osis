@@ -14,14 +14,14 @@
             <div class="tab-content" id="tab_content">
                 <div role="tabpanel" class="tab-pane active" id="admission_conditions">
                     <div class="row">
-{#                        {% include "education_group/training_tree.html" %}#}
-                        <div id="panel-data" class="col-md-12">
+                        {% include "education_group/training_tree.html" %}
+                        <div id="panel-data" class="col-md-9">
                             {% include "education_group/tabs.html" %}
                             <br/>
 
                             <div class="row">
                                 <pre>{{ info }}</pre>
-                                <pre>{{ records }}</pre>
+{#                                <pre>{{ records }}</pre>#}
 
                                 {% if info.is_bachelor %}
                                     <span>Text for Bachelor</span>
@@ -34,37 +34,37 @@
                                 {% else %}
                                     {% if info.is_first_group %}
                                         <div>
-                                            <span>Text 1st Group</span>
-                                            <a href="#" role="button" class="modify-text-btn button">
+                                            <h4>Text 1st Group</h4>
+                                            <a href="#" role="button" class="modify-text-btn button"
+                                                data-section="first_group">
                                                 <span class="glyphicon glyphicon-edit"
                                                       style="font-size: 16px;"
                                                       aria-hidden="true"></span>
                                             </a>
-
-
-                                            <pre>{{ admission_condition.text_for_first_group|default:"Undefined Text" }}</pre>
+                                            <div id="text_first_group">{{ admission_condition.text_first_group|safe }}</div>
                                         </div>
                                     {% endif %}
                                     {% if info.is_second_group %}
                                         <div>
-                                            <span>Text 2nd Group</span>
-                                            <a href="#" role="button" class="modify-text-btn button">
+                                            <h4>Text 2nd Group</h4>
+                                            <a href="#" role="button" class="modify-text-btn button"
+                                            data-section="second_group">
                                                 <span class="glyphicon glyphicon-edit"
                                                       style="font-size: 16px;"
                                                       aria-hidden="true"></span>
                                             </a>
-                                            <pre>{{ admission_condition.text_for_second_group|default:"Undefined Text" }}</pre>
+                                            <div id="text_second_group">{{ admission_condition.text_second_group|safe }}</div>
                                         </div>
                                     {% endif %}
                                     {% if info.is_third_group %}
                                         <div>
                                             <h3>Bacheliers universitaires</h3>
-                                            <a href="#" role="button" class="modify-text-btn button">
+                                            <a href="#" role="button" class="modify-text-btn button" data-section="bachelor_university">
                                                 <span class="glyphicon glyphicon-edit"
                                                       style="font-size: 16px;"
                                                       aria-hidden="true"></span>
                                             </a>
-                                            <pre>Texte libre</pre>
+                                            <div id="text_bachelor_university">{{ admission_condition.text_bachelor_university|safe }}</div>
 
                                             <table class="table table-bordered">
                                                 <thead>
@@ -195,20 +195,20 @@
                                         </div>
                                         <div>
                                             <h3>{% trans 'Bacheliers non-universitaires' %}</h3>
-                                            <a href="#" role="button" class="modify-text-btn button">
+                                            <a href="#" role="button" class="modify-text-btn button" data-section="first_bachelor_non_university">
+                                                <span class="glyphicon glyphicon-edit"
+                                                      style="font-size: 16px;"
+                                                      aria-hidden="true"></span>
+                                            </a>
+                                            <div id="text_first_bachelor_non_university">{{ admission_condition.text_first_bachelor_non_university|safe }}</div>
+
+                                            <a href="#" role="button" class="modify-text-btn button" data-section="second_bachelor_non_university">
                                                 <span class="glyphicon glyphicon-edit"
                                                       style="font-size: 16px;"
                                                       aria-hidden="true"></span>
                                             </a>
 
-                                            <pre>First text</pre>
-                                            <a href="#" role="button" class="modify-text-btn button">
-                                                <span class="glyphicon glyphicon-edit"
-                                                      style="font-size: 16px;"
-                                                      aria-hidden="true"></span>
-                                            </a>
-
-                                            <pre>Second text</pre>
+                                            <div id="text_second_bachelor_non_university">{{ admission_condition.text_second_bachelor_non_university|safe }}</div>
                                         </div>
                                         <div>
                                             <h3>Diplomés du 2em cycle universitaire</h3>
@@ -277,33 +277,24 @@
                                             </table>
                                         </div>
                                         <div>
-                                            <h3>{% trans 'Diplomés du 2eme cycle non universitaire' %} <a href="#" class="modify-text-btn button" role="button"><span class="glyphicon glyphicon-edit" style="font-size: 16px;" aria-hidden="true"></span></a></h3>
-                                            <div>
-                                                <pre>{{ admission_condition.free_text|default:"Undefined Text" }}</pre>
-                                            </div>
+                                            <h3>{% trans 'Diplomés du 2eme cycle non universitaire' %} <a href="#" class="modify-text-btn button" role="button" data-section="diploma_second_cycle"><span class="glyphicon glyphicon-edit" style="font-size: 16px;" aria-hidden="true"></span></a></h3>
+                                            <div id="text_diploma_second_cycle">{{ admission_condition.text_diploma_second_cycle|safe }}</div>
                                         </div>
 
                                         <div>
-                                            <h3>{% trans "Adultes en reprise d'études" %} <a href="#" class="modify-text-btn button" role="button"><span class="glyphicon glyphicon-edit" style="font-size: 16px;" aria-hidden="true"></span></a></h3>
+                                            <h3>{% trans "Adultes en reprise d'études" %} <a href="#" class="modify-text-btn button" role="button" data-section="adult"><span class="glyphicon glyphicon-edit" style="font-size: 16px;" aria-hidden="true"></span></a></h3>
 
-                                            <div>
-                                                <pre>{{ admission_condition.adultes|default:"Undefined Text" }}</pre>
-                                            </div>
+                                            <div id="text_adult">{{ admission_condition.text_adult|safe }}</div>
                                         </div>
                                         <div>
-                                            <h3>{% trans 'Accès personnalisé' %} <a href="#" class="modify-text-btn button" role="button"><span class="glyphicon glyphicon-edit" style="font-size: 16px;" aria-hidden="true"></span></a></h3>
-                                            <div>
-                                                <pre>{{ admission_condition.custom_access|default:"Undefined Text" }}</pre>
-                                            </div>
+                                            <h3>{% trans 'Accès personnalisé' %} <a href="#" class="modify-text-btn button" role="button" data-section="custom_access"><span class="glyphicon glyphicon-edit" style="font-size: 16px;" aria-hidden="true"></span></a></h3>
+                                            <div id="text_custom_access">{{ admission_condition.text_custom_access|safe }}</div>
                                         </div>
                                         <div>
-                                            <h3>{% trans "Procedures d'admission et d'inscription" %} <a href="#" class="modify-text-btn button" role="button"><span class="glyphicon glyphicon-edit" style="font-size: 16px;" aria-hidden="true"></span></a></h3>
-                                            <div>
-                                                <pre>{{ admission_condition.procedures_admission_inscription|default:"Undefined Text" }}</pre>
-                                            </div>
-                                            <div>
-                                                <pre>{{ admission_condition.procedures_admission_inscription_compl|default:"Undefined Text" }}</pre>
-                                            </div>
+                                            <h3>{% trans "Procedures d'admission et d'inscription" %} <a href="#" class="modify-text-btn button" role="button" data-section="first_procedure"><span class="glyphicon glyphicon-edit" style="font-size: 16px;" aria-hidden="true"></span></a></h3>
+                                            <div id="text_first_procedure">{{ admission_condition.text_first_procedure|safe }}</div>
+                                            <h3>{% trans "Procedures d'admission et d'inscription" %} <a href="#" class="modify-text-btn button" role="button" data-section="second_procedure"><span class="glyphicon glyphicon-edit" style="font-size: 16px;" aria-hidden="true"></span></a></h3>
+                                            <div id="text_second_procedure">{{ admission_condition.text_second_procedure|safe }}</div>
                                         </div>
                                     {% endif %}
                                 {% endif %}
@@ -322,10 +313,10 @@
                     <h5 class="modal-title">{% trans 'Modify text' %}</h5>
                 </div>
                 <div class="modal-body">
-
+                    {{ admission_condition_form.text_field }}
                 </div>
                 <div class="modal-footer">
-                    <button id="pedagogy_remove_add_btn" type="submit" class="btn btn-primary" role="button"
+                    <button id="modify_text_btn" type="submit" class="btn btn-primary" role="button"
                             title="{% trans 'save' %}">{% trans 'save' %}</button>
                     <button type="submit" class="btn" data-dismiss="modal">{% trans 'cancel' %}</button>
                 </div>
@@ -414,11 +405,79 @@
             return false;
         });
 
+        /*
+        $('div#panel-data').on('click', 'a.line-edit-btn', function (evt) {
+            evt.preventDefault();
+            var section = $(this).data('section'),
+                record_id = $(this).data('record-id');
+        });
+        */
+
+        $('#modify_text_btn').click(function(evt) {
+            evt.preventDefault();
+            var modal = $("#modify_text");
+            var url = "{% url 'education_group_year_admission_condition_modify_text' education_group_year_id=education_group_year.id %}";
+            var section = $(this).data('section');
+            console.log('modify_text_btn.click', section);
+
+            var text_ptr = CKEDITOR.instances['id_text_field'];
+
+            var data = {
+                section: section,
+                text: text_ptr.getData(),
+            }
+
+            console.table(data);
+
+            $("#text_"  + section).html(data['text']);
+
+            $.ajax(url, {
+                data: JSON.stringify(data),
+                type: 'post',
+                dataType: 'json',
+                success: function (data) {
+                    console.table(data);
+                    modal.modal('hide');
+                },
+                error: function (jqXHR, textStatus, errorThrown) {
+                    alert('Error');
+                }
+            });
+        });
+
         $('.modify-text-btn').click(function (evt) {
-           evt.preventDefault();
-           var modal = $("#modify_text");
-           modal.modal('show');
-           return false;
+            evt.preventDefault();
+            var section = $(this).data('section');
+            var url = "{% url 'education_group_year_admission_condition_get_text' education_group_year_id=education_group_year.id %}";
+
+            console.log(section);
+            var modal = $("#modify_text");
+            var button = modal.find('#modify_text_btn');
+            button.data('section', section);
+
+            var text_ptr = CKEDITOR.instances['id_text_field'];
+            var data = {
+                section: section,
+            }
+
+            console.log(url);
+
+            $.ajax(url, {
+                data: JSON.stringify(data),
+                type: 'post',
+                dataType: 'json',
+                success: function (data) {
+                    console.table(data);
+                    text_ptr.setData(data.text);
+                },
+                error: function(jqXHR, textStatus, errorThrown) {
+                    alert('Error');
+                }
+            })
+            text_ptr.setData()
+
+            modal.modal('show');
+            return false;
         });
 
         $('#myTabs a').click(function (e) {
