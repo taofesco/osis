@@ -102,20 +102,26 @@ def get_summary_responsibles_with_entities(entities):
     return summary_responsibles
 
 
-def get_summary_responsible_list(an_entity, summary_responsible_param):
-    summary_responsible = summary_responsible_param.copy()
+def get_summary_responsible_list(an_entity, summary_responsibles_param):
+    summary_responsibles = summary_responsibles_param.copy()
     summary_responsible_attributions = filter_summary_responsible([an_entity], True)
 
     if summary_responsible_attributions:
         for attribution in summary_responsible_attributions:
-            id_person = attribution.tutor.person
-            if id_person not in summary_responsible:
-                summary_responsible.update({id_person: [an_entity]})
-            else:
-                entities_list = summary_responsible.get(id_person)
-                entities_list.append(an_entity)
-                summary_responsible.update({id_person: entities_list})
-    return summary_responsible
+            update_summary_responsibles_dict(an_entity, attribution, summary_responsibles)
+    return summary_responsibles
+
+
+def update_summary_responsibles_dict(an_entity, attribution, summary_responsibles_param):
+    summary_responsibles = summary_responsibles_param.copy()
+    id_person = attribution.tutor.person
+    if id_person not in summary_responsibles:
+        summary_responsibles.update({id_person: [an_entity]})
+    else:
+        entities_list = summary_responsibles.get(id_person)
+        entities_list.append(an_entity)
+        summary_responsibles.update({id_person: entities_list})
+    return summary_responsibles
 
 
 def _is_updating_period_opening_today(an_entity):
@@ -133,23 +139,22 @@ def find_parent_calendar(an_entity):
     an_entity_version = find_latest_version_by_entity(an_entity, now_date)
     if an_entity_version:
         if an_entity_version.parent:
-            entity_calendar = find_by_reference_and_entity(SUMMARY_COURSE_SUBMISSION,
-                                                           an_entity_version.parent)
-            if entity_calendar:
-                return True if entity_calendar.start_date.date() == now_date else False
-            else:
-                ent_vers_parent_up = find_latest_version_by_entity(an_entity_version.parent, now_date)
-                return find_parent_calendar(ent_vers_parent_up.entity) if ent_vers_parent_up else get_default_calendar()
+            return _check_entity_calendar(an_entity_version, now_date)
         else:
             return get_default_calendar()
+
+
+def _check_entity_calendar(an_entity_version, now_date):
+    entity_calendar = find_by_reference_and_entity(SUMMARY_COURSE_SUBMISSION,
+                                                   an_entity_version.parent)
+    if entity_calendar:
+        return True if entity_calendar.start_date.date() == now_date else False
+    else:
+        ent_vers_parent_up = find_latest_version_by_entity(an_entity_version.parent, now_date)
+        return find_parent_calendar(ent_vers_parent_up.entity) if ent_vers_parent_up else get_default_calendar()
 
 
 def get_default_calendar():
     current_academic_yr = current_academic_year()
     ac_cal = get_by_reference_and_academic_year(SUMMARY_COURSE_SUBMISSION, current_academic_yr)
     return True if ac_cal and ac_cal.start_date == timezone.now().date() else False
-#
-#
-# def _is_event_starting_today(an_entity):
-#     return find_by_reference_and_entity(SUMMARY_COURSE_SUBMISSION,
-#                                         an_entity)
