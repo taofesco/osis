@@ -25,10 +25,12 @@
 ##############################################################################
 from django.test import TestCase
 
-from base.models.entity_calendar import find_by_entity_and_reference_for_current_academic_year, find_by_reference_and_start_date
+from base.models.entity_calendar import find_by_entity_and_reference_for_current_academic_year, \
+    find_by_reference_and_entity
 from base.models.enums.academic_calendar_type import SUMMARY_COURSE_SUBMISSION, EXAM_ENROLLMENTS
 from base.tests.factories.academic_year import create_current_academic_year, AcademicYearFactory
 from base.tests.factories.entity_calendar import EntityCalendarFactory
+from base.tests.factories.entity import EntityFactory
 
 A_REFERENCE = SUMMARY_COURSE_SUBMISSION
 
@@ -38,7 +40,6 @@ class TestFindByReferenceForCurrentAcademicYear(TestCase):
     def setUpTestData(cls):
         cls.current_academic_year = create_current_academic_year()
         cls.previous_academic_year = AcademicYearFactory(year=cls.current_academic_year.year-1)
-
         cls.current_entity_calendar = EntityCalendarFactory(academic_calendar__academic_year=cls.current_academic_year,
                                                             academic_calendar__reference=A_REFERENCE)
         EntityCalendarFactory(academic_calendar__academic_year=cls.previous_academic_year,
@@ -55,14 +56,11 @@ class TestFindByReferenceForCurrentAcademicYear(TestCase):
             self.current_entity_calendar.entity.id, A_REFERENCE)
         self.assertEqual(entity_calendar_obj, self.current_entity_calendar)
 
-    def test_find_by_reference_and_start_date(self):
-        a_start_date = self.current_entity_calendar.start_date
+    def test_find_by_reference_and_entity(self):
+        an_entity_calendar = find_by_reference_and_entity(A_REFERENCE, self.current_entity_calendar.entity)
+        self.assertEqual(an_entity_calendar, self.current_entity_calendar)
 
-        entity_calendars = find_by_reference_and_start_date(A_REFERENCE, a_start_date)
-        self.assertCountEqual(entity_calendars, [{'entity': self.current_entity_calendar.entity.id}])
-
-        a_previous_start_date = self.previous_academic_year.start_date
-        entity_calendars = find_by_reference_and_start_date(A_REFERENCE, a_previous_start_date)
-        self.assertCountEqual(entity_calendars, [])
+        an_entity = EntityFactory()
+        self.assertIsNone(find_by_reference_and_entity(A_REFERENCE, an_entity))
 
 

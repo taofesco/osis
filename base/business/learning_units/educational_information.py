@@ -26,7 +26,7 @@
 from django.utils import timezone
 from datetime import datetime
 from base.models.entity_version import find_latest_version_by_entity
-from base.models.entity_calendar import find_by_reference_and_start_date, find_by_reference_and_entity
+from base.models.entity_calendar import find_by_reference_and_entity
 from base.models.enums.academic_calendar_type import SUMMARY_COURSE_SUBMISSION
 from attribution.models.attribution import filter_summary_responsible
 from base.models.entity import Entity
@@ -90,18 +90,16 @@ def _is_new_responsible(responsible_and_learning_unit_yr_list, a_person):
 
 def _teacher_mailing_for_summary_opened():
     entities = Entity.objects.filter(organization__type=MAIN)
-    now_date = timezone.now().date()
-    summary_responsible = get_summary_responsibles_with_entities(entities, now_date)
-    send_mail_for_educational_information_update_period_opening(summary_responsible)
+    send_mail_for_educational_information_update_period_opening(get_summary_responsibles_with_entities(entities))
 
 
-def get_summary_responsibles_with_entities(entities, now_date):
-    summary_responsible = {}
+def get_summary_responsibles_with_entities(entities):
+    summary_responsibles = {}
     for an_entity in entities:
-        opened_now = _is_updating_period_opening_today(an_entity, now_date)
+        opened_now = _is_updating_period_opening_today(an_entity)
         if opened_now:
-            summary_responsible = get_summary_responsible_list(an_entity, summary_responsible)
-    return summary_responsible
+            summary_responsibles = get_summary_responsible_list(an_entity, summary_responsibles)
+    return summary_responsibles
 
 
 def get_summary_responsible_list(an_entity, summary_responsible_param):
@@ -120,17 +118,18 @@ def get_summary_responsible_list(an_entity, summary_responsible_param):
     return summary_responsible
 
 
-def _is_updating_period_opening_today(an_entity, now_date):
+def _is_updating_period_opening_today(an_entity):
     entity_calendar = find_by_reference_and_entity(SUMMARY_COURSE_SUBMISSION,
                                                    an_entity)
     if entity_calendar:
-        return True if entity_calendar.start_date.date() == now_date else False
+        return True if entity_calendar.start_date.date() == timezone.now().date() else False
     else:
-        opened_now = find_parent_calendar(an_entity, now_date)
+        opened_now = find_parent_calendar(an_entity)
     return opened_now
 
 
-def find_parent_calendar(an_entity, now_date):
+def find_parent_calendar(an_entity):
+    now_date = timezone.now().date()
     an_entity_version = find_latest_version_by_entity(an_entity, now_date)
     if an_entity_version:
         if an_entity_version.parent:
@@ -140,13 +139,17 @@ def find_parent_calendar(an_entity, now_date):
                 return True if entity_calendar.start_date.date() == now_date else False
             else:
                 ent_vers_parent_up = find_latest_version_by_entity(an_entity_version.parent, now_date)
-                return find_parent_calendar(ent_vers_parent_up.entity,
-                                            now_date) if ent_vers_parent_up else get_default_calendar(now_date)
+                return find_parent_calendar(ent_vers_parent_up.entity) if ent_vers_parent_up else get_default_calendar()
         else:
-            return get_default_calendar(now_date)
+            return get_default_calendar()
 
 
-def get_default_calendar(now_date):
+def get_default_calendar():
     current_academic_yr = current_academic_year()
     ac_cal = get_by_reference_and_academic_year(SUMMARY_COURSE_SUBMISSION, current_academic_yr)
-    return True if ac_cal and ac_cal.start_date == now_date else False
+    return True if ac_cal and ac_cal.start_date == timezone.now().date() else False
+#
+#
+# def _is_event_starting_today(an_entity):
+#     return find_by_reference_and_entity(SUMMARY_COURSE_SUBMISSION,
+#                                         an_entity)
