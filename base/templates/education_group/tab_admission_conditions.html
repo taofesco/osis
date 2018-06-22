@@ -2,6 +2,7 @@
 {% load bootstrap3 %}
 {% load i18n %}
 {% load staticfiles %}
+{% load admission_conditions %}
 {% block breadcrumb %}
     {% include 'education_group/breadcrumb.html' %}
 {% endblock %}
@@ -25,16 +26,18 @@
 
                                 {% comment %}
                                 {% if info.is_bachelor %}
-                                    <span>{% trans 'Admission Conditions for Bachelors' %}</span>
-                                    <a href="#" title="" class="btn btn-primary" role="button"
-                                       id="bt_organization_edit">
-                                        <span class="glyphicon glyphicon-edit" aria-hidden="true"></span>
-                                    </a>
-                                    <pre>{{ admission_condition.text_for_bachelor }}</pre>
-                                {% else %}
+                                    <div id="bacherlor_admission">
+                                        <span>{% trans 'Admission Conditions for Bachelors' %}</span>
+                                        <a href="#" title="" class="btn btn-primary" role="button"
+                                           id="bt_organization_edit">
+                                            <span class="glyphicon glyphicon-edit" aria-hidden="true"></span>
+                                        </a>
+                                        <pre>{{ admission_condition.text_for_bachelor }}</pre>
+                                    </div>
+                                    {% else %}
                                 {% endcomment %}
                                     {% if info.is_first_group %}
-                                        <div>
+                                        <div id="alert_message">
                                             <h4>{% trans 'Alert Message' %}</h4>
                                             <a href="#" role="button" class="modify-text-btn button"
                                                 data-section="alert_message">
@@ -46,7 +49,7 @@
                                         </div>
                                     {% endif %}
                                     {% if info.is_second_group %}
-                                        <div>
+                                        <div id="free_text">
                                             <h4>Text 2nd Group</h4>
                                             <a href="#" role="button" class="modify-text-btn button"
                                             data-section="second_group">
@@ -58,7 +61,7 @@
                                         </div>
                                     {% endif %}
                                     {% if info.is_third_group %}
-                                        <div>
+                                        <div id="university_bachelors">
                                             <h3>{% trans 'University Bachelors' %}</h3>
                                             <a href="#" role="button" class="modify-text-btn button" data-section="ucl_bachelors">
                                                 <span class="glyphicon glyphicon-edit"
@@ -78,140 +81,15 @@
                                                 </tr>
                                                 </thead>
                                                 <tbody>
-                                                <tr id="ucl_bachelors">
-                                                    <td colspan="5" class="info">{% trans 'UCL Bachelors' %} <a
-                                                        class="button line-add-btn" data-section="ucl_bachelors" href="#"><span
-                                                        class="glyphicon glyphicon-plus"
-                                                        aria-hidden="true"></span></a>
-                                                    </td>
-                                                </tr>
-                                                {% for line in record.ucl_bachelors %}
-                                                <tr id="ucl_bachelors_{{ line.id }}">
-                                                    <td id="ucl_bachelors_{{ line.id }}_diploma">{{ line.diploma|safe }}</td>
-                                                    <td id="ucl_bachelors_{{ line.id }}_conditions">{{ line.conditions|safe }}</td>
-                                                    <td id="ucl_bachelors_{{ line.id }}_access" class="text-right">{{ line.access|safe}}</td>
-                                                    <td id="ucl_bachelors_{{ line.id }}_remarks">{{ line.remarks|safe }}</td>
-                                                    <td class="text-right">{{ line.id }} -
-                                                        <a href="#" role="button"
-                                                           data-record-id="{{ line.id }}"
-                                                           data-section="ucl_bachelors"
-                                                           class="button line-remove-btn">
-                                                            <span class="glyphicon glyphicon-remove-circle"
-                                                                  style="font-size: 16px;"
-                                                                  aria-hidden="true"></span>
-                                                        </a>
-                                                        <a href="#" role="button" class="button line-edit-btn"
-                                                           data-record-id="{{ line.id }}"
-                                                           data-section="ucl_bachelors">
-                                                            <span class="glyphicon glyphicon-edit"
-                                                                  style="font-size: 16px;"
-                                                                  aria-hidden="true"></span>
-                                                        </a>
-                                                    </td>
-                                                </tr>
-                                                {% endfor %}
-                                                <tr id="others_bachelors_french">
-                                                    <td colspan="5" class="info">{% trans 'Others Bachelors of the French speaking Community of Belgium' %}<a
-                                                            class="button line-add-btn" href="#"><span
-                                                            class="glyphicon glyphicon-plus"
-                                                            aria-hidden="true"></span></a></td>
-                                                </tr>
-                                                {% for line in record.others_bachelors_french %}
-                                                <tr id="others_bachelors_french_{{ line.id }}">
-                                                    <td id="others_bachelors_french_{{ line.id }}_diploma">{{ line.diploma|safe }}</td>
-                                                    <td id="others_bachelors_french_{{ line.id }}_conditions">{{ line.conditions|safe }}</td>
-                                                    <td id="others_bachelors_french_{{ line.id }}_access" class="text-right">{{ line.access|safe}}</td>
-                                                    <td id="others_bachelors_french_{{ line.id }}_remarks">{{ line.remarks|safe }}</td>
-                                                    <td class="text-right">
-                                                        <a href="#" role="button"
-                                                           data-record-id="{{ line.id }}"
-                                                           data-section="others_bachelors_french"
-                                                           class="button line-remove-btn">
-                                                            <span class="glyphicon glyphicon-remove-circle"
-                                                                  style="font-size: 16px;"
-                                                                  aria-hidden="true"></span>
-                                                        </a>
-                                                        <a href="#" role="button"
-                                                           data-record-id="{{ line.id }}"
-                                                           data-section="others_bachelors_french"
-                                                           class="button line-edit-btn">
-                                                            <span class="glyphicon glyphicon-edit"
-                                                                  style="font-size: 16px;"
-                                                                  aria-hidden="true"></span>
-                                                        </a>
-                                                    </td>
-                                                </tr>
-                                                {% endfor %}
-                                                <tr id="bachelors_dutch">
-                                                    <td colspan="5" class="info">{% trans 'Bachelors of the Dutch speaking Community of Beligum' %}<a
-                                                            class="button line-add-btn" href="#"><span
-                                                            class="glyphicon glyphicon-plus"
-                                                            aria-hidden="true"></span></a></td>
-                                                </tr>
-                                                {% for line in record.bachelors_dutch %}
-                                                <tr id="bachelors_dutch_{{ line.id }}">
-                                                    <td id="bachelors_dutch_{{ line.id }}_diploma">{{ line.diploma|safe }}</td>
-                                                    <td id="bachelors_dutch_{{ line.id }}_conditions">{{ line.conditions|safe }}</td>
-                                                    <td id="bachelors_dutch_{{ line.id }}_access" class="text-right">{{ line.access|safe}}</td>
-                                                    <td id="bachelors_dutch_{{ line.id }}_remarks">{{ line.remarks|safe }}</td>
-                                                    <td class="text-right">
-                                                        <a href="#" role="button"
-                                                           data-record-id="{{ line.id }}"
-                                                           data-section="bachelors_dutch"
-                                                           class="button line-remove-btn">
-                                                            <span class="glyphicon glyphicon-remove-circle"
-                                                                  style="font-size: 16px;"
-                                                                  aria-hidden="true"></span>
-                                                        </a>
-                                                        <a href="#" role="button"
-                                                           data-record-id="{{ line.id }}"
-                                                           data-section="bachelors_dutch"
-                                                           class="button line-edit-btn">
-                                                            <span class="glyphicon glyphicon-edit"
-                                                                  style="font-size: 16px;"
-                                                                  aria-hidden="true"></span>
-                                                        </a>
-                                                    </td>
-                                                </tr>
-                                                {% endfor %}
-                                                <tr id="foreign_bachelors">
-                                                    <td colspan="5" class="info">{% trans 'Foreign Bachelors' %}<a
-                                                            class="button line-add-btn" href="#"><span
-                                                            class="glyphicon glyphicon-plus"
-                                                            aria-hidden="true"></span></a></td>
-                                                </tr>
-                                                {% for line in record.foreign_bachelors %}
-                                                <tr id="foreign_bachelors_{{ line.id }}">
-                                                    <td id="foreign_bachelors_{{ line.id }}_diploma">{{ line.diploma|safe }}</td>
-                                                    <td id="foreign_bachelors_{{ line.id }}_conditions">{{ line.conditions|safe }}</td>
-                                                    <td id="foreign_bachelors_{{ line.id }}_access" class="text-right">{{ line.access|safe}}</td>
-                                                    <td id="foreign_bachelors_{{ line.id }}_remarks">{{ line.remarks|safe }}</td>
-                                                    <td class="text-right">
-                                                        <a href="#" role="button"
-                                                           data-record-id="{{ line.id }}"
-                                                           data-section="foreign_bachelors"
-
-                                                           class="button line-remove-btn">
-                                                            <span class="glyphicon glyphicon-remove-circle"
-                                                                  style="font-size: 16px;"
-                                                                  aria-hidden="true"></span>
-                                                        </a>
-                                                        <a href="#" role="button"
-                                                           data-record-id="{{ line.id }}"
-                                                           data-section="foreign_bachelors"
-                                                           class="button line-edit-btn">
-                                                            <span class="glyphicon glyphicon-edit"
-                                                                  style="font-size: 16px;"
-                                                                  aria-hidden="true"></span>
-                                                        </a>
-                                                    </td>
-                                                </tr>
-                                                {% endfor %}
+                                                {% render_condition_rows 'ucl_bachelors' _('UCL Bachelors') record.ucl_bachelors %}
+                                                {% render_condition_rows 'others_bachelors_french' _('Others Bachelors of the French speaking Community of Belgium') record.others_bachelors_french %}
+                                                {% render_condition_rows 'bachelors_dutch' _('Bachelors of the Dutch speaking Community of Beligum') record.bachelors_dutch %}
+                                                {% render_condition_rows 'foreign_bachelors' _('Foreign Bachelors') record.foreign_bachelors %}
                                                 </tbody>
                                             </table>
                                         </div>
                                         {% comment %}
-                                        <div>
+                                        <div id="non_university_bachelors">
                                             <h3>{% trans 'Non university Bachelors' %}</h3>
                                             <a href="#" role="button" class="modify-text-btn button" data-section="first_bachelor_non_university">
                                                 <span class="glyphicon glyphicon-edit"
@@ -229,7 +107,7 @@
                                             <div id="text_second_bachelor_non_university">{{ admission_condition.text_second_bachelor_non_university|safe }}</div>
                                         </div>
                                         {% endcomment %}
-                                        <div>
+                                        <div id="holders_second_university_degree">
                                             <h3>{% trans 'Holders of a 2nd cycle University degree' %}</h3>
                                             <table class="table table-bordered">
                                                 <thead>
@@ -242,88 +120,27 @@
                                                 </tr>
                                                 </thead>
                                                 <tbody>
-                                                <tr id="graduates">
-                                                    <td colspan="5" class="info">{% trans 'Graduates' %} <a
-                                                            class="button line-add-btn" href="#"><span
-                                                            class="glyphicon glyphicon-plus"
-                                                            aria-hidden="true"></span></a></td>
-                                                </tr>
-                                                {% for line in record.graduates %}
-                                                <tr id="graduates_{{ line.id }}">
-                                                    <td id="graduates_{{ line.id }}_diploma">{{ line.diploma|safe }}</td>
-                                                    <td id="graduates_{{ line.id }}_conditions">{{ line.conditions|safe }}</td>
-                                                    <td id="graduates_{{ line.id }}_access" class="text-right">{{ line.access|safe}}</td>
-                                                    <td id="graduates_{{ line.id }}_remarks">{{ line.remarks|safe }}</td>
-                                                    <td class="text-right">
-                                                        <a href="#" role="button"
-                                                           data-record-id="{{ line.id }}"
-                                                           data-section="graduates"
-                                                           class="button line-remove-btn">
-                                                            <span class="glyphicon glyphicon-remove-circle"
-                                                                  style="font-size: 16px;"
-                                                                  aria-hidden="true"></span>
-                                                        </a>
-                                                        <a href="#" role="button"
-                                                           data-record-id="{{ line.id }}"
-                                                           data-section="graduates"
-                                                           class="button line-edit-btn">
-                                                            <span class="glyphicon glyphicon-edit"
-                                                                  style="font-size: 16px;"
-                                                                  aria-hidden="true"></span>
-                                                        </a>
-                                                    </td>
-                                                </tr>
-                                                {% endfor %}
-                                                <tr id="masters">
-                                                    <td colspan="5" class="info">{% trans 'Masters' %} <a
-                                                            class="button line-add-btn" href="#"><span
-                                                            class="glyphicon glyphicon-plus"
-                                                            aria-hidden="true"></span></a></td>
-                                                </tr>
-                                                {% for line in record.masters %}
-                                                <tr id="masters_{{ line.id }}">
-                                                    <td id="masters_{{ line.id }}_diploma">{{ line.diploma|safe }}</td>
-                                                    <td id="masters_{{ line.id }}_conditions">{{ line.conditions|safe }}</td>
-                                                    <td id="masters_{{ line.id }}_access" class="text-right">{{ line.access|safe}}</td>
-                                                    <td id="masters_{{ line.id }}_remarks">{{ line.remarks|safe }}</td>
-                                                    <td class="text-right">
-                                                        <a href="#" role="button"
-                                                           data-record-id="{{ line.id }}"
-                                                           data-section="masters"
-                                                           class="button line-remove-btn">
-                                                            <span class="glyphicon glyphicon-remove-circle"
-                                                                  style="font-size: 16px;"
-                                                                  aria-hidden="true"></span>
-                                                        </a>
-                                                        <a href="#" role="button" class="button line-edit-btn"
-                                                           data-record-id="{{ line.id }}"
-                                                           data-section="masters">
-                                                            <span class="glyphicon glyphicon-edit"
-                                                                  style="font-size: 16px;"
-                                                                  aria-hidden="true"></span>
-                                                        </a>
-                                                    </td>
-                                                </tr>
-                                                {% endfor %}
+                                                {% render_condition_rows 'graduates' _('Graduates') record.graduates %}
+                                                {% render_condition_rows 'masters' _('Masters') record.masters %}
                                                 </tbody>
                                             </table>
                                         </div>
                                         {% comment %}
-                                        <div>
+                                        <div id="holders_non_university_second_degree">
                                             <h3>{% trans 'Diplomés du 2eme cycle non universitaire' %} <a href="#" class="modify-text-btn button" role="button" data-section="diploma_second_cycle"><span class="glyphicon glyphicon-edit" style="font-size: 16px;" aria-hidden="true"></span></a></h3>
                                             <div id="text_diploma_second_cycle">{{ admission_condition.text_diploma_second_cycle|safe }}</div>
                                         </div>
 
-                                        <div>
+                                        <div id="adults_taking_up_university_training">
                                             <h3>{% trans "Adultes en reprise d'études" %} <a href="#" class="modify-text-btn button" role="button" data-section="adult"><span class="glyphicon glyphicon-edit" style="font-size: 16px;" aria-hidden="true"></span></a></h3>
 
                                             <div id="text_adult">{{ admission_condition.text_adult|safe }}</div>
                                         </div>
-                                        <div>
+                                        <div id="personalized_access">
                                             <h3>{% trans 'Accès personnalisé' %} <a href="#" class="modify-text-btn button" role="button" data-section="custom_access"><span class="glyphicon glyphicon-edit" style="font-size: 16px;" aria-hidden="true"></span></a></h3>
                                             <div id="text_custom_access">{{ admission_condition.text_custom_access|safe }}</div>
                                         </div>
-                                        <div>
+                                        <div id="admission_enrollment_procedures">
                                             <h3>{% trans "Procedures d'admission et d'inscription" %} <a href="#" class="modify-text-btn button" role="button" data-section="first_procedure"><span class="glyphicon glyphicon-edit" style="font-size: 16px;" aria-hidden="true"></span></a></h3>
                                             <div id="text_first_procedure">{{ admission_condition.text_first_procedure|safe }}</div>
                                             <h3>{% trans "Procedures d'admission et d'inscription" %} <a href="#" class="modify-text-btn button" role="button" data-section="second_procedure"><span class="glyphicon glyphicon-edit" style="font-size: 16px;" aria-hidden="true"></span></a></h3>
@@ -539,8 +356,8 @@
 
             var text_ptr = CKEDITOR.instances['id_text_field'];
             var data = {
-                section: section,
-            }
+                section: section
+            };
 
             console.log(url);
 
