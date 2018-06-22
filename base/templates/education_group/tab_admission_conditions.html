@@ -358,50 +358,11 @@
         </div>
     </div>
 
-    <div class="modal fade" id="add_term">
+    <div class="modal fade" id="save_term">
         <div class="modal-dialog modal-lg" role="document">
             <div class="modal-content">
                 <div class="modal-header">
-                    <h5 class="modal-title">{% trans 'Add a new line' %}</h5>
-                </div>
-                <div class="modal-body">
-                    <ul class="nav nav-tabs" id="myTabs" role="tablist">
-                        <li role="presentation" class="active"><a href="#diploma">{% trans 'Diploma' %}</a></li>
-                        <li role="presentation"><a href="#conditions">{% trans 'Conditions' %}</a></li>
-                        <li role="presentation"><a href="#access">{% trans 'Access' %}</a></li>
-                        <li role="presentation"><a href="#remarks">{% trans 'Remarks' %}</a></li>
-                    </ul>
-                    <div class="tab-content">
-                        <div role="tabpanel" class="tab-pane fade active" id="diploma">
-                            {{ section_modal_form.diploma }}
-                        </div>
-                        <div role="tabpanel" class="tab-pane fade" id="conditions">
-                            {{ section_modal_form.conditions }}
-                        </div>
-                        <div role="tabpanel" class="tab-pane fade" id="access">
-                            {{ section_modal_form.access }}
-                        </div>
-                        <div role="tabpanel" class="tab-pane fade" id="remarks">
-                            {{ section_modal_form.remarks }}
-                        </div>
-
-                    </div>
-                </div>
-                <div class="modal-footer">
-                    <button id="add_term_btn" type="submit"
-                            class="btn btn-primary" role="button"
-                            title="{% trans 'save' %}">{% trans 'save' %}</button>
-                    <button type="submit" class="btn" data-dismiss="modal">{% trans 'cancel' %}</button>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <div class="modal fade" id="modify_term">
-        <div class="modal-dialog modal-lg" role="document">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h5 class="modal-title">{% trans 'Modify an existing line' %}</h5>
+                    <h5 class="modal-title"></h5>
                 </div>
                 <div class="modal-body">
                     <ul class="nav nav-tabs" id="modification_tabs" role="tablist">
@@ -427,7 +388,7 @@
                     </div>
                 </div>
                 <div class="modal-footer">
-                    <button id="modify_term_btn" type="submit"
+                    <button id="save_button_term" type="submit"
                             class="btn btn-primary" role="button"
                             title="{% trans 'save' %}">{% trans 'save' %}</button>
                     <button type="submit" class="btn" data-dismiss="modal">{% trans 'cancel' %}</button>
@@ -444,16 +405,25 @@
         $(".line-add-btn").click(function (evt) {
             evt.preventDefault();
             var section = $(this).data('section');
-            var modal = $("#add_term");
+            var modal = $("#save_term");
 
-            var button = modal.find('#add_term_btn');
+            var button = modal.find('#save_term_button'),
+                diploma_ptr = modal.find('#textarea_diploma'),
+                conditions_ptr = modal.find('#textarea_conditions'),
+                access_ptr = modal.find('#textarea_access'),
+                remarks_ptr = modal.find('#textarea_remarks'),
+                modal_title = modal.find('.modal-title');
+
+            modal_title.text("{% trans 'Add a new line' %}");
+
+            reset_textareas(diploma_ptr, conditions_ptr, access_ptr, remarks_ptr);
+
             button.data('section', section);
             modal.modal('show');
             return false;
         });
 
         $('div#panel-data').on('click', 'a.line-remove-btn', function (evt) {
-        {#$(".line-remove-btn").click(function (evt) {#}
             evt.preventDefault();
 
             var section = $(this).data('section');
@@ -482,8 +452,10 @@
             evt.preventDefault();
             var section = $(this).data('section'),
                 record_id = $(this).data('record-id');
-            var modal = $("#modify_term");
-            var button = modal.find('#modify_term_btn');
+
+            var modal = $("#save_term");
+            var button = modal.find('#save_term_button');
+
             button.data('section', section);
             button.data('record-id', record_id);
 
@@ -492,7 +464,10 @@
             var diploma_ptr = $('#textarea_diploma'),
                 conditions_ptr = $('#textarea_conditions'),
                 access_ptr = $('#textarea_access'),
-                remarks_ptr = $('#textarea_remarks');
+                remarks_ptr = $('#textarea_remarks'),
+                modal_title = modal.find('.modal-title');
+
+            modal_title.text("{% trans 'Modify an existing line' %}");
 
             var data = {
                 section: section,
@@ -598,16 +573,37 @@
             $(this).tab('show');
         });
 
-        $('#modify_term_btn').click(function(evt) {
+        function change_row_in_table(section, record_id, data) {
+            $('#' + section + '_' + record_id + "_diploma").html(data.diploma);
+            $('#' + section + '_' + record_id + "_conditions").html(data.conditions);
+            $('#' + section + '_' + record_id + "_access").html(data.access);
+            $('#' + section + '_' + record_id + "_remarks").html(data.remarks);
+        }
+
+        function reset_textareas(diploma_ptr, conditions_ptr, access_ptr, remarks_ptr) {
+            diploma_ptr.val('');
+            conditions_ptr.val('');
+            access_ptr.val('');
+            remarks_ptr.val('');
+        }
+
+        $('#save_term_button').click(function(evt) {
             var modal = $('#modify_term');
-            var url = "{% url 'education_group_year_admission_condition_update_line' education_group_year_id=education_group_year.id %}"
+
             var section = $(this).data('section'),
                 record_id = $(this).data('record-id');
 
-            var diploma_ptr = $('#textarea_diploma'),
-                conditions_ptr = $('#textarea_conditions'),
-                access_ptr = $('#textarea_access'),
-                remarks_ptr = $('#textarea_remarks');
+            add_mode = (record_id === undefined);
+            if (add_mode) {
+                var url = "{% url 'education_group_year_admission_condition_add_line' education_group_year_id=education_group_year.id %}";
+            }
+            else {
+                var url = "{% url 'education_group_year_admission_condition_update_line' education_group_year_id=education_group_year.id %}"
+            }
+            var diploma_ptr = modal.find('#textarea_diploma'),
+                conditions_ptr = modal.find('#textarea_conditions'),
+                access_ptr = modal.find('#textarea_access'),
+                remarks_ptr = modal.find('#textarea_remarks');
 
             var data = {
                 id: record_id,
@@ -617,25 +613,20 @@
                 access: access_ptr.val(),
                 remarks: remarks_ptr.val()
             };
-            console.log(data);
 
             $.ajax(url, {
                 data: JSON.stringify(data),
                 type: 'post',
                 dataType: 'json',
-                success: function (data) {
-                    console.log("updated", data);
-                    css_selector = section + '_' + record_id + "_diploma";
-                    console.log(css_selector);
-                    $('#' + section + '_' + record_id + "_diploma").html(data.diploma);
-                    $('#' + section + '_' + record_id + "_conditions").html(data.conditions);
-                    $('#' + section + '_' + record_id + "_access").html(data.access);
-                    $('#' + section + '_' + record_id + "_remarks").html(data.remarks);
 
-                    diploma_ptr.val('');
-                    conditions_ptr.val('');
-                    access_ptr.val('');
-                    remarks_ptr.val('');
+                success: function (data) {
+                    if (add_mode) {
+                        add_new_row_in_table(section, data);
+                    } else {
+                        change_row_in_table(section, record_id, data);
+                    }
+
+                    reset_textareas(diploma_ptr, conditions_ptr, access_ptr, remarks_ptr);
 
                     modal.modal('hide');
                 },
@@ -647,55 +638,19 @@
 
         });
 
-        $('#add_term_btn').click(function(evt) {
-            var modal = $('#add_term');
-            var url = "{% url 'education_group_year_admission_condition_add_line' education_group_year_id=education_group_year.id %}";
-            var section = $(this).data('section');
+        function add_new_row_in_table(section, data) {
+            var html = create_html_for_record(section, data.record);
+            var pointer = $('#' + section);
 
-            var diploma_ptr = $('#id_diploma'),
-                conditions_ptr = $('#id_conditions'),
-                access_ptr = $('#id_access'),
-                remarks_ptr = $('#id_remarks');
+            var css_selector = "tr[id^='" + section + "_']";
+            var number_of_lines = $(css_selector).length;
 
-            var data = {
-                section: section,
-                diploma: diploma_ptr.val(),
-                conditions: conditions_ptr.val(),
-                access: access_ptr.val(),
-                remarks: remarks_ptr.val()
-            };
+            if (number_of_lines > 0) {
+                pointer = $(css_selector + ':last');
+            }
 
-            $.ajax(url, {
-                data: JSON.stringify(data),
-                type: 'post',
-                dataType: 'json',
-                success: function(data) {
-                    var html = create_html_for_record(section, data.record);
-                    var pointer = $('#' + section);
-
-                    var css_selector = "tr[id^='"+section+"_']";
-                    var number_of_lines = $(css_selector).length;
-
-                    if (number_of_lines > 0) {
-                        pointer = $(css_selector + ':last');
-                    }
-
-                    pointer.after(html);
-
-                    diploma_ptr.val('');
-                    conditions_ptr.val('');
-                    access_ptr.val('');
-                    remarks_ptr.val('');
-
-                    modal.modal('hide');
-                },
-                error: function(jqXHR, textStatus, errorThrown) {
-                    alert('Error');
-                }
-            });
-
-            modal.modal('hide');
-        });
+            pointer.after(html);
+        }
 
         function create_html_for_record(section, record) {
             return [
@@ -715,5 +670,6 @@
                 '</tr>'
             ].join('')
         }
+
     </script>
 {% endblock %}
