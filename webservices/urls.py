@@ -25,10 +25,13 @@
 ##############################################################################
 from django.conf.urls import url
 
-from webservices.views import ws_catalog_offer
+from webservices.views import ws_catalog_offer, ws_get_conditions_admissions
 
 urlpatterns = [
     url('^v0.1/catalog/offer/(?P<year>[0-9]{4})/(?P<language>[a-zA-Z]{2})/(?P<acronym>[a-zA-Z0-9]+)$',
         ws_catalog_offer,
         name='v0.1-ws_catalog_offer'),
+    url('^ws/cond/(?P<year>[0-9]{4})/(?P<language>[a-zA-Z]{2})/(?P<acronym>[a-zA-Z0-9]+)$',
+        ws_get_conditions_admissions,
+        name='ws_get_cond_admissions')
 ]

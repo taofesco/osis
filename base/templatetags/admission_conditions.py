@@ -35,7 +35,7 @@ def render_row(record, section_name):
         </tr>
     """.format(section=section_name,
                record_id=record.id,
-               diploma=mark_safe(record.diploma),
+               diploma=record.diploma,
                conditions=mark_safe(record.conditions),
                access=mark_safe(record.access),
                remarks=mark_safe(record.remarks))

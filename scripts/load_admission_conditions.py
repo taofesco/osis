@@ -4,6 +4,7 @@ import sys
 
 from django.conf import settings
 from django.db.models import Q
+from prettyprinter import cpprint
 
 from base.models.academic_year import AcademicYear
 from base.models.admission_condition import AdmissionCondition, AdmissionConditionLine
@@ -49,7 +50,7 @@ def run(filename, language='fr-be'):
 
             admission_condition, created = AdmissionCondition.objects.get_or_create(
                 education_group_year=education_group_year)
-            admission_condition.text_bachelor = item['info']['content']
+            admission_condition.text_bachelor = item['info']['text']
             admission_condition.save()
         else:
             filters = (Q(academic_year__year=year),
@@ -79,15 +80,36 @@ def run(filename, language='fr-be'):
                         admission_condition=admission_condition,
                         **fields
                     )
-                else:
-                    # field_names = ('bachelor', 'first_group', 'second_group', 'bachelor_university',
-                    #                'first_bachelor_non_university', 'second_bachelor_non_univeristy',
-                    #                'diploma_second_cycle', 'diploma_second_cycle_non_university',
-                    #                'adult', 'custom_access', 'first_procedure', 'second_procedure')
-                    #
-                    # fields = ['text_{}{}'.format(field_name, lang)
-                    #           for field_name in field_names]
-                    # field_name = ''
-                    # setattr(admission_condition, field_name, value)
+                elif line['type'] == 'text':
+                    section = line['section']
+                    if section == 'non_university_bachelors':
+                        setattr(admission_condition, 'text_non_university_bachelors' + lang, line['text'])
+                    elif section == 'holders_non_university_second_degree':
+                        setattr(admission_condition, 'text_holders_non_university_second_degree' + lang, line['text'])
+                    elif section == 'university_bachelors':
+                        setattr(admission_condition, 'text_university_bachelors' + lang, line['text'])
+                    elif section == 'holders_second_university_degree':
+                        setattr(admission_condition, 'text_holders_second_university_degree' + lang, line['text'])
+                    else:
+                        raise Exception('This case is not handled')
 
-                    print(acronym, line)
+
+            texts = item['info'].get('texts', {}) or {}
+
+            for key, value in texts.items():
+                if not value:
+                    continue
+                if key == 'introduction':
+                    setattr(admission_condition, 'text_standard' + lang, value['text'])
+                elif key == 'personalized_access':
+                    setattr(admission_condition, 'text_personalized_access' + lang, value['text'])
+                elif key == 'admission_enrollment_procedures':
+                    setattr(admission_condition, 'text_admission_enrollment_procedures' + lang, value['text'])
+                elif key == 'adults_taking_up_university_training':
+                    setattr(admission_condition, 'text_adults_taking_up_university_training' + lang, value['text'])
+                else:
+                    raise Exception('Bouh')
+
+            admission_condition.save()
+
+

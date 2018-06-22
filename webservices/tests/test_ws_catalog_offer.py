@@ -186,7 +186,7 @@ class WsCatalogOfferPostTestCase(TestCase, Helper):
                 self.assertDictEqual(response_json, {
                     'acronym': education_group_year.acronym,
                     'language': language,
-                    'sections': [],
+                    'sections': [{'id': 'conditions_admissions', 'content': None, 'label': 'conditions_admissions'}],
                     'title': title_to_test,
                     'year': education_group_year.academic_year.year,
                 })
@@ -232,11 +232,18 @@ class WsCatalogOfferPostTestCase(TestCase, Helper):
                     'language': language,
                     'title': title_to_test,
                     'year': education_group_year.academic_year.year,
-                    'sections': [{
-                        'label': ttl.label,
-                        'id': tt.text_label.label,
-                        'content': tt.text,
-                    }]
+                    'sections': [
+                        {
+                            'label': ttl.label,
+                            'id': tt.text_label.label,
+                            'content': tt.text,
+                        },
+                        {
+                            'label': 'conditions_admissions',
+                            'id': 'conditions_admissions',
+                            'content': None
+                        }
+                    ]
                 })
 
     def test_with_one_section_with_common(self):
@@ -305,6 +312,10 @@ class WsCatalogOfferPostTestCase(TestCase, Helper):
                     'id': tt.text_label.label + '-commun',
                     'label': ttl.label,
                     'content': tt2.text,
+                }, {
+                    'id': 'conditions_admissions',
+                    'label': 'conditions_admissions',
+                    'content': None,
                 }]
                 sections = convert_sections_list_of_dict_to_dict(sections)
 
@@ -417,17 +428,17 @@ class WsCatalogOfferPostTestCase(TestCase, Helper):
             if section in response_sections:
                 response_sections.pop(section)
 
-        self.assertEqual(len(response_sections), len(intro_set) + len(common_sections_set))
+        self.assertEqual(len(response_sections), len(intro_set) + len(common_sections_set) + 1)
         for section in common_sections_set:
             if section + '-commun' in response_sections:
                 response_sections.pop(section + '-commun')
 
-        self.assertEqual(len(response_sections), len(intro_set))
+        self.assertEqual(len(response_sections), len(intro_set) + 1)
         for section in intro_set:
             if 'intro-' + section in response_sections:
                 response_sections.pop('intro-' + section)
 
-        self.assertEqual(len(response_sections), 0)
+        self.assertEqual(len(response_sections), 1)
 
     def test_no_translation_for_term(self):
         education_group_year = EducationGroupYearFactory()
@@ -460,6 +471,10 @@ class WsCatalogOfferPostTestCase(TestCase, Helper):
             'id': text_label.label,
             'label': translated_text_label.label,
             'content': None
+        }, {
+            'id': 'conditions_admissions',
+            'label': 'conditions_admissions',
+            'content': None,
         }])
 
         self.assertEqual(response_sections, sections)
@@ -486,4 +501,4 @@ class WsCatalogOfferPostTestCase(TestCase, Helper):
         response_json = response.json()
         response_sections = convert_sections_list_of_dict_to_dict(response_json.pop('sections', []))
 
-        self.assertEqual(len(response_sections), 0)
+        self.assertEqual(len(response_sections), 1)

@@ -25,6 +25,7 @@
 ##############################################################################
 import json
 from collections import OrderedDict
+from functools import wraps
 
 from ckeditor.widgets import CKEditorWidget
 from django import forms
@@ -36,6 +37,7 @@ from django.db.models import Prefetch
 from django.http import HttpResponseRedirect, JsonResponse
 from django.shortcuts import get_object_or_404, redirect
 from django.urls import reverse
+from django.utils.decorators import method_decorator
 from django.utils.translation import ugettext_lazy as _
 from django.views.decorators.http import require_http_methods
 
@@ -505,12 +507,27 @@ def education_group_year_admission_condition_edit(request, education_group_year_
 
     return layout.render(request, 'education_group/tab_admission_conditions.html', context)
 
+
+def dummy_json(view_func):
+    @wraps(view_func)
+    def wrapper(request, *args, **kwargs):
+        if request.content_type == 'application/json':
+            if request.body:
+                request.json = json.loads(request.body)
+            else:
+                request.json = None
+        return view_func(*args, **kwargs)
+    return wrapper
+
+
 @login_required
 @ajax_required
+@method_decorator(dummy_json)
 @permission_required('base.can_edit_educationgroup_pedagogy', raise_exception=True)
 def education_group_year_admission_condition_add_line(request, education_group_year_id):
     education_group_year = get_object_or_404(EducationGroupYear, pk=education_group_year_id)
-    info = json.loads(request.body.decode('utf-8'))
+    # info = json.loads(request.body.decode('utf-8'))
+    info = request.json
 
     admission_condition, created = AdmissionCondition.objects.get_or_create(education_group_year=education_group_year)
 
@@ -535,10 +552,11 @@ def education_group_year_admission_condition_add_line(request, education_group_y
 
 @login_required
 @ajax_required
+@method_decorator(dummy_json)
 @permission_required('base.can_edit_educationgroup_pedagogy', raise_exception=True)
 def education_group_year_admission_condition_remove_line(request, education_group_year_id):
-    info = json.loads(request.body.decode('utf-8'))
-
+    # info = json.loads(request.body.decode('utf-8'))
+    info = request.json
     admission_condition_line_id = info['id']
 
     education_group_year = get_object_or_404(EducationGroupYear, pk=education_group_year_id)
@@ -551,9 +569,11 @@ def education_group_year_admission_condition_remove_line(request, education_grou
 
 @login_required
 @ajax_required
+@method_decorator(dummy_json)
 @permission_required('base.can_edit_educationgroup_pedagogy', raise_exception=True)
 def education_group_year_admission_condition_modify_text(request, education_group_year_id):
-    info = json.loads(request.body.decode('utf-8'))
+    # info = json.loads(request.body.decode('utf-8'))
+    info = request.json
 
     education_group_year = get_object_or_404(EducationGroupYear, pk=education_group_year_id)
     admission_condition, created = AdmissionCondition.objects.get_or_create(education_group_year=education_group_year)
@@ -565,22 +585,26 @@ def education_group_year_admission_condition_modify_text(request, education_grou
 
 @login_required
 @ajax_required
+@method_decorator(dummy_json)
 @permission_required('base.can_edit_educationgroup_pedagogy', raise_exception=True)
 def education_group_year_admission_condition_get_text(request, education_group_year_id):
     education_group_year = get_object_or_404(EducationGroupYear, pk=education_group_year_id)
     admission_condition, created = AdmissionCondition.objects.get_or_create(education_group_year=education_group_year)
-    info = json.loads(request.body.decode('utf-8'))
+    # info = json.loads(request.body.decode('utf-8'))
+    info = request.json
     text = getattr(admission_condition, 'text_' + info['section'], '')
     return JsonResponse({'message': 'read', 'section': info['section'], 'text': text})
 
 @login_required
 @ajax_required
+@method_decorator(dummy_json)
 @permission_required('base.can_edit_educationgroup_pedagogy', raise_exception=True)
 def education_group_year_admission_condition_get_line(request, education_group_year_id):
     education_group_year = get_object_or_404(EducationGroupYear, pk=education_group_year_id)
     admission_condition, created = AdmissionCondition.objects.get_or_create(education_group_year=education_group_year)
 
-    info = json.loads(request.body.decode('utf-8'))
+    # info = json.loads(request.body.decode('utf-8'))
+    info = request.json
 
     admission_condition_line = get_object_or_404(AdmissionConditionLine,
                                                  admission_condition=admission_condition,
@@ -598,12 +622,14 @@ def education_group_year_admission_condition_get_line(request, education_group_y
 
 @login_required
 @ajax_required
+@method_decorator(dummy_json)
 @permission_required('base.can_edit_educationgroup_pedagogy', raise_exception=True)
 def education_group_year_admission_condition_update_line(request, education_group_year_id):
     education_group_year = get_object_or_404(EducationGroupYear, pk=education_group_year_id)
     admission_condition, created = AdmissionCondition.objects.get_or_create(education_group_year=education_group_year)
 
-    info = json.loads(request.body.decode('utf-8'))
+    # info = json.loads(request.body.decode('utf-8'))
+    info = request.json
     print(info)
 
     admission_condition_line = get_object_or_404(AdmissionConditionLine,
@@ -626,5 +652,3 @@ def education_group_year_admission_condition_update_line(request, education_grou
                          'conditions': admission_condition_line.conditions,
                          'access': admission_condition_line.access,
                          'remarks': admission_condition_line.remarks})
-
-
