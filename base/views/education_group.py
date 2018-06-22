@@ -23,6 +23,7 @@
 #    see http://www.gnu.org/licenses/.
 #
 ##############################################################################
+import json
 from collections import OrderedDict
 
 from ckeditor.fields import RichTextField
@@ -588,6 +589,9 @@ def translated_text_labels2dict(translated_text_label):
 #     admission_condition.delete()
 #     return redirect('education_group_type_admission_conditions')
 
+def is_bachelor(education_group_year):
+    return education_group_year.education_group_type.name == 'Bachelier'
+
 
 @login_required
 @permission_required('base.can_edit_educationgroup_pedagogy', raise_exception=True)
@@ -599,18 +603,16 @@ def education_group_year_admission_condition_edit(request, education_group_year_
 
     acronym = education_group_year.acronym.lower()
 
-    is_bachelor = education_group_year.education_group_type.name == 'Bachelier'
-
     first_group = acronym.endswith(('2m', '2m1'))
     use_standard_text = acronym.endswith(('2a', '2mc'))
     second_group = True
     third_group = acronym.endswith(('2m', '2m1'))
 
     class SectionModalForm(forms.Form):
-        diploma = forms.CharField(widget=CKEditorWidget())
-        conditions = forms.CharField(widget=CKEditorWidget())
-        access = forms.CharField(widget=CKEditorWidget())
-        remarks = forms.CharField(widget=CKEditorWidget())
+        diploma = forms.CharField(widget=forms.Textarea)
+        conditions = forms.CharField(widget=forms.Textarea)
+        access = forms.CharField(widget=forms.Textarea)
+        remarks = forms.CharField(widget=forms.Textarea)
 
     class AdmissionConditionForm(forms.Form):
         text_field = forms.CharField(widget=CKEditorWidget())
@@ -621,13 +623,11 @@ def education_group_year_admission_condition_edit(request, education_group_year_
 
     admission_condition, created = AdmissionCondition.objects.get_or_create(education_group_year=education_group_year)
 
-    records = {
-        'bacheliers_ucl': list(
-            map(model_to_dict,
-                AdmissionConditionLine.objects.filter(admission_condition=admission_condition,
-                                                      section='bacheliers_ucl'))
-        ),
-    }
+    record = {}
+    for section in ('ucl_bachelors', 'others_bachelors_french', 'bachelors_dutch', 'foreign_bachelors',
+                    'graduates', 'masters'):
+        record[section] = AdmissionConditionLine.objects.filter(admission_condition=admission_condition,
+                                                      section=section)
 
     context = {
         'section_modal_form': section_modal_form,
@@ -635,14 +635,14 @@ def education_group_year_admission_condition_edit(request, education_group_year_
         'education_group_year': education_group_year,
         'parent': parent,
         'info': {
-            'is_bachelor': is_bachelor,
+            'is_bachelor': is_bachelor(education_group_year),
             'is_first_group': first_group,
             'is_second_group': second_group,
             'is_third_group': third_group,
             'use_standard_text': use_standard_text,
         },
         'admission_condition': admission_condition,
-        'records': records,
+        'record': record,
     }
 
     return layout.render(request, 'education_group/tab_admission_conditions.html', context)
@@ -652,9 +652,7 @@ def education_group_year_admission_condition_edit(request, education_group_year_
 @permission_required('base.can_edit_educationgroup_pedagogy', raise_exception=True)
 def education_group_year_admission_condition_add_line(request, education_group_year_id):
     education_group_year = get_object_or_404(EducationGroupYear, pk=education_group_year_id)
-    import json
     info = json.loads(request.body.decode('utf-8'))
-    print(info)
 
     admission_condition, created = AdmissionCondition.objects.get_or_create(education_group_year=education_group_year)
 
@@ -681,10 +679,7 @@ def education_group_year_admission_condition_add_line(request, education_group_y
 @ajax_required
 @permission_required('base.can_edit_educationgroup_pedagogy', raise_exception=True)
 def education_group_year_admission_condition_remove_line(request, education_group_year_id):
-
-    import json
     info = json.loads(request.body.decode('utf-8'))
-    print(info)
 
     admission_condition_line_id = info['id']
 
@@ -700,10 +695,7 @@ def education_group_year_admission_condition_remove_line(request, education_grou
 @ajax_required
 @permission_required('base.can_edit_educationgroup_pedagogy', raise_exception=True)
 def education_group_year_admission_condition_modify_text(request, education_group_year_id):
-
-    import json
     info = json.loads(request.body.decode('utf-8'))
-    print(info)
 
     education_group_year = get_object_or_404(EducationGroupYear, pk=education_group_year_id)
     admission_condition, created = AdmissionCondition.objects.get_or_create(education_group_year=education_group_year)
@@ -719,9 +711,62 @@ def education_group_year_admission_condition_modify_text(request, education_grou
 def education_group_year_admission_condition_get_text(request, education_group_year_id):
     education_group_year = get_object_or_404(EducationGroupYear, pk=education_group_year_id)
     admission_condition, created = AdmissionCondition.objects.get_or_create(education_group_year=education_group_year)
-    import json
     info = json.loads(request.body.decode('utf-8'))
-    print(info)
     text = getattr(admission_condition, 'text_' + info['section'], '')
     return JsonResponse({'message': 'read', 'section': info['section'], 'text': text})
+
+@login_required
+@ajax_required
+@permission_required('base.can_edit_educationgroup_pedagogy', raise_exception=True)
+def education_group_year_admission_condition_get_line(request, education_group_year_id):
+    education_group_year = get_object_or_404(EducationGroupYear, pk=education_group_year_id)
+    admission_condition, created = AdmissionCondition.objects.get_or_create(education_group_year=education_group_year)
+
+    info = json.loads(request.body.decode('utf-8'))
+
+    admission_condition_line = get_object_or_404(AdmissionConditionLine,
+                                                 admission_condition=admission_condition,
+                                                 section=info['section'],
+                                                 pk=info['id']
+                                                 )
+    return JsonResponse({'message': 'read',
+                         'section': admission_condition_line.section,
+                         'id': admission_condition_line.id,
+                         'diploma': admission_condition_line.diploma,
+                         'conditions': admission_condition_line.conditions,
+                         'access': admission_condition_line.access,
+                         'remarks': admission_condition_line.remarks})
+
+
+@login_required
+@ajax_required
+@permission_required('base.can_edit_educationgroup_pedagogy', raise_exception=True)
+def education_group_year_admission_condition_update_line(request, education_group_year_id):
+    education_group_year = get_object_or_404(EducationGroupYear, pk=education_group_year_id)
+    admission_condition, created = AdmissionCondition.objects.get_or_create(education_group_year=education_group_year)
+
+    info = json.loads(request.body.decode('utf-8'))
+    print(info)
+
+    admission_condition_line = get_object_or_404(AdmissionConditionLine,
+                                                 admission_condition=admission_condition,
+                                                 section=info.pop('section'),
+                                                 pk=info.pop('id')
+                                                 )
+
+    for key, value in info.items():
+        setattr(admission_condition_line, key, value)
+
+    admission_condition_line.save()
+
+    admission_condition_line.refresh_from_db()
+
+    return JsonResponse({'message': 'updated',
+                         'section': admission_condition_line.section,
+                         'id': admission_condition_line.id,
+                         'diploma': admission_condition_line.diploma,
+                         'conditions': admission_condition_line.conditions,
+                         'access': admission_condition_line.access,
+                         'remarks': admission_condition_line.remarks})
+
 

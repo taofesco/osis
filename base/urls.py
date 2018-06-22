@@ -241,7 +241,17 @@ urlpatterns = [
 
             url(r'^admission_conditions/remove_line$',
                 education_group.education_group_year_admission_condition_remove_line,
-                name='education_group_year_admission_condition_remove_line')
+                name='education_group_year_admission_condition_remove_line'),
+
+            url(r'^admission_conditions/update_line$',
+                education_group.education_group_year_admission_condition_update_line,
+                name='education_group_year_admission_condition_update_line'),
+
+            url(r'^admission_conditions/get_line$',
+                education_group.education_group_year_admission_condition_get_line,
+                name='education_group_year_admission_condition_get_line'),
+
+            # education_group_year_admission_condition_get_line
         ])),
 
         # url(r'^admission_conditions/', include([

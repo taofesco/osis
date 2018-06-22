@@ -186,12 +186,13 @@ def insert_section_if_checked(context, education_group_year, text_label):
     return {'label': None, 'content': None}
 
 
-def admission_condition_line_to_dict(admission_condition_line):
+def admission_condition_line_to_dict(context, admission_condition_line):
+    lang = '' if context.language == 'fr-be' else 'en'
+    fields = ('diploma', 'conditions', 'access', 'remarks')
+
     return {
-        'diploma': admission_condition_line.diploma,
-        'conditions': admission_condition_line.conditions,
-        'access': admission_condition_line.access,
-        'remarks': admission_condition_line.remarks,
+        field: getattr(admission_condition_line, field + lang) or ''
+        for field in fields
     }
 
 def insert_admission_condition_section(context, education_group_year):
@@ -202,7 +203,7 @@ def insert_admission_condition_section(context, education_group_year):
     group_by_section_name = collections.defaultdict(list)
 
     for item in admission_condition_lines:
-        group_by_section_name[item.section].append(admission_condition_line_to_dict(item))
+        group_by_section_name[item.section].append(admission_condition_line_to_dict(context, item))
 
     return {
         "label": "conditions_admissions",
