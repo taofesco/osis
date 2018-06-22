@@ -632,6 +632,11 @@
                     $('#' + section + '_' + record_id + "_access").html(data.access);
                     $('#' + section + '_' + record_id + "_remarks").html(data.remarks);
 
+                    diploma_ptr.val('');
+                    conditions_ptr.val('');
+                    access_ptr.val('');
+                    remarks_ptr.val('');
+
                     modal.modal('hide');
                 },
                 error: function (jqXHR, textStatus, errorThrown) {
