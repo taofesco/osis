@@ -697,10 +697,10 @@
         function create_html_for_record(section, record) {
             return [
                 '<tr id="', section, '_',record.id,'">',
-                    '<td>', record.diploma, '</td>',
-                    '<td>', record.conditions, '</td>',
-                    '<td>', record.access, '</td>',
-                    '<td>', record.remarks, '</td>',
+                    '<td id="', section, '_', record.id, '_diploma">', record.diploma, '</td>',
+                    '<td id="', section, '_', record.id, '_conditions">', record.conditions, '</td>',
+                    '<td id="', section, '_', record.id, '_access">', record.access, '</td>',
+                    '<td id="', section, '_', record.id, '_remarks">', record.remarks, '</td>',
                     '<td>',
                         '<a href="#" class="button line-remove-btn" data-record-id="', record.id,'" data-section="',section,'">',
                             '<span class="glyphicon glyphicon-remove-circle" style="font-size: 16px;" aria-hidden="true" />',
