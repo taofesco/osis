@@ -205,7 +205,7 @@
                     </div>
                 </div>
                 <div class="modal-footer">
-                    <button id="save_button_term" type="submit"
+                    <button id="save_term_button" type="submit"
                             class="btn btn-primary" role="button"
                             title="{% trans 'save' %}">{% trans 'save' %}</button>
                     <button type="submit" class="btn" data-dismiss="modal">{% trans 'cancel' %}</button>
@@ -405,12 +405,13 @@
         }
 
         $('#save_term_button').click(function(evt) {
-            var modal = $('#modify_term');
+            var modal = $('#save_term');
 
             var section = $(this).data('section'),
                 record_id = $(this).data('record-id');
 
             add_mode = (record_id === undefined);
+
             if (add_mode) {
                 var url = "{% url 'education_group_year_admission_condition_add_line' education_group_year_id=education_group_year.id %}";
             }
