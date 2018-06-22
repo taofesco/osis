@@ -308,8 +308,6 @@
                     alert('Error');
                 }
             });
-
-            console.log(section, record_id);
         });
 
         $('#modify_text_btn').click(function(evt) {
@@ -325,8 +323,6 @@
                 section: section,
                 text: text_ptr.getData(),
             }
-
-            console.table(data);
 
             $("#text_"  + section).html(data['text']);
 
@@ -349,7 +345,6 @@
             var section = $(this).data('section');
             var url = "{% url 'education_group_year_admission_condition_get_text' education_group_year_id=education_group_year.id %}";
 
-            console.log(section);
             var modal = $("#modify_text");
             var button = modal.find('#modify_text_btn');
             button.data('section', section);
@@ -359,14 +354,11 @@
                 section: section
             };
 
-            console.log(url);
-
             $.ajax(url, {
                 data: JSON.stringify(data),
                 type: 'post',
                 dataType: 'json',
                 success: function (data) {
-                    console.table(data);
                     text_ptr.setData(data.text);
                 },
                 error: function(jqXHR, textStatus, errorThrown) {
