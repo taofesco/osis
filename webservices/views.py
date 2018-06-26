@@ -164,7 +164,7 @@ def parameters_validation(acronym, language, year):
     education_group_year = get_object_or_404(EducationGroupYear,
                                              # Fixer pour utiliser aussi partial_acronym en plus de l'acronym
                                              # example: LDVLD100I
-                                             acronym__iexact=acronym,
+                                             Q(acronym__iexact=acronym) | Q(partial_acronym__iexact=acronym),
                                              academic_year__year=year)
     return education_group_year, iso_language, year
 
@@ -189,7 +189,7 @@ def insert_section_if_checked(context, education_group_year, text_label):
 
 
 def admission_condition_line_to_dict(context, admission_condition_line):
-    lang = '' if context.language == 'fr-be' else 'en'
+    lang = '' if context.language == 'fr-be' else '_en'
     fields = ('diploma', 'conditions', 'access', 'remarks')
 
     return {
@@ -199,7 +199,7 @@ def admission_condition_line_to_dict(context, admission_condition_line):
 
 
 def response_for_bachelor(context):
-    lang = '' if context.language == 'fr-be' else 'en'
+    lang = '' if context.language == 'fr-be' else '_en'
     education_group_year = EducationGroupYear.objects.filter(acronym__iexact='common-bacs',
                                                              academic_year=context.academic_year).first()
 
@@ -219,7 +219,7 @@ def response_for_bachelor(context):
 
 
 def build_content_response(context, admission_condition, admission_condition_common, acronym_suffix):
-    lang = '' if context.language == 'fr-be' else 'en'
+    lang = '' if context.language == 'fr-be' else '_en'
 
     admission_condition_lines = AdmissionConditionLine.objects.filter(admission_condition=admission_condition)
 
@@ -296,11 +296,6 @@ def build_content_response(context, admission_condition, admission_condition_com
 
 @renderer_classes((JSONRenderer,))
 def ws_get_conditions_admissions(request, year, language, acronym):
-    education_group_year = get_object_or_404(
-        EducationGroupYear,
-        Q(acronym__iexact=acronym) | Q(partial_acronym__iexact=acronym),
-        academic_year__year=year)
-
     education_group_year, iso_language, year = parameters_validation(acronym, language, year)
 
     class Context:
@@ -341,78 +336,3 @@ def ws_get_conditions_admissions(request, year, language, acronym):
         "content": build_content_response(context, admission_condition, admission_condition_common, full_suffix)
     }
     return JsonResponse(result)
-
-
-def insert_admission_condition_section(context, education_group_year):
-    admission_condition = AdmissionCondition.objects.filter(education_group_year=education_group_year).first()
-    if not admission_condition:
-        return {
-            'label': 'conditions_admissions',
-            'content': None,
-            'id': 'conditions_admissions'
-        }
-
-    admission_condition_lines = AdmissionConditionLine.objects.filter(admission_condition=admission_condition)
-
-    group_by_section_name = collections.defaultdict(list)
-
-    for item in admission_condition_lines:
-        group_by_section_name[item.section].append(admission_condition_line_to_dict(context, item))
-
-    ACRONYM_PATTERN = re.compile(r'(?P<prefix>[a-z]+)(?P<cycle>[0-9]{1,2})(?P<suffix>[a-z]+)(?P<year>[0-9]?)')
-
-    acronym_match = re.match(ACRONYM_PATTERN, education_group_year.acronym.lower())
-    if not acronym_match:
-        raise Exception('error')
-
-    common_acronym = 'common-{cycle}{suffix}{year}'.format(acronym_match.groupdict())
-
-    education_group_year_common = EducationGroupYear.objects.filter(acronym=common_acronym).first()
-
-    print(education_group_year_common)
-    return {}
-
-    return {
-        'id': 'conditions_admissions',
-        "label": "conditions_admissions",
-        "content": {
-            "alert_message": admission_condition.text_alert_message,
-            "bachelor_text": admission_condition.text_bachelor,
-            "free_text": admission_condition.text_free,
-            "sections": {
-                "university_bachelors": {
-                    "text": admission_condition.text_university_bachelors,
-                    "records": {
-                        "ucl_bachelors": group_by_section_name['ucl_bachelors'],
-                        "others_bachelors_french": group_by_section_name['others_bachelors_french'],
-                        "bachelors_dutch": group_by_section_name['bachelors_dutch'],
-                        "foreign_bachelors": group_by_section_name['foreign_bachelors'],
-                    }
-                },
-                "non_university_bachelors": {
-                    "text": admission_condition.text_non_university_bachelors,
-                    # "text-common": admission_condition.text_second_bachelor_non_university,
-                },
-                "holders_second_university_degree": {
-                    "text": admission_condition.text_holders_second_university_degree,
-                    "records": {
-                        "graduates": group_by_section_name['graduates'],
-                        "masters": group_by_section_name['masters']
-                    }
-                },
-                "holders_non_university_second_degree": {
-                    "text": admission_condition.text_holders_non_university_second_degree,
-                },
-                "adults_taking_up_university_training": {
-                    "text": admission_condition.text_adults_taking_up_university_training,
-                },
-                "personalized_access": {
-                    "text": admission_condition.text_personalized_access,
-                },
-                "admission_enrollment_procedures": {
-                    "text": admission_condition.text_admission_enrollment_procedures,
-                    # "text-common": admission_condition.text_second_procedure,
-                }
-            }
-        }
-    }
