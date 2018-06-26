@@ -45,6 +45,7 @@ from webservices.utils import convert_sections_to_list_of_dict
 LANGUAGES = {'fr': 'fr-be', 'en': 'en'}
 INTRO_PATTERN = r'intro-(?P<acronym>\w+)'
 COMMON_PATTERN = r'(?P<section_name>\w+)-commun'
+ACRONYM_PATTERN = re.compile(r'(?P<prefix>[a-z]+)(?P<cycle>[0-9]{1,2})(?P<suffix>[a-z]+)(?P<year>[0-9]?)')
 
 Context = collections.namedtuple(
     'Context',
@@ -99,14 +100,13 @@ def ws_catalog_offer(request, year, language, acronym):
     validate_json_request(request, year, acronym)
 
     # Processing
-    context = new_context(acronym, education_group_year, iso_language, language)
+    context = new_context(education_group_year, iso_language, language)
     items = request.data['sections']
 
-    # sections = collections.OrderedDict()
     sections = process_message(context, education_group_year, items)
 
     context.description['sections'] = convert_sections_to_list_of_dict(sections)
-    context.description['sections'].append(insert_admission_condition_section(context, education_group_year))
+    context.description['sections'].append(get_conditions_admissions(context))
     return Response(context.description, content_type='application/json')
 
 
@@ -141,11 +141,11 @@ def process_section(context, education_group_year, item):
     return None
 
 
-def new_context(acronym, education_group_year, iso_language, language):
+def new_context(education_group_year, iso_language, language):
     title = get_title_of_education_group_year(education_group_year, iso_language)
     description = new_description(education_group_year, language, title)
     context = Context(
-        acronym=acronym.upper(),
+        acronym=education_group_year.acronym.upper(),
         year=int(education_group_year.academic_year.year),
         title=title,
         description=description,
@@ -298,19 +298,15 @@ def build_content_response(context, admission_condition, admission_condition_com
 def ws_get_conditions_admissions(request, year, language, acronym):
     education_group_year, iso_language, year = parameters_validation(acronym, language, year)
 
-    class Context:
-        pass
+    context = new_context(education_group_year, iso_language, language)
 
-    context = Context()
-    context.acronym = acronym
-    context.academic_year = education_group_year.academic_year
-    context.education_group_year = education_group_year
-    context.language = iso_language
-    context.year = year
+    result = get_conditions_admissions(context)
 
-    ACRONYM_PATTERN = re.compile(r'(?P<prefix>[a-z]+)(?P<cycle>[0-9]{1,2})(?P<suffix>[a-z]+)(?P<year>[0-9]?)')
+    return JsonResponse(result)
 
-    acronym_match = re.match(ACRONYM_PATTERN, education_group_year.acronym.lower())
+
+def get_conditions_admissions(context):
+    acronym_match = re.match(ACRONYM_PATTERN, context.acronym.lower())
     if not acronym_match:
         raise Exception('error')
 
@@ -322,10 +318,10 @@ def ws_get_conditions_admissions(request, year, language, acronym):
 
     if is_bachelor:
         # special case, if it's a bachelor, just return the text for the bachelor
-        return JsonResponse(response_for_bachelor(context))
+        return response_for_bachelor(context)
 
     common_acronym = 'common-{}'.format(full_suffix)
-    admission_condition = AdmissionCondition.objects.get(education_group_year=education_group_year)
+    admission_condition = AdmissionCondition.objects.get(education_group_year=context.education_group_year)
 
     admission_condition_common = AdmissionCondition.objects.filter(
         education_group_year__acronym__iexact=common_acronym).first()
@@ -335,4 +331,4 @@ def ws_get_conditions_admissions(request, year, language, acronym):
         "label": "conditions_admissions",
         "content": build_content_response(context, admission_condition, admission_condition_common, full_suffix)
     }
-    return JsonResponse(result)
+    return result
