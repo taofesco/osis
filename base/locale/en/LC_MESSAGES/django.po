@@ -3012,9 +3012,6 @@ msgstr "Conditions"
 msgid "Access"
 msgstr "Access"
 
-msgid "Remarks"
-msgstr "Remarks"
-
 msgid "Actions"
 msgstr "Actions"
 
