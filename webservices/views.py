@@ -320,7 +320,6 @@ def ws_get_conditions_admissions(request, year, language, acronym):
         raise Exception('error')
 
     acronym_suffix = acronym_match.group('suffix').lower()
-    # import pdb; pdb.set_trace()
 
     full_suffix = '{cycle}{suffix}{year}'.format(**acronym_match.groupdict())
 

@@ -23,7 +23,7 @@ def render_row(record, section_name):
             <td id="{section}_{record_id}_conditions">{conditions}</td>
             <td id="{section}_{record_id}_access" class="text-right">{access}</td>
             <td id="{section}_{record_id}_remarks">{remarks}</td>
-            <td class="text-right">{record_id} -
+            <td class="text-right">
                 <a href="#" role="button" data-record-id="{record_id}" data-section="{section}" class="button line-remove-btn">
                     <span class="glyphicon glyphicon-remove-circle" style="font-size: 16px;" aria-hidden="true">
                     </span>
