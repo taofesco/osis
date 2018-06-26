@@ -38,9 +38,9 @@
                                     </div>
                                 {% endif %}
                                 {% if info.show_free_text %}
-                                    <div id="free_text">
-                                        <h3>{% trans 'Free Text' %} <a href="#" class="modify-text-btn button" role="button" data-section="second_group"><span class="glyphicon glyphicon-edit" style="font-size: 16px;" aria-hidden="true"></span></a></h3>
-                                        <div id="text_second_group">{{ admission_condition.text_standard|safe }}</div>
+                                    <div id="standard_text">
+                                        <h3>{% trans 'Free Text' %} <a href="#" class="modify-text-btn button" role="button" data-section="standard"><span class="glyphicon glyphicon-edit" style="font-size: 16px;" aria-hidden="true"></span></a></h3>
+                                        <div id="text_standard">{{ admission_condition.text_standard|safe }}</div>
                                         <hr/>
                                     </div>
                                 {% endif %}
