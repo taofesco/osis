@@ -1,3 +1,5 @@
+import unittest
+
 from django.test import TestCase
 
 from base.models.admission_condition import AdmissionCondition
@@ -5,6 +7,7 @@ from base.tests.factories.education_group_year import EducationGroupYearFactory
 from webservices.tests.helper import Helper
 
 
+@unittest.skip("unused")
 class WsGetAdmissionsConditionsTestCase(TestCase, Helper):
     URL_NAME = 'ws_get_cond_admissions'
 

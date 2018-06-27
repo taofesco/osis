@@ -231,7 +231,6 @@ def build_content_response(context, admission_condition, admission_condition_com
     response = {}
 
     # first part
-    print(acronym_suffix)
     if acronym_suffix in ('2m', '2m1'):
         response.update({
             "alert_message": getattr(admission_condition_common,
