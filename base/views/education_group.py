@@ -25,7 +25,6 @@
 ##############################################################################
 import json
 from collections import OrderedDict
-from functools import wraps
 
 from ckeditor.widgets import CKEditorWidget
 from django import forms
@@ -37,7 +36,6 @@ from django.db.models import Prefetch
 from django.http import HttpResponseRedirect, JsonResponse
 from django.shortcuts import get_object_or_404, redirect
 from django.urls import reverse
-from django.utils.decorators import method_decorator
 from django.utils.translation import ugettext_lazy as _
 from django.views.decorators.http import require_http_methods
 
@@ -583,7 +581,6 @@ def education_group_year_admission_condition_get_line(request, education_group_y
 
     info = json.loads(request.body.decode('utf-8'))
     lang = '' if info['language'] == 'fr' else '_en'
-    print(info)
 
     admission_condition_line = get_object_or_404(AdmissionConditionLine,
                                                  admission_condition=admission_condition,
@@ -609,7 +606,6 @@ def education_group_year_admission_condition_update_line(request, education_grou
     admission_condition, created = AdmissionCondition.objects.get_or_create(education_group_year=education_group_year)
 
     info = json.loads(request.body.decode('utf-8'))
-    print(info)
 
     admission_condition_line = get_object_or_404(AdmissionConditionLine,
                                                  admission_condition=admission_condition,
