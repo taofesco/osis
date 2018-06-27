@@ -28,9 +28,7 @@ def run(filename, language='fr-be'):
 
     lang = '' if language == 'fr-be' else '_en'
 
-    # TODO: Ajouter la date dans le fichier d'export des conditions d'admissions communes
-
-    year = 2017
+    year = texts['year']
     education_group_year_common = EducationGroupYear.objects.get(
         academic_year__year=year,
         acronym='common'
@@ -50,8 +48,6 @@ def run(filename, language='fr-be'):
         admission_condition, created = AdmissionCondition.objects.get_or_create(
             education_group_year=education_group_year)
 
-
-        # TODO: Fix the name of the fields
         if text_label == 'alert_message':
             setattr(admission_condition, 'text_alert_message' + lang, value)
 
