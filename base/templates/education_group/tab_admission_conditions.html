@@ -22,7 +22,7 @@
 
                             <div class="row">
                                 {% if info.is_common and info.is_bachelor %}
-                                    {% render_condition_text 'bacherlor_admission' _('Admission Conditions for Bachelors') admission_condition.text_bachelor %}
+                                    {% render_condition_text 'bachelor' _('Admission Conditions for Bachelors') admission_condition.text_bachelor %}
                                 {% endif %}
                                 {% if info.is_common and info.is_master %}
                                     {% render_condition_text 'alert_message' _('Alert Message') admission_condition.text_alert_message %}
