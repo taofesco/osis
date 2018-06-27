@@ -42,7 +42,7 @@
                                                 <th width="20%">{% trans 'Conditions' %}</th>
                                                 <th width="150px">{% trans 'Access' %}</th>
                                                 <th>{% trans 'Remarks' %}</th>
-                                                <th width="5%">{% trans 'Actions' %}</th>
+                                                <th width="10%">{% trans 'Actions' %}</th>
                                             </tr>
                                             </thead>
                                             <tbody>
@@ -68,7 +68,7 @@
                                                 <th width="20%">{% trans 'Conditions' %}</th>
                                                 <th width="150px">{% trans 'Access' %}</th>
                                                 <th>{% trans 'Remarks' %}</th>
-                                                <th width="5%">{% trans 'Actions' %}</th>
+                                                <th width="10%">{% trans 'Actions' %}</th>
                                             </tr>
                                             </thead>
                                             <tbody>
@@ -203,13 +203,15 @@
         $('div#panel-data').on('click', 'a.line-edit-btn', function (evt) {
             evt.preventDefault();
             var section = $(this).data('section'),
-                record_id = $(this).data('record-id');
+                record_id = $(this).data('record-id'),
+                language = $(this).data('language');
 
             var modal = $("#save_term");
             var button = modal.find('#save_term_button');
 
             button.data('section', section);
             button.data('record-id', record_id);
+            button.data('language', language);
 
             var url = "{% url 'education_group_year_admission_condition_get_line' education_group_year_id=education_group_year.id %}";
 
@@ -223,7 +225,8 @@
 
             var data = {
                 section: section,
-                id: record_id
+                id: record_id,
+                language: language,
             };
 
             $.ajax(url, {
@@ -235,7 +238,6 @@
                     conditions_ptr.val(data.conditions);
                     access_ptr.val(data.access);
                     remarks_ptr.val(data.remarks);
-
                     modal.modal('show');
                 },
                 error: function(jqXHR, textStatus, errorThrown) {
@@ -249,7 +251,9 @@
             evt.preventDefault();
             var modal = $("#modify_text");
             var url = "{% url 'education_group_year_admission_condition_modify_text' education_group_year_id=education_group_year.id %}";
-            var section = $(this).data('section');
+            var section = $(this).data('section'),
+                language = $(this).data('language');
+
             console.log('modify_text_btn.click', section);
 
             var text_ptr = CKEDITOR.instances['id_text_field'];
@@ -257,15 +261,17 @@
             var data = {
                 section: section,
                 text: text_ptr.getData(),
-            }
-
-            $("#text_"  + section).html(data['text']);
+                language: language,
+            };
 
             $.ajax(url, {
                 data: JSON.stringify(data),
                 type: 'post',
                 dataType: 'json',
-                success: function (data) {
+                success: function (response) {
+                    if (language === 'fr') {
+                        $("#text_" + section).html(response.text);
+                    }
                     modal.modal('hide');
                 },
                 error: function (jqXHR, textStatus, errorThrown) {
@@ -276,16 +282,19 @@
 
         $('.modify-text-btn').click(function (evt) {
             evt.preventDefault();
-            var section = $(this).data('section');
+            var section = $(this).data('section'),
+                language = $(this).data('language');
             var url = "{% url 'education_group_year_admission_condition_get_text' education_group_year_id=education_group_year.id %}";
 
             var modal = $("#modify_text");
             var button = modal.find('#modify_text_btn');
             button.data('section', section);
+            button.data('language', language);
 
             var text_ptr = CKEDITOR.instances['id_text_field'];
             var data = {
-                section: section
+                section: section,
+                language: language,
             };
 
             $.ajax(url, {
@@ -334,15 +343,16 @@
             var modal = $('#save_term');
 
             var section = $(this).data('section'),
-                record_id = $(this).data('record-id');
-
-            add_mode = (record_id === undefined);
+                record_id = $(this).data('record-id'),
+                language = $(this).data('language'),
+                add_mode = (record_id === undefined),
+                url = '';
 
             if (add_mode) {
-                var url = "{% url 'education_group_year_admission_condition_add_line' education_group_year_id=education_group_year.id %}";
+                url = "{% url 'education_group_year_admission_condition_add_line' education_group_year_id=education_group_year.id %}";
             }
             else {
-                var url = "{% url 'education_group_year_admission_condition_update_line' education_group_year_id=education_group_year.id %}"
+                url = "{% url 'education_group_year_admission_condition_update_line' education_group_year_id=education_group_year.id %}"
             }
             var diploma_ptr = modal.find('#textarea_diploma'),
                 conditions_ptr = modal.find('#textarea_conditions'),
@@ -351,12 +361,14 @@
 
             var data = {
                 id: record_id,
+                language: language,
                 section: section,
                 diploma: diploma_ptr.val(),
                 conditions: conditions_ptr.val(),
                 access: access_ptr.val(),
                 remarks: remarks_ptr.val()
             };
+            console.log(data);
 
             $.ajax(url, {
                 data: JSON.stringify(data),
@@ -364,10 +376,12 @@
                 dataType: 'json',
 
                 success: function (data) {
-                    if (add_mode) {
-                        add_new_row_in_table(section, data);
-                    } else {
-                        change_row_in_table(section, record_id, data);
+                    if (language === 'fr') {
+                        if (add_mode) {
+                            add_new_row_in_table(section, data);
+                        } else {
+                            change_row_in_table(section, record_id, data);
+                        }
                     }
 
                     reset_textareas(diploma_ptr, conditions_ptr, access_ptr, remarks_ptr);
@@ -407,8 +421,11 @@
                         '<a href="#" class="button line-remove-btn" data-record-id="', record.id,'" data-section="',section,'">',
                             '<span class="glyphicon glyphicon-remove-circle" style="font-size: 16px;" aria-hidden="true" />',
                         '</a>',
-                        '<a href="#" class="button line-edit-btn" data-record-id="', record.id, '" data-section="', section, '">',
+                        '<a href="#" class="button line-edit-btn" data-record-id="', record.id, '" data-section="', section, '" data-language="fr">',
                             '<span class="glyphicon glyphicon-edit" style="font-size: 16px;" aria-hidden="true" />',
+                        '</a>',
+                        '<a href="#" class="button line-edit-btn" data-record-id="', record.id, '" data-section="', section, '" data-language="en">',
+                            '<span class="glyphicon glyphicon-flag" style="font-size: 16px;" aria-hidden="true" />',
                         '</a>',
                     '</td>',
                 '</tr>'

@@ -1,5 +1,12 @@
 <div id="{{ section }}">
-    <h3>{{ text }} <a href="#" class="modify-text-btn button" role="button" data-section="{{ section }}"><span class="glyphicon glyphicon-edit" style="font-size: 16px;" aria-hidden="true"></span></a></h3>
+    <h3>{{ text }}
+        <a href="#" class="modify-text-btn button" role="button" data-section="{{ section }}" data-language="fr">
+            <span class="glyphicon glyphicon-edit" style="font-size: 16px;" aria-hidden="true"></span>
+        </a>
+        <a href="#" class="button modify-text-btn" role="button"  data-section="{{section}}" data-language="en">
+            <span class="glyphicon glyphicon-flag" style="font-size: 16px;" aria-hidden="true"></span>
+        </a>
+    </h3>
     <div id="text_{{ section }}">{{ field|safe }}</div>
     <hr/>
 </div>

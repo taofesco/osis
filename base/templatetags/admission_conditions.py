@@ -28,8 +28,11 @@ def render_row(record, section_name):
                     <span class="glyphicon glyphicon-remove-circle" style="font-size: 16px;" aria-hidden="true">
                     </span>
                 </a>
-                <a href="#" role="button" class="button line-edit-btn" data-record-id="{record_id}" data-section="{section}">
+                <a href="#" role="button" class="button line-edit-btn" data-record-id="{record_id}" data-section="{section}" data-language="fr">
                     <span class="glyphicon glyphicon-edit" style="font-size: 16px;" aria-hidden="true"></span>
+                </a>
+                <a href="#" role="button" class="button line-edit-btn" data-record-id="{record_id}" data-section="{section}" data-language="en">
+                    <span class="glyphicon glyphicon-flag" style="font-size: 16px;" aria-hidden="true"></span>
                 </a>
             </td>
         </tr>
@@ -46,7 +49,7 @@ def render_header_table(header_text, section_name):
     header = """
         <tr id="{section_name}">
             <td colspan="5" class="info">
-                {header_text} <a class="button line-add-btn" data-section="{section_name}" href="#">
+                {header_text} <a class="button line-add-btn" data-section="{section_name}" data-language="fr" href="#">
                 <span class="glyphicon glyphicon-plus" aria-hidden="true"></span>
                 </a>
             </td>

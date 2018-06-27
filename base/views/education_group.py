@@ -546,23 +546,32 @@ def education_group_year_admission_condition_remove_line(request, education_grou
 @permission_required('base.can_edit_educationgroup_pedagogy', raise_exception=True)
 def education_group_year_admission_condition_modify_text(request, education_group_year_id):
     info = json.loads(request.body.decode('utf-8'))
+    lang = '' if info['language'] == 'fr' else '_en'
 
     education_group_year = get_object_or_404(EducationGroupYear, pk=education_group_year_id)
     admission_condition, created = AdmissionCondition.objects.get_or_create(education_group_year=education_group_year)
 
-    setattr(admission_condition, 'text_' + info['section'], info['text'])
+    column = 'text_{}{}'.format(info['section'], lang)
+    setattr(admission_condition, column, info['text'])
     admission_condition.save()
+    admission_condition.refresh_from_db()
 
-    return JsonResponse({'message': 'modified'})
+    response = {
+        'message': 'modified',
+        'text': getattr(admission_condition, column, '')
+    }
+    return JsonResponse(response)
 
 @login_required
 @ajax_required
 @permission_required('base.can_edit_educationgroup_pedagogy', raise_exception=True)
 def education_group_year_admission_condition_get_text(request, education_group_year_id):
     info = json.loads(request.body.decode('utf-8'))
+    lang = '' if info['language'] == 'fr' else '_en'
     education_group_year = get_object_or_404(EducationGroupYear, pk=education_group_year_id)
     admission_condition, created = AdmissionCondition.objects.get_or_create(education_group_year=education_group_year)
-    text = getattr(admission_condition, 'text_' + info['section'], '')
+    column = 'text_' + info['section'] + lang
+    text = getattr(admission_condition, column, 'Undefined')
     return JsonResponse({'message': 'read', 'section': info['section'], 'text': text})
 
 @login_required
@@ -573,6 +582,8 @@ def education_group_year_admission_condition_get_line(request, education_group_y
     admission_condition, created = AdmissionCondition.objects.get_or_create(education_group_year=education_group_year)
 
     info = json.loads(request.body.decode('utf-8'))
+    lang = '' if info['language'] == 'fr' else '_en'
+    print(info)
 
     admission_condition_line = get_object_or_404(AdmissionConditionLine,
                                                  admission_condition=admission_condition,
@@ -582,10 +593,10 @@ def education_group_year_admission_condition_get_line(request, education_group_y
         'message': 'read',
         'section': admission_condition_line.section,
         'id': admission_condition_line.id,
-        'diploma': admission_condition_line.diploma,
-        'conditions': admission_condition_line.conditions,
-        'access': admission_condition_line.access,
-        'remarks': admission_condition_line.remarks
+        'diploma': getattr(admission_condition_line, 'diploma' + lang, ''),
+        'conditions': getattr(admission_condition_line, 'conditions' + lang, ''),
+        'access': getattr(admission_condition_line, 'access' + lang, ''),
+        'remarks': getattr(admission_condition_line, 'remarks' + lang, ''),
     }
     return JsonResponse(response)
 
@@ -598,6 +609,7 @@ def education_group_year_admission_condition_update_line(request, education_grou
     admission_condition, created = AdmissionCondition.objects.get_or_create(education_group_year=education_group_year)
 
     info = json.loads(request.body.decode('utf-8'))
+    print(info)
 
     admission_condition_line = get_object_or_404(AdmissionConditionLine,
                                                  admission_condition=admission_condition,
@@ -605,17 +617,22 @@ def education_group_year_admission_condition_update_line(request, education_grou
                                                  pk=info.pop('id')
                                                  )
 
+    lang = '' if info['language'] == 'fr' else '_en'
+
     for key, value in info.items():
-        setattr(admission_condition_line, key, value)
+        setattr(admission_condition_line, key + lang, value)
 
     admission_condition_line.save()
 
     admission_condition_line.refresh_from_db()
 
-    return JsonResponse({'message': 'updated',
-                         'section': admission_condition_line.section,
-                         'id': admission_condition_line.id,
-                         'diploma': admission_condition_line.diploma,
-                         'conditions': admission_condition_line.conditions,
-                         'access': admission_condition_line.access,
-                         'remarks': admission_condition_line.remarks})
+    response = {
+        'message': 'updated',
+        'section': admission_condition_line.section,
+        'id': admission_condition_line.id,
+        'diploma': getattr(admission_condition_line, 'diploma' + lang, ''),
+        'conditions': getattr(admission_condition_line, 'conditions' + lang, ''),
+        'access': getattr(admission_condition_line, 'access' + lang, ''),
+        'remarks': getattr(admission_condition_line, 'remarks' + lang, '')
+    }
+    return JsonResponse(response)
