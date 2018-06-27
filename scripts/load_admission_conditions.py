@@ -4,12 +4,9 @@ import sys
 
 from django.conf import settings
 from django.db.models import Q
-from prettyprinter import cpprint
 
-from base.models.academic_year import AcademicYear
 from base.models.admission_condition import AdmissionCondition, AdmissionConditionLine
 from base.models.education_group_year import EducationGroupYear
-from base.tests.factories.education_group_year import EducationGroupYearFactory
 
 
 def check_parameters(filename, language):
@@ -93,7 +90,6 @@ def run(filename, language='fr-be'):
                     else:
                         raise Exception('This case is not handled')
 
-
             texts = item['info'].get('texts', {}) or {}
 
             for key, value in texts.items():
@@ -111,5 +107,3 @@ def run(filename, language='fr-be'):
                     raise Exception('Bouh')
 
             admission_condition.save()
-
-

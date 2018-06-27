@@ -24,6 +24,7 @@
 #
 ##############################################################################
 import collections
+import functools
 import re
 
 from django.core.exceptions import SuspiciousOperation
@@ -251,6 +252,11 @@ def build_content_response(context, admission_condition, admission_condition_com
         "free_text": getattr(admission_condition, 'text_free' + lang),
     })
 
+    get_texts = functools.partial(get_texts_for_section,
+                                  admission_condition=admission_condition,
+                                  admission_condition_common=admission_condition_common,
+                                  lang=lang)
+
     if acronym_suffix in ('2m', '2m1'):
         response.update({
             "sections": {
@@ -263,11 +269,7 @@ def build_content_response(context, admission_condition, admission_condition_com
                         "foreign_bachelors": group_by_section_name['foreign_bachelors'],
                     }
                 },
-                "non_university_bachelors": {
-                    "text": getattr(admission_condition, 'text_non_university_bachelors' + lang),
-                    "text-common": getattr(admission_condition_common,
-                                           'text_non_university_bachelors' + lang) if admission_condition_common else None,
-                },
+                "non_university_bachelors": get_texts('text_non_university_bachelors'),
                 "holders_second_university_degree": {
                     "text": getattr(admission_condition, 'text_holders_second_university_degree' + lang),
                     "records": {
@@ -278,25 +280,21 @@ def build_content_response(context, admission_condition, admission_condition_com
                 "holders_non_university_second_degree": {
                     "text": getattr(admission_condition, 'text_holders_non_university_second_degree' + lang) or None,
                 },
-                "adults_taking_up_university_training": {
-                    "text": getattr(admission_condition, 'text_adults_taking_up_university_training' + lang) or None,
-                    "text-common": getattr(admission_condition_common,
-                                           'text_adults_taking_up_university_training' + lang) if admission_condition_common else None
-                },
-                "personalized_access": {
-                    "text": getattr(admission_condition, 'text_personalized_access' + lang) or None,
-                    "text-common": getattr(admission_condition_common,
-                                           'text_personalized_access' + lang) if admission_condition_common else None
-                },
-                "admission_enrollment_procedures": {
-                    "text": getattr(admission_condition, 'text_admission_enrollment_procedures' + lang),
-                    "text-common": getattr(admission_condition_common,
-                                           'text_admission_enrollment_procedures' + lang) if admission_condition_common else None,
-                }
+                "adults_taking_up_university_training": get_texts('text_adults_taking_up_university_training'),
+                "personalized_access": get_texts('text_personalized_access'),
+                "admission_enrollment_procedures": get_texts('text_admission_enrollment_procedures'),
             }
         })
 
     return response
+
+
+def get_texts_for_section(column_name, admission_condition, admission_condition_common, lang):
+    return {
+        "text": getattr(admission_condition, 'text_adults_taking_up_university_training' + lang) or None,
+        "text-common": getattr(admission_condition_common,
+                               'text_adults_taking_up_university_training' + lang) if admission_condition_common else None
+    }
 
 
 @renderer_classes((JSONRenderer,))
@@ -326,7 +324,9 @@ def get_conditions_admissions(context):
         return response_for_bachelor(context)
 
     common_acronym = 'common-{}'.format(full_suffix)
-    admission_condition, created = AdmissionCondition.objects.get_or_create(education_group_year=context.education_group_year)
+    admission_condition, created = AdmissionCondition.objects.get_or_create(
+        education_group_year=context.education_group_year
+    )
 
     admission_condition_common = AdmissionCondition.objects.filter(
         education_group_year__acronym__iexact=common_acronym).first()

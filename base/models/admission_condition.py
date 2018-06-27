@@ -12,10 +12,10 @@ class AdmissionCondition(models.Model):
 
     # texte alert (2m et 2m1)
     text_alert_message = models.TextField(default='')
-    
+
     # texte standard pour 2a et 2mc
     text_standard = models.TextField(null=True)
-    
+
     # text libre pour 2eme partie
     text_free = models.TextField(default='')
 
@@ -29,7 +29,6 @@ class AdmissionCondition(models.Model):
     text_adults_taking_up_university_training = models.TextField(default='')
     text_personalized_access = models.TextField(default='')
     text_admission_enrollment_procedures = models.TextField(default='')
-
 
     # English
     text_bachelor_en = models.TextField(default='')

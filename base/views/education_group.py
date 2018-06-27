@@ -475,7 +475,7 @@ def education_group_year_admission_condition_edit(request, education_group_year_
     for section in ('ucl_bachelors', 'others_bachelors_french', 'bachelors_dutch', 'foreign_bachelors',
                     'graduates', 'masters'):
         record[section] = AdmissionConditionLine.objects.filter(admission_condition=admission_condition,
-                                                      section=section)
+                                                                section=section)
 
     context = {
         'admission_condition_form': admission_condition_form,
@@ -488,8 +488,7 @@ def education_group_year_admission_condition_edit(request, education_group_year_
             'is_master': is_master,
             'show_free_text': is_specific and (is_master or use_standard_text),
         },
-
-    'admission_condition': admission_condition,
+        'admission_condition': admission_condition,
         'record': record,
     }
 
@@ -524,6 +523,7 @@ def education_group_year_admission_condition_add_line(request, education_group_y
     }
     return JsonResponse({'message': 'added', 'record': record})
 
+
 @login_required
 @ajax_required
 @permission_required('base.can_edit_educationgroup_pedagogy', raise_exception=True)
@@ -538,6 +538,7 @@ def education_group_year_admission_condition_remove_line(request, education_grou
                                                  pk=admission_condition_line_id)
     admission_condition_line.delete()
     return JsonResponse({'message': 'deleted'})
+
 
 @login_required
 @ajax_required
@@ -560,6 +561,7 @@ def education_group_year_admission_condition_modify_text(request, education_grou
     }
     return JsonResponse(response)
 
+
 @login_required
 @ajax_required
 @permission_required('base.can_edit_educationgroup_pedagogy', raise_exception=True)
@@ -571,6 +573,7 @@ def education_group_year_admission_condition_get_text(request, education_group_y
     column = 'text_' + info['section'] + lang
     text = getattr(admission_condition, column, 'Undefined')
     return JsonResponse({'message': 'read', 'section': info['section'], 'text': text})
+
 
 @login_required
 @ajax_required
@@ -586,8 +589,14 @@ def education_group_year_admission_condition_get_line(request, education_group_y
                                                  admission_condition=admission_condition,
                                                  section=info['section'],
                                                  pk=info['id'])
-    response = {
-        'message': 'read',
+
+    response = get_content_of_admission_condition_line('read', admission_condition_line, lang)
+    return JsonResponse(response)
+
+
+def get_content_of_admission_condition_line(message, admission_condition_line, lang):
+    return {
+        'message': message,
         'section': admission_condition_line.section,
         'id': admission_condition_line.id,
         'diploma': getattr(admission_condition_line, 'diploma' + lang, ''),
@@ -595,7 +604,6 @@ def education_group_year_admission_condition_get_line(request, education_group_y
         'access': getattr(admission_condition_line, 'access' + lang, ''),
         'remarks': getattr(admission_condition_line, 'remarks' + lang, ''),
     }
-    return JsonResponse(response)
 
 
 @login_required
@@ -622,13 +630,5 @@ def education_group_year_admission_condition_update_line(request, education_grou
 
     admission_condition_line.refresh_from_db()
 
-    response = {
-        'message': 'updated',
-        'section': admission_condition_line.section,
-        'id': admission_condition_line.id,
-        'diploma': getattr(admission_condition_line, 'diploma' + lang, ''),
-        'conditions': getattr(admission_condition_line, 'conditions' + lang, ''),
-        'access': getattr(admission_condition_line, 'access' + lang, ''),
-        'remarks': getattr(admission_condition_line, 'remarks' + lang, '')
-    }
+    response = get_content_of_admission_condition_line('updated', admission_condition_line, lang)
     return JsonResponse(response)

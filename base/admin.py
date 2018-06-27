@@ -192,5 +192,3 @@ admin.site.register(tutor.Tutor,
 
 admin.site.register(admission_condition.AdmissionCondition,
                     admission_condition.AdmissionConditionAdmin)
-#
-# admin.site.register(admission_condition.AdmissionConditionSection, admission_condition.AdmissionConditionSectionAdmin)
