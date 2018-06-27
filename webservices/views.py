@@ -241,8 +241,7 @@ def build_content_response(context, admission_condition, admission_condition_com
             "alert_message": getattr(admission_condition_common,
                                      'text_alert_message' + lang) if admission_condition_common else None,
         })
-    print('acronym_suffix', acronym_suffix)
-    print(admission_condition.education_group_year.id)
+
     if acronym_suffix in ('2a', '2mc'):
         response.update({
             "standard_text": getattr(admission_condition_common, 'text_standard' + lang),
@@ -287,7 +286,7 @@ def build_content_response(context, admission_condition, admission_condition_com
                 "personalized_access": {
                     "text": getattr(admission_condition, 'text_personalized_access' + lang) or None,
                     "text-common": getattr(admission_condition_common,
-                                           'text_adults_taking_up_university_training' + lang) if admission_condition_common else None
+                                           'text_personalized_access' + lang) if admission_condition_common else None
                 },
                 "admission_enrollment_procedures": {
                     "text": getattr(admission_condition, 'text_admission_enrollment_procedures' + lang),

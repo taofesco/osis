@@ -25,9 +25,8 @@
 ##############################################################################
 
 from django.test import TestCase
-from prettyprinter import cpprint
 
-from base.models.admission_condition import AdmissionCondition
+from base.models.admission_condition import AdmissionCondition, AdmissionConditionLine
 from base.tests.factories.education_group_year import EducationGroupYearFactory
 from cms.enums.entity_name import OFFER_YEAR
 from cms.tests.factories.text_label import TextLabelFactory
@@ -584,6 +583,7 @@ class WsOfferCatalogAdmissionsCondition(TestCase, Helper):
 
     def test_admission_conditions_for_master(self):
         education_group_year = EducationGroupYearFactory(acronym='actu2m')
+
         admission_condition = AdmissionCondition.objects.create(education_group_year=education_group_year)
         admission_condition.text_university_bachelors = 'text_university_bachelors'
         admission_condition.save()
@@ -592,6 +592,11 @@ class WsOfferCatalogAdmissionsCondition(TestCase, Helper):
                                                                 academic_year=education_group_year.academic_year)
 
         admission_condition_common = AdmissionCondition.objects.create(education_group_year=education_group_year_common)
+        admission_condition_common.text_free = 'text_free'
+        admission_condition_common.text_personalized_access = 'text_personalized_access'
+        admission_condition_common.text_adults_taking_up_university_training = 'text_adults_taking_up_university_training'
+        admission_condition_common.text_admission_enrollment_procedures = 'text_admission_enrollment_procedures'
+        admission_condition_common.save()
 
         iso_language, language = 'fr-be', 'fr'
 
@@ -613,4 +618,49 @@ class WsOfferCatalogAdmissionsCondition(TestCase, Helper):
         response_json = response.json()
 
         useless, condition_admissions_section = remove_conditions_admission(response_json['sections'])
-        cpprint(condition_admissions_section)
+        sections = condition_admissions_section['content']['sections']
+        self.assertEqual(sections['university_bachelors']['text'], admission_condition.text_university_bachelors)
+        self.assertEqual(sections['personalized_access']['text-common'],
+                         admission_condition_common.text_personalized_access)
+        self.assertEqual(sections['adults_taking_up_university_training']['text-common'],
+                         admission_condition_common.text_adults_taking_up_university_training)
+        self.assertEqual(sections['admission_enrollment_procedures']['text-common'],
+                         admission_condition_common.text_admission_enrollment_procedures)
+
+    def test_admission_conditions_for_master_with_diplomas(self):
+        education_group_year = EducationGroupYearFactory(acronym='actu2m')
+
+        admission_condition = AdmissionCondition.objects.create(education_group_year=education_group_year)
+
+        education_group_year_common = EducationGroupYearFactory(acronym='common-2m',
+                                                                academic_year=education_group_year.academic_year)
+        acl = AdmissionConditionLine.objects.create(admission_condition=admission_condition)
+        acl.section = 'ucl_bachelors'
+        acl.diploma = 'diploma'
+        acl.conditions = 'conditions'
+        acl.remarks = 'remarks'
+        acl.access = 'access'
+        acl.save()
+
+        iso_language, language = 'fr-be', 'fr'
+
+        message = {
+            'anac': education_group_year.academic_year.year,
+            'code_offre': education_group_year.acronym,
+            'sections': [
+                'conditions_admissions'
+            ]
+        }
+
+        response = self.post(education_group_year.academic_year.year,
+                             language,
+                             education_group_year.acronym,
+                             data=message)
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.content_type, 'application/json')
+
+        response_json = response.json()
+
+        useless, condition_admissions_section = remove_conditions_admission(response_json['sections'])
+        sections = condition_admissions_section['content']['sections']
+        self.assertEqual(len(sections['university_bachelors']['records']['ucl_bachelors']), 1)
