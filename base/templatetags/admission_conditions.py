@@ -53,3 +53,11 @@ def render_header_table(header_text, section_name):
         </tr>
     """.format(section_name=section_name, header_text=header_text)
     return textwrap.dedent(header)
+
+@register.inclusion_tag('templatetags/admission_condition_text.html')
+def render_condition_text(section_name, text, field):
+    return {
+        'section': section_name,
+        'text': text,
+        'field': field,
+    }

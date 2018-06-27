@@ -21,28 +21,14 @@
                             <br/>
 
                             <div class="row">
-                                <pre>{{ info }}</pre>
-
                                 {% if info.is_common and info.is_bachelor %}
-                                    <div id="bacherlor_admission">
-                                        <h3>{% trans 'Admission Conditions for Bachelors' %} <a href="#" class="modify-text-btn button" role="button" data-section="bachelor"><span class="glyphicon glyphicon-edit" style="font-size: 16px;" aria-hidden="true"></span></a></h3>
-                                        <div id="text_bachelor">{{ admission_condition.text_bachelor|safe }}</div>
-                                        <hr/>
-                                    </div>
+                                    {% render_condition_text 'bacherlor_admission' _('Admission Conditions for Bachelors') admission_condition.text_bachelor %}
                                 {% endif %}
                                 {% if info.is_common and info.is_master %}
-                                    <div id="alert_message">
-                                        <h3>{% trans 'Alert Message' %} <a href="#" class="modify-text-btn button" role="button" data-section="alert_message"><span class="glyphicon glyphicon-edit" style="font-size: 16px;" aria-hidden="true"></span></a></h3>
-                                        <div id="text_alert_message">{{ admission_condition.text_alert_message|safe }}</div>
-                                        <hr/>
-                                    </div>
+                                    {% render_condition_text 'alert_message' _('Alert Message') admission_condition.text_alert_message %}
                                 {% endif %}
                                 {% if info.show_free_text %}
-                                    <div id="standard_text">
-                                        <h3>{% trans 'Free Text' %} <a href="#" class="modify-text-btn button" role="button" data-section="standard"><span class="glyphicon glyphicon-edit" style="font-size: 16px;" aria-hidden="true"></span></a></h3>
-                                        <div id="text_standard">{{ admission_condition.text_standard|safe }}</div>
-                                        <hr/>
-                                    </div>
+                                    {% render_condition_text 'standard' _('Free Text') admission_condition.text_standard %}
                                 {% endif %}
                                 {% if info.is_specific and info.is_master %}
                                     <div id="university_bachelors">
@@ -53,7 +39,7 @@
                                             <thead>
                                             <tr>
                                                 <th width="30%">{% trans 'Diploma' %}</th>
-                                                <th width="30%">{% trans 'Conditions' %}</th>
+                                                <th width="20%">{% trans 'Conditions' %}</th>
                                                 <th width="150px">{% trans 'Access' %}</th>
                                                 <th>{% trans 'Remarks' %}</th>
                                                 <th width="5%">{% trans 'Actions' %}</th>
@@ -70,11 +56,7 @@
                                     </div>
                                 {% endif %}
                                 {% if info.is_master %}
-                                    <div id="non_university_bachelors">
-                                        <h3>{% trans 'Non university Bachelors' %} <a href="#" class="modify-text-btn button" role="button" data-section="non_university_bachelors"><span class="glyphicon glyphicon-edit" style="font-size: 16px;" aria-hidden="true"></span></a></h3>
-                                        <div id="text_non_university_bachelors">{{ admission_condition.text_non_university_bachelors|safe }}</div>
-                                        <hr/>
-                                    </div>
+                                    {% render_condition_text 'non_university_bachelors' _('Non university Bachelors') admission_condition.text_non_university_bachelors %}
                                 {% endif %}
                                 {% if info.is_specific and info.is_master %}
                                     <div id="holders_second_university_degree">
@@ -83,10 +65,10 @@
                                             <thead>
                                             <tr>
                                                 <th width="30%">{% trans 'Diploma' %}</th>
-                                                <th width="30%">{% trans 'Conditions' %}</th>
+                                                <th width="20%">{% trans 'Conditions' %}</th>
                                                 <th width="150px">{% trans 'Access' %}</th>
                                                 <th>{% trans 'Remarks' %}</th>
-                                                <th>{% trans 'Actions' %}</th>
+                                                <th width="5%">{% trans 'Actions' %}</th>
                                             </tr>
                                             </thead>
                                             <tbody>
@@ -95,28 +77,12 @@
                                             </tbody>
                                         </table>
                                     </div>
-                                    <div id="holders_non_university_second_degree">
-                                        <h3>{% trans 'Holders of a non-University 2nd cycle degree' %} <a href="#" class="modify-text-btn button" role="button" data-section="holders_non_university_second_degree"><span class="glyphicon glyphicon-edit" style="font-size: 16px;" aria-hidden="true"></span></a></h3>
-                                        <div id="text_holders_non_university_second_degree">{{ admission_condition.text_holders_non_university_second_degree|safe }}</div>
-                                        <hr/>
-                                    </div>
+                                    {% render_condition_text 'holders_non_university_second_degree' _('Holders of a non-University 2nd cycle degree') admission_condition.text_holders_non_university_second_degree %}
                                 {% endif %}
                                 {% if info.is_master %}
-                                    <div id="adults_taking_up_university_training">
-                                        <h3>{% trans "Adults taking up their university training" %} <a href="#" class="modify-text-btn button" role="button" data-section="adults_taking_up_university_training"><span class="glyphicon glyphicon-edit" style="font-size: 16px;" aria-hidden="true"></span></a></h3>
-                                        <div id="text_adults_taking_up_university_training">{{ admission_condition.text_adults_taking_up_university_training|safe }}</div>
-                                        <hr/>
-                                    </div>
-                                    <div id="personalized_access">
-                                        <h3>{% trans 'Personalized access' %} <a href="#" class="modify-text-btn button" role="button" data-section="personalized_access"><span class="glyphicon glyphicon-edit" style="font-size: 16px;" aria-hidden="true"></span></a></h3>
-                                        <div id="text_personalized_access">{{ admission_condition.text_personalized_access|safe }}</div>
-                                        <hr/>
-                                    </div>
-                                    <div id="admission_enrollment_procedures">
-                                        <h3>{% trans "Admission and Enrolment Procedures for general registration" %} <a href="#" class="modify-text-btn button" role="button" data-section="admission_enrollment_procedures"><span class="glyphicon glyphicon-edit" style="font-size: 16px;" aria-hidden="true"></span></a></h3>
-                                        <div id="text_admission_enrollment_procedures">{{ admission_condition.text_admission_enrollment_procedures|safe }}</div>
-                                        <hr/>
-                                    </div>
+                                    {% render_condition_text 'adults_taking_up_university_training' _('Adults taking up their university training') admission_condition.text_adults_taking_up_university_training %}
+                                    {% render_condition_text 'personalized_access' _('Personalized access') admission_condition.text_personalized_access %}
+                                    {% render_condition_text 'admission_enrollment_procedures' _('Admission and Enrolment Procedures for general registration') admission_condition.text_admission_enrollment_procedures %}
                                 {% endif %}
                             </div>
                         </div>
@@ -300,7 +266,6 @@
                 type: 'post',
                 dataType: 'json',
                 success: function (data) {
-                    console.table(data);
                     modal.modal('hide');
                 },
                 error: function (jqXHR, textStatus, errorThrown) {
