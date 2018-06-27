@@ -31,10 +31,9 @@ import sys
 from itertools import chain
 
 from django.conf import settings
+from django.db.models import Q
 
-from base.models.academic_year import AcademicYear
 from base.models.education_group_year import EducationGroupYear
-from base.tests.factories.education_group_year import EducationGroupYearFactory
 from cms.models.text_label import TextLabel
 from cms.models.translated_text import TranslatedText
 from cms.models.translated_text_label import TranslatedTextLabel
@@ -105,8 +104,8 @@ def find_education_group_year_for_group(item):
 
 def find_education_group_year_for_offer(item):
     qs = EducationGroupYear.objects.filter(
-        academic_year__year=item['year'],
-        acronym__iexact=item['acronym']
+        Q(acronym__iexact=item['acronym']) | Q(partial_acronym__iexact=item['acronym']),
+        academic_year__year=item['year']
     )
 
     if not qs.exists():
@@ -121,16 +120,7 @@ def find_education_group_year_for_common(item):
         acronym__iexact=item['acronym']
     )
 
-    if not records:
-        academic_year = AcademicYear.objects.get(year=item['year'])
-        education_group_year = EducationGroupYearFactory(
-            acronym=item['acronym'],
-            academic_year=academic_year
-        )
-    else:
-        education_group_year = records.first()
-
-    return education_group_year
+    return records.first()
 
 
 LABEL_TEXTUALS = [

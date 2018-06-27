@@ -28,7 +28,7 @@ def run(filename, language='fr-be'):
 
     lang = '' if language == 'fr-be' else '_en'
 
-    year = texts['year']
+    year = texts.pop('year')
     education_group_year_common = EducationGroupYear.objects.get(
         academic_year__year=year,
         acronym='common'
@@ -64,7 +64,5 @@ def run(filename, language='fr-be'):
             setattr(admission_condition, 'text_standard' + lang, value)
         else:
             raise Exception('unhandled')
-
-        print(education_group_year.id, text_label)
 
         admission_condition.save()

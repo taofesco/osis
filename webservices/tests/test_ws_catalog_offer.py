@@ -25,7 +25,9 @@
 ##############################################################################
 
 from django.test import TestCase
+from prettyprinter import cpprint
 
+from base.models.admission_condition import AdmissionCondition
 from base.tests.factories.education_group_year import EducationGroupYearFactory
 from cms.enums.entity_name import OFFER_YEAR
 from cms.tests.factories.text_label import TextLabelFactory
@@ -509,37 +511,106 @@ class WsCatalogOfferPostTestCase(TestCase, Helper):
 
         self.assertEqual(len(response_sections), 0)
 
-# self.assertEqual(sections[0], {
-#     'id': 'conditions_admission',
-#     'label': 'conditions_admission',
-#     'content': {
-#         'alert_message': None,
-#         'free_text': '',
-#         'sections': {
-#             'university_bachelors': {
-#                 'text': '',
-#                 'records': {
-#                     'ucl_bachelors': [],
-#                     'others_bachelors_french': [],
-#                     'bachelors_dutch': [],
-#                     'foreign_bachelors': []
-#                 }
-#             },
-#             'non_university_bachelors': {'text': '', 'text-common': None},
-#             'holders_second_university_degree': {
-#                 'text': '',
-#                 'records': {'graduates': [], 'masters': []}
-#             },
-#             'holders_non_university_second_degree': {'text': None},
-#             'adults_taking_up_university_training': {
-#                 'text': None,
-#                 'text-common': None
-#             },
-#             'personalized_access': {'text': None, 'text-common': None},
-#             'admission_enrollment_procedures': {
-#                 'text': '',
-#                 'text-common': None
-#             }
-#         }
-#     }
-# })
+
+class WsOfferCatalogAdmissionsCondition(TestCase, Helper):
+    URL_NAME = 'v0.1-ws_catalog_offer'
+
+    def test_admission_conditions_for_bachelors_without_common(self):
+        education_group_year = EducationGroupYearFactory(acronym='hist1ba')
+
+        iso_language, language = 'fr-be', 'fr'
+
+        message = {
+            'anac': education_group_year.academic_year.year,
+            'code_offre': education_group_year.acronym,
+            'sections': [
+                'conditions_admissions',
+            ]
+        }
+        response = self.post(education_group_year.academic_year.year,
+                             language,
+                             education_group_year.acronym,
+                             data=message)
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.content_type, 'application/json')
+
+        response_json = response.json()
+
+        useless, condition_admissions_section = remove_conditions_admission(response_json['sections'])
+
+        self.assertDictEqual(condition_admissions_section, {
+            'id': 'conditions_admission',
+            'label': 'conditions_admission',
+            'content': None,
+        })
+
+    def test_admission_conditions_for_bacherlors_with_common(self):
+        education_group_year = EducationGroupYearFactory(acronym='hist1ba')
+
+        education_group_year_common = EducationGroupYearFactory(acronym='common-bacs',
+                                                                academic_year=education_group_year.academic_year)
+
+        admission_condition_common = AdmissionCondition.objects.create(
+            education_group_year=education_group_year_common,
+            text_bachelor='this is a test')
+
+        iso_language, language = 'fr-be', 'fr'
+
+        message = {
+            'anac': education_group_year.academic_year.year,
+            'code_offre': education_group_year.acronym,
+            'sections': [
+                'conditions_admissions',
+            ]
+        }
+        response = self.post(education_group_year.academic_year.year,
+                             language,
+                             education_group_year.acronym,
+                             data=message)
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.content_type, 'application/json')
+
+        response_json = response.json()
+
+        useless, condition_admissions_section = remove_conditions_admission(response_json['sections'])
+
+        self.assertDictEqual(condition_admissions_section, {
+            'id': 'conditions_admission',
+            'label': 'conditions_admission',
+            'content': {'bachelor_text': 'this is a test'}
+        })
+
+    def test_admission_conditions_for_master(self):
+        education_group_year = EducationGroupYearFactory(acronym='actu2m')
+        admission_condition = AdmissionCondition.objects.create(education_group_year=education_group_year)
+        admission_condition.text_university_bachelors = 'text_university_bachelors'
+        admission_condition.save()
+
+        education_group_year_common = EducationGroupYearFactory(acronym='common-2m',
+                                                                academic_year=education_group_year.academic_year)
+
+        admission_condition_common = AdmissionCondition.objects.create(education_group_year=education_group_year_common)
+
+        iso_language, language = 'fr-be', 'fr'
+
+        message = {
+            'anac': education_group_year.academic_year.year,
+            'code_offre': education_group_year.acronym,
+            'sections': [
+                'conditions_admissions'
+            ]
+        }
+
+        response = self.post(education_group_year.academic_year.year,
+                             language,
+                             education_group_year.acronym,
+                             data=message)
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.content_type, 'application/json')
+
+        response_json = response.json()
+
+        useless, condition_admissions_section = remove_conditions_admission(response_json['sections'])
+        cpprint(condition_admissions_section)

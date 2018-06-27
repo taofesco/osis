@@ -45,7 +45,7 @@ from webservices.utils import convert_sections_to_list_of_dict
 LANGUAGES = {'fr': 'fr-be', 'en': 'en'}
 INTRO_PATTERN = r'intro-(?P<acronym>\w+)'
 COMMON_PATTERN = r'(?P<section_name>\w+)-commun'
-ACRONYM_PATTERN = re.compile(r'(?P<prefix>[a-z]+)(?P<cycle>[0-9]{1,2})(?P<suffix>[a-z]+)(?P<year>[0-9]?)')
+ACRONYM_PATTERN = re.compile(r'(?P<prefix>[a-z]+)(?P<cycle>[0-9]{1,3})(?P<suffix>[a-z]+)(?P<year>[0-9]?)')
 
 Context = collections.namedtuple(
     'Context',
@@ -100,7 +100,7 @@ def ws_catalog_offer(request, year, language, acronym):
     validate_json_request(request, year, acronym)
 
     # Processing
-    context = new_context(education_group_year, iso_language, language)
+    context = new_context(education_group_year, iso_language, language, acronym)
     items = request.data['sections']
 
     sections = process_message(context, education_group_year, items)
@@ -141,11 +141,16 @@ def process_section(context, education_group_year, item):
     return None
 
 
-def new_context(education_group_year, iso_language, language):
+def new_context(education_group_year, iso_language, language, original_acronym):
     title = get_title_of_education_group_year(education_group_year, iso_language)
     description = new_description(education_group_year, language, title)
+    partial_acronym = education_group_year.partial_acronym.upper()
+    acronym = education_group_year.acronym.upper()
+
+    is_partial = original_acronym.upper() == partial_acronym
+
     context = Context(
-        acronym=education_group_year.acronym.upper(),
+        acronym=partial_acronym if is_partial else acronym,
         year=int(education_group_year.academic_year.year),
         title=title,
         description=description,
@@ -210,7 +215,7 @@ def response_for_bachelor(context):
     }
 
     if education_group_year:
-        admission_condition = AdmissionCondition.objects.get(education_group_year=education_group_year)
+        admission_condition, created = AdmissionCondition.objects.get_or_create(education_group_year=education_group_year)
         result['content'] = {
             "bachelor_text": getattr(admission_condition, 'text_bachelor' + lang) if admission_condition else None,
         }
@@ -236,9 +241,11 @@ def build_content_response(context, admission_condition, admission_condition_com
             "alert_message": getattr(admission_condition_common,
                                      'text_alert_message' + lang) if admission_condition_common else None,
         })
-    elif acronym_suffix in ('2a', '2mc'):
+    print('acronym_suffix', acronym_suffix)
+    print(admission_condition.education_group_year.id)
+    if acronym_suffix in ('2a', '2mc'):
         response.update({
-            "standard_text": getattr(admission_condition, 'text_standard' + lang),
+            "standard_text": getattr(admission_condition_common, 'text_standard' + lang),
         })
 
     response.update({
@@ -297,7 +304,7 @@ def build_content_response(context, admission_condition, admission_condition_com
 def ws_get_conditions_admissions(request, year, language, acronym):
     education_group_year, iso_language, year = parameters_validation(acronym, language, year)
 
-    context = new_context(education_group_year, iso_language, language)
+    context = new_context(education_group_year, iso_language, language, acronym)
 
     result = get_conditions_admissions(context)
 
