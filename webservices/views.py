@@ -193,7 +193,7 @@ def admission_condition_line_to_dict(context, admission_condition_line):
     fields = ('diploma', 'conditions', 'access', 'remarks')
 
     return {
-        field: getattr(admission_condition_line, field + lang) or ''
+        field: (getattr(admission_condition_line, field + lang) or '').strip()
         for field in fields
     }
 
@@ -204,8 +204,8 @@ def response_for_bachelor(context):
                                                              academic_year=context.academic_year).first()
 
     result = {
-        'id': 'conditions_admissions',
-        "label": "conditions_admissions",
+        'id': 'conditions_admission',
+        "label": "conditions_admission",
         "content": None,
     }
 
@@ -321,14 +321,14 @@ def get_conditions_admissions(context):
         return response_for_bachelor(context)
 
     common_acronym = 'common-{}'.format(full_suffix)
-    admission_condition = AdmissionCondition.objects.get(education_group_year=context.education_group_year)
+    admission_condition, created = AdmissionCondition.objects.get_or_create(education_group_year=context.education_group_year)
 
     admission_condition_common = AdmissionCondition.objects.filter(
         education_group_year__acronym__iexact=common_acronym).first()
 
     result = {
-        'id': 'conditions_admissions',
-        "label": "conditions_admissions",
+        'id': 'conditions_admission',
+        "label": "conditions_admission",
         "content": build_content_response(context, admission_condition, admission_condition_common, full_suffix)
     }
     return result
