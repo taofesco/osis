@@ -14,7 +14,7 @@ class AdmissionCondition(models.Model):
     text_alert_message = models.TextField(default='')
 
     # texte standard pour 2a et 2mc
-    text_standard = models.TextField(null=True)
+    text_standard = models.TextField(default='')
 
     # text libre pour 2eme partie
     text_free = models.TextField(default='')
@@ -34,7 +34,7 @@ class AdmissionCondition(models.Model):
     text_bachelor_en = models.TextField(default='')
 
     text_alert_message_en = models.TextField(default='')
-    text_standard_en = models.TextField(null=True)
+    text_standard_en = models.TextField(default='')
     text_free_en = models.TextField(default='')
 
     text_university_bachelors_en = models.TextField(default='')
@@ -60,14 +60,16 @@ class AdmissionConditionLine(models.Model):
     admission_condition = models.ForeignKey(AdmissionCondition)
 
     section = models.CharField(max_length=32)
+    # this external_id is used just for the import, once reddot is dead, we could remove it.
+    external_id = models.CharField(max_length=32, null=True)
 
-    diploma = models.TextField(null=True)
-    conditions = models.TextField(null=True)
-    access = models.TextField(null=True)
-    remarks = models.TextField(null=True)
+    diploma = models.TextField(default='')
+    conditions = models.TextField(default='')
+    access = models.TextField(default='')
+    remarks = models.TextField(default='')
 
     # English
-    diploma_en = models.TextField(null=True)
-    conditions_en = models.TextField(null=True)
-    access_en = models.TextField(null=True)
-    remarks_en = models.TextField(null=True)
+    diploma_en = models.TextField(default='')
+    conditions_en = models.TextField(default='')
+    access_en = models.TextField(default='')
+    remarks_en = models.TextField(default='')

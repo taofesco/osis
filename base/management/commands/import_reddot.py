@@ -263,11 +263,23 @@ class Command(BaseCommand):
             'access' + self.lang: line['access'],
             'remarks' + self.lang: line['remarks']
         }
-        AdmissionConditionLine.objects.create(
-            section=line['title'],
-            admission_condition=admission_condition,
-            **fields
-        )
+        # import pdb; pdb.set_trace()
+        queryset = AdmissionConditionLine.objects.filter(section=line['title'], admission_condition=admission_condition, external_id=line['external_id'])
+        if not queryset.count():
+            AdmissionConditionLine.objects.create(
+                section=line['title'],
+                admission_condition=admission_condition,
+                external_id=line['external_id'],
+                **fields
+            )
+        else:
+            acl = queryset.first()
+            setattr(acl, 'diploma' + self.lang, diploma)
+            setattr(acl, 'conditions' + self.lang, line['conditions'] or '')
+            setattr(acl, 'access' + self.lang, line['access'])
+            setattr(acl, 'remarks' + self.lang, line['remarks'])
+            acl.save()
+
 
     def save_text_of_conditions(self, admission_condition, item):
         texts = item['info'].get('texts', {}) or {}
