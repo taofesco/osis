@@ -464,7 +464,7 @@ def education_group_year_admission_condition_edit(request, education_group_year_
     use_standard_text = acronym.endswith(('2a', '2mc'))
 
     class AdmissionConditionForm(forms.Form):
-        text_field = forms.CharField(widget=CKEditorWidget())
+        text_field = forms.CharField(widget=CKEditorWidget(config_name='minimal'))
 
     admission_condition_form = AdmissionConditionForm()
 
