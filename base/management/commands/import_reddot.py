@@ -198,118 +198,114 @@ class Command(BaseCommand):
         self.stdout.write(self.style.SUCCESS('language: {}'.format(options['language'])))
         self.stdout.write(self.style.SUCCESS('year: {}'.format(options['year'])))
 
+        self.iso_language = options['language']
+        self.json_content = json.loads(path.read_text())
+        self.lang = '' if self.iso_language == 'fr-be' else '_en'
+
         if options['is_conditions']:
-            self.load_admission_conditions(path, options['language'], options['year'])
+            self.load_admission_conditions()
         elif options['is_common']:
-            self.load_admission_conditions_common(path, options['language'], options['year'])
+            self.load_admission_conditions_common()
         else:
-            self.load_offers(path, options['language'], options['year'])
+            self.load_offers()
+
         self.stdout.write(self.style.SUCCESS('records imported!'))
 
-    def load_offers(self, path, language, year):
-        entity = 'offer_year'
-
-        items = json.loads(path.read_text())
-
-        labels = set(chain.from_iterable(o.get('info', {}).keys() for o in items))
+    def load_offers(self):
+        labels = set(chain.from_iterable(o.get('info', {}).keys() for o in self.json_content))
 
         Context = collections.namedtuple('Context', 'entity language')
-        context = Context(entity=entity, language=language)
+        context = Context(entity='offer_year', language=self.iso_language)
 
         mapping_label_text_label = get_mapping_label_texts(context, labels)
 
-        create_offers(context, items, mapping_label_text_label)
+        create_offers(context, self.json_content, mapping_label_text_label)
 
-    def load_admission_conditions(self, path, language, year):
-        items = json.loads(path.read_text())
-
-        lang = '' if language == 'fr-be' else '_en'
-
-        for item in items:
+    def load_admission_conditions(self):
+        for item in self.json_content:
             year = item['year']
             acronym = item['acronym']
 
             if acronym == 'bacs':
-                education_group_year_common = EducationGroupYear.objects.get(
-                    academic_year__year=year,
-                    acronym='common'
-                )
-                education_group_year, created = EducationGroupYear.objects.get_or_create(
-                    academic_year__year=year,
-                    acronym='common-bacs',
-                    education_group=education_group_year_common.education_group
-                )
-
-                admission_condition, created = AdmissionCondition.objects.get_or_create(
-                    education_group_year=education_group_year)
-                admission_condition.text_bachelor = item['info']['text']
-                admission_condition.save()
+                self.load_admission_conditions_for_bachelor(item, year)
             else:
-                filters = (Q(academic_year__year=year),
-                           Q(acronym__iexact=acronym) | Q(partial_acronym__iexact=acronym))
+                self.load_admission_conditions_generic(acronym, item, year)
 
-                records = EducationGroupYear.objects.filter(*filters)
+    def load_admission_conditions_generic(self, acronym, item, year):
+        filters = (Q(academic_year__year=year),
+                   Q(acronym__iexact=acronym) | Q(partial_acronym__iexact=acronym))
+        records = EducationGroupYear.objects.filter(*filters)
+        if not records:
+            self.stderr.write(self.style.WARNING("unknown acronym: {}".format(acronym)))
+        else:
+            education_group_year = records.first()
+            admission_condition, created = AdmissionCondition.objects.get_or_create(
+                education_group_year=education_group_year)
 
-                if not records:
-                    print("unknown", acronym)
-                    continue
+            self.save_diplomas(admission_condition, item)
+            self.save_text_of_conditions(admission_condition, item)
 
-                education_group_year = records.first()
-                admission_condition, created = AdmissionCondition.objects.get_or_create(
-                    education_group_year=education_group_year)
+            admission_condition.save()
 
-                lines = item['info'].get('diplomas', []) or []
-                for line in lines:
-                    if line['type'] == 'table':
-                        fields = {
-                            'diploma' + lang: line['diploma'],
-                            'conditions' + lang: line['conditions'] or '',
-                            'access' + lang: line['access'],
-                            'remarks' + lang: line['remarks']
-                        }
-                        AdmissionConditionLine.objects.create(
-                            section=line['title'],
-                            admission_condition=admission_condition,
-                            **fields
-                        )
-                    elif line['type'] == 'text':
-                        section = line['section']
-                        if section == 'non_university_bachelors':
-                            setattr(admission_condition, 'text_non_university_bachelors' + lang, line['text'])
-                        elif section == 'holders_non_university_second_degree':
-                            setattr(admission_condition, 'text_holders_non_university_second_degree' + lang,
-                                    line['text'])
-                        elif section == 'university_bachelors':
-                            setattr(admission_condition, 'text_university_bachelors' + lang, line['text'])
-                        elif section == 'holders_second_university_degree':
-                            setattr(admission_condition, 'text_holders_second_university_degree' + lang, line['text'])
-                        else:
-                            raise Exception('This case is not handled')
+    def save_diplomas(self, admission_condition, item):
+        lines = item['info'].get('diplomas', []) or []
+        for line in lines:
+            if line['type'] == 'table':
+                self.save_condition_line_of_row(admission_condition, line)
+            elif line['type'] == 'text':
+                self.set_values_for_text_row_of_condition_admission(admission_condition, line)
 
-                texts = item['info'].get('texts', {}) or {}
+    def save_condition_line_of_row(self, admission_condition, line):
+        fields = {
+            'diploma' + self.lang: line['diploma'],
+            'conditions' + self.lang: line['conditions'] or '',
+            'access' + self.lang: line['access'],
+            'remarks' + self.lang: line['remarks']
+        }
+        AdmissionConditionLine.objects.create(
+            section=line['title'],
+            admission_condition=admission_condition,
+            **fields
+        )
 
-                for key, value in texts.items():
-                    if not value:
-                        continue
-                    if key == 'introduction':
-                        setattr(admission_condition, 'text_standard' + lang, value['text'])
-                    elif key == 'personalized_access':
-                        setattr(admission_condition, 'text_personalized_access' + lang, value['text'])
-                    elif key == 'admission_enrollment_procedures':
-                        setattr(admission_condition, 'text_admission_enrollment_procedures' + lang, value['text'])
-                    elif key == 'adults_taking_up_university_training':
-                        setattr(admission_condition, 'text_adults_taking_up_university_training' + lang, value['text'])
-                    else:
-                        raise Exception('Bouh')
+    def save_text_of_conditions(self, admission_condition, item):
+        texts = item['info'].get('texts', {}) or {}
+        for key, value in texts.items():
+            if not value:
+                continue
+            if key == 'introduction':
+                self.set_admission_condition_value(admission_condition, 'standard', value['text'])
+            elif key in ('personalized_access', 'admission_enrollment_procedures',
+                         'adults_taking_up_university_training'):
+                self.set_admission_condition_value(admission_condition, key, value['text'])
+            else:
+                raise Exception('This case is not handled')
 
-                admission_condition.save()
+    def set_values_for_text_row_of_condition_admission(self, admission_condition, line):
+        section = line['section']
+        if section in ('non_university_bachelors', 'holders_non_university_second_degree', 'university_bachelors',
+                       'holders_second_university_degree'):
+            self.set_admission_condition_value(admission_condition, section, line['text'])
+        else:
+            raise Exception('This case is not handled')
 
-    def load_admission_conditions_common(self, path, language, year):
-        texts = json.loads(path.read_text())
+    def load_admission_conditions_for_bachelor(self, item, year):
+        education_group_year_common = EducationGroupYear.objects.get(
+            academic_year__year=year,
+            acronym='common'
+        )
+        education_group_year, created = EducationGroupYear.objects.get_or_create(
+            academic_year__year=year,
+            acronym='common-bacs',
+            education_group=education_group_year_common.education_group
+        )
+        admission_condition, created = AdmissionCondition.objects.get_or_create(
+            education_group_year=education_group_year)
+        admission_condition.text_bachelor = item['info']['text']
+        admission_condition.save()
 
-        lang = '' if language == 'fr-be' else '_en'
-
-        year = texts.pop('year')
+    def load_admission_conditions_common(self):
+        year = self.json_content.pop('year')
         education_group_year_common = EducationGroupYear.objects.get(
             academic_year__year=year,
             acronym='common'
@@ -317,7 +313,7 @@ class Command(BaseCommand):
 
         academic_year = AcademicYear.objects.get(year=year)
 
-        for key, value in texts.items():
+        for key, value in self.json_content.items():
             offer_type, text_label = key.split('.')
 
             education_group_year, created = EducationGroupYear.objects.get_or_create(
@@ -329,21 +325,15 @@ class Command(BaseCommand):
             admission_condition, created = AdmissionCondition.objects.get_or_create(
                 education_group_year=education_group_year)
 
-            if text_label == 'alert_message':
-                setattr(admission_condition, 'text_alert_message' + lang, value)
-
-            elif text_label == 'personalized_access':
-                setattr(admission_condition, 'text_personalized_access' + lang, value)
-
-            elif text_label == 'admission_enrollment_procedures':
-                setattr(admission_condition, 'text_admission_enrollment_procedures' + lang, value)
-
-            elif text_label == 'adults_taking_up_university_training':
-                setattr(admission_condition, 'text_adults_taking_up_university_training' + lang, value)
-
+            if text_label in ('alert_message', 'personalized_access', 'admission_enrollment_procedures',
+                              'adults_taking_up_university_training'):
+                self.set_admission_condition_value(admission_condition, text_label, value)
             elif text_label == 'introduction':
-                setattr(admission_condition, 'text_standard' + lang, value)
+                self.set_admission_condition_value(admission_condition, 'standard', value)
             else:
-                raise Exception('unhandled')
+                raise Exception('This case is not handled')
 
             admission_condition.save()
+
+    def set_admission_condition_value(self, admission_condition, field, value):
+        setattr(admission_condition, 'text_' + field + self.lang, value)
