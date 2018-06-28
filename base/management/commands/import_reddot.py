@@ -303,7 +303,7 @@ class Command(BaseCommand):
         )
         admission_condition, created = AdmissionCondition.objects.get_or_create(
             education_group_year=education_group_year)
-        admission_condition.text_bachelor = item['info']['text']
+        self.set_admission_condition_value(admission_condition, 'bachelor', item['info']['text'])
         admission_condition.save()
 
     def load_admission_conditions_common(self):
