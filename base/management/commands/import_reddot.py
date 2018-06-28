@@ -256,8 +256,9 @@ class Command(BaseCommand):
                 self.set_values_for_text_row_of_condition_admission(admission_condition, line)
 
     def save_condition_line_of_row(self, admission_condition, line):
+        diploma = '\n'.join(map(str.strip, line['diploma'].splitlines()))
         fields = {
-            'diploma' + self.lang: line['diploma'],
+            'diploma' + self.lang: diploma,
             'conditions' + self.lang: line['conditions'] or '',
             'access' + self.lang: line['access'],
             'remarks' + self.lang: line['remarks']
