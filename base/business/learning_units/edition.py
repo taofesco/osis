@@ -41,10 +41,11 @@ from base.models.academic_year import AcademicYear, compute_max_academic_year_ad
 from base.models.entity_component_year import EntityComponentYear
 from base.models.entity_container_year import EntityContainerYear
 from base.models.entity_version import EntityVersion
-from base.models.enums import learning_unit_periodicity, learning_unit_year_subtypes
+from base.models.enums import learning_unit_year_periodicity, learning_unit_year_subtypes
 from base.models.enums.entity_container_year_link_type import ENTITY_TYPE_LIST
 from base.models.learning_container_year import LearningContainerYear
 from base.models.learning_unit_year import LearningUnitYear
+from base.models.proposal_learning_unit import is_learning_unit_year_in_proposal
 from cms.models import translated_text
 
 FIELDS_TO_EXCLUDE_WITH_REPORT = ("is_vacant", "type_declaration_vacant", "attribution_procedure")
@@ -134,7 +135,7 @@ def _duplicate_learning_unit_year(old_learn_unit_year, new_academic_year):
     duplicated_luy = update_related_object(old_learn_unit_year, 'academic_year', new_academic_year)
     duplicated_luy.attribution_procedure = None
     duplicated_luy.learning_container_year = _duplicate_learning_container_year(duplicated_luy, new_academic_year)
-    _duplicate_bibliography(duplicated_luy)
+    _duplicate_teaching_material(duplicated_luy)
     _duplicate_cms_data(duplicated_luy)
     duplicated_luy.save()
     return duplicated_luy
@@ -216,10 +217,10 @@ def _duplicate_learning_class_year(new_component):
         update_related_object(old_learning_class, 'learning_component_year', new_component)
 
 
-def _duplicate_bibliography(duplicated_luy):
-    previous_bibliography = mdl_base.bibliography.find_by_learning_unit_year(duplicated_luy.copied_from)
-    for bib in previous_bibliography:
-        update_related_object(bib, 'learning_unit_year', duplicated_luy)
+def _duplicate_teaching_material(duplicated_luy):
+    previous_teaching_material = mdl_base.teaching_material.find_by_learning_unit_year(duplicated_luy.copied_from)
+    for material in previous_teaching_material:
+        update_related_object(material, 'learning_unit_year', duplicated_luy)
 
 
 def _duplicate_cms_data(duplicated_luy):
@@ -264,8 +265,8 @@ def get_next_academic_years(learning_unit_to_edit, year):
 
 def filter_biennial(queryset, periodicity):
     result = queryset
-    if periodicity != learning_unit_periodicity.ANNUAL:
-        is_odd = periodicity == learning_unit_periodicity.BIENNIAL_ODD
+    if periodicity != learning_unit_year_periodicity.ANNUAL:
+        is_odd = periodicity == learning_unit_year_periodicity.BIENNIAL_ODD
         result = queryset.annotate(odd=F('year') % 2).filter(odd=is_odd)
     return result
 
@@ -453,7 +454,7 @@ def _get_translated_value(value):
 def _check_postponement_learning_unit_year_proposal_state(nex_luy):
     error_msg = _("learning_unit_in_proposal_cannot_save") % {'luy': nex_luy.acronym,
                                                               'academic_year': nex_luy.academic_year}
-    return [error_msg] if nex_luy.is_in_proposal() else []
+    return [error_msg] if is_learning_unit_year_in_proposal(nex_luy) else []
 
 
 def _check_postponement_conflict_on_entity_container_year(lcy, next_lcy):

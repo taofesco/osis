@@ -271,7 +271,7 @@ def search(**kwargs):
         queryset = queryset.filter(title__icontains=kwargs['title'])
 
     if 'acronym' in kwargs:
-        queryset = queryset.filter(acronym__icontains=kwargs['acronym'])
+        queryset = queryset.filter(acronym__iregex=kwargs['acronym'])
 
     if 'entity_type' in kwargs:
         queryset = queryset.filter(entity_type__exact=kwargs['entity_type'])

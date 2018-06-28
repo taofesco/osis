@@ -25,14 +25,10 @@
 ##############################################################################
 from django.contrib.auth.models import Group
 from django.test import TestCase, RequestFactory
-from django.utils.translation import ugettext_lazy as _
 
 from base.business.learning_unit_year_with_context import get_with_context
-from base.forms.learning_unit.edition_volume import VolumeEditionForm, VolumeEditionBaseFormset, ENTITY_TYPES_VOLUME, \
+from base.forms.learning_unit.edition_volume import VolumeEditionForm, VolumeEditionBaseFormset, \
     VolumeEditionFormsetContainer
-from base.models.entity_component_year import EntityComponentYear
-from base.models.enums.entity_container_year_link_type import REQUIREMENT_ENTITY
-from base.models.learning_component_year import LearningComponentYear
 from base.models.person import CENTRAL_MANAGER_GROUP, FACULTY_MANAGER_GROUP
 from base.tests.factories.business.learning_units import GenerateContainer, GenerateAcademicYear
 from base.tests.factories.person import PersonFactory
@@ -89,8 +85,7 @@ class TestVolumeEditionForm(TestCase):
                 initial=component_values,
                 component=component,
                 entities=self.learning_unit_with_context.entities)
-            self.assertFalse(form.is_valid())
-            self.assertEqual(form.errors['volume_total'][0], _('vol_tot_not_equal_to_q1_q2'))
+            self.assertTrue(form.is_valid()) # Accept that vol_q1 + vol_q2 is not equal to vol_tot
 
     def test_post_volume_form_wrong_volume_tot_requirement(self):
         for component, component_values in self.learning_unit_with_context.components.items():
@@ -101,9 +96,7 @@ class TestVolumeEditionForm(TestCase):
                 initial=component_values,
                 component=component,
                 entities=self.learning_unit_with_context.entities)
-            self.assertFalse(form.is_valid())
-            self.assertEqual(form.errors['volume_total_requirement_entities'][0],
-                             _('vol_tot_req_entities_not_equal_to_vol_tot_mult_cp'))
+            self.assertTrue(form.is_valid()) # Accept that vol_tot * cp is not equal to vol_global
 
     def test_post_volume_form_wrong_vol_req_entity(self):
         for component, component_values in self.learning_unit_with_context.components.items():
@@ -114,12 +107,7 @@ class TestVolumeEditionForm(TestCase):
                 initial=component_values,
                 component=component,
                 entities=self.learning_unit_with_context.entities)
-            self.assertFalse(form.is_valid())
-
-            error_msg = ' + '.join([self.learning_unit_with_context.entities.get(t).acronym for t in ENTITY_TYPES_VOLUME
-                                    if self.learning_unit_with_context.entities.get(t)])
-            error_msg += ' = {}'.format(_('vol_global'))
-            self.assertEqual(form.errors['volume_total_requirement_entities'][0], error_msg)
+            self.assertTrue(form.is_valid()) # Accept that vol_global is not equal to sum of volumes of entities
 
     def test_post_volume_form_partim_q1(self):
         for component, component_values in self.learning_unit_with_context.components.items():
@@ -131,9 +119,6 @@ class TestVolumeEditionForm(TestCase):
                 component=component,
                 entities=self.learning_unit_with_context.entities)
             self.assertTrue(form.is_valid())
-            parent_data = _get_valid_data()
-            errors = form.validate_parent_partim_component(parent_data)
-            self.assertEqual(len(errors), 7)
 
     def test_get_entity_fields(self):
         for component, component_values in self.learning_unit_with_context.components.items():
@@ -147,64 +132,7 @@ class TestVolumeEditionForm(TestCase):
             actual_entity_fields = form.get_entity_fields()
             self.assertEqual(len(actual_entity_fields), 3)
 
-    def test_warning_volumes(self):
-        learning_component_year_0 = LearningComponentYear.objects.filter(
-            learningunitcomponent__learning_unit_year=self.first_learning_unit_year
-        ).first()
-        entity_component_year_0 = EntityComponentYear.objects.get(
-            learning_component_year=learning_component_year_0,
-            entity_container_year__type=REQUIREMENT_ENTITY
-        )
 
-        test_cases = [
-            {'vol_q1': 15, 'vol_q2': 15, 'vol_tot_annual': 40, 'planned_classes': 1, 'vol_tot_global': 30},
-            {'vol_q1': 15, 'vol_q2': 15, 'vol_tot_annual': 30, 'planned_classes': 1, 'vol_tot_global': 40}
-        ]
-
-        for case in test_cases:
-            with self.subTest(case=case):
-                learning_component_year_0.hourly_volume_partial_q1 = case.get('vol_q1')
-                learning_component_year_0.hourly_volume_partial_q2 = case.get('vol_q2')
-                learning_component_year_0.hourly_volume_total_annual = case.get('vol_tot_annual')
-                learning_component_year_0.planned_classes = case.get('planned_classes')
-                learning_component_year_0.save()
-
-                entity_component_year_0.repartition_volume = case.get('vol_tot_global')
-                entity_component_year_0.save()
-
-                self.assertIn(_('Volumes are inconsistent'), learning_component_year_0.warnings)
-                self.assertIn(_('Volumes are inconsistent'), self.first_learning_unit_year.warnings)
-
-    def test_warning_volumes_no_warning(self):
-        learning_component_year_0 = LearningComponentYear.objects.filter(
-            learningunitcomponent__learning_unit_year=self.first_learning_unit_year
-        ).first()
-        entity_component_year_0 = EntityComponentYear.objects.get(
-            learning_component_year=learning_component_year_0,
-            entity_container_year__type=REQUIREMENT_ENTITY
-        )
-
-        self.first_learning_unit_year.credits = self.first_learning_unit_year.credits + 1
-        self.first_learning_unit_year.save()
-
-        test_cases = [
-            {'vol_q1': 15, 'vol_q2': 15, 'vol_tot_annual': 30, 'planned_classes': 1, 'vol_tot_global': 30},
-            {'vol_q1': 10, 'vol_q2': 20, 'vol_tot_annual': 30, 'planned_classes': 2, 'vol_tot_global': 60}
-        ]
-
-        for case in test_cases:
-            with self.subTest(case=case):
-                learning_component_year_0.hourly_volume_partial_q1 = case.get('vol_q1')
-                learning_component_year_0.hourly_volume_partial_q2 = case.get('vol_q2')
-                learning_component_year_0.hourly_volume_total_annual = case.get('vol_tot_annual')
-                learning_component_year_0.planned_classes = case.get('planned_classes')
-                learning_component_year_0.save()
-
-                entity_component_year_0.repartition_volume = case.get('vol_tot_global')
-                entity_component_year_0.save()
-
-                self.assertFalse(learning_component_year_0.warnings)
-                self.assertFalse(self.first_learning_unit_year.warnings)
 
 
 def _get_wrong_data_empty_field():
@@ -328,12 +256,7 @@ class TestVolumeEditionFormsetContainer(TestCase):
             request_factory.post(None, data=data_forms),
             self.learning_units_with_context, self.central_manager)
 
-        self.assertFalse(volume_edition_formset_container.is_valid())
-        self.assertEqual(
-            volume_edition_formset_container.formsets[self.learning_unit_year_partim].errors[0].get('volume_total'),
-            [_('vol_tot_full_must_be_greater_or_equal_than_partim')]
-        )
-
+        self.assertTrue(volume_edition_formset_container.is_valid()) # Volumes of partims can be greater than parent's
 
     def test_post_volume_edition_formset_container__vol_tot_full_can_be_equal_to_partim(self):
         request_factory = RequestFactory()

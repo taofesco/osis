@@ -34,21 +34,23 @@ from django.utils.translation import ugettext_lazy as _
 
 from base.forms.learning_unit.entity_form import EntityContainerBaseForm
 from base.forms.learning_unit.learning_unit_create import LearningUnitYearModelForm, \
-    LearningUnitModelForm, LearningContainerYearModelForm, LearningContainerModelForm
+    LearningUnitModelForm, LearningContainerYearModelForm, LearningContainerModelForm, DEFAULT_ACRONYM_COMPONENT
 from base.forms.learning_unit.learning_unit_create_2 import FullForm, FACULTY_OPEN_FIELDS
 from base.models.academic_year import AcademicYear
 from base.models.entity_component_year import EntityComponentYear
 from base.models.entity_container_year import EntityContainerYear
 from base.models.entity_version import EntityVersion
 from base.models.enums import learning_unit_year_subtypes, learning_container_year_types, organization_type, \
-    learning_unit_periodicity
+    learning_unit_year_periodicity
 from base.models.enums.entity_container_year_link_type import ADDITIONAL_REQUIREMENT_ENTITY_1, \
     ADDITIONAL_REQUIREMENT_ENTITY_2
 from base.models.enums.entity_type import FACULTY
 from base.models.enums.internship_subtypes import TEACHING_INTERNSHIP
+from base.models.enums.learning_component_year_type import LECTURING, PRACTICAL_EXERCISES
 from base.models.enums.learning_container_year_types import MASTER_THESIS, INTERNSHIP
-from base.models.enums.learning_unit_periodicity import ANNUAL
+from base.models.enums.learning_unit_year_periodicity import ANNUAL
 from base.models.enums.organization_type import MAIN
+from base.models.enums.person_source_type import DISSERTATION
 from base.models.learning_component_year import LearningComponentYear
 from base.models.learning_container import LearningContainer
 from base.models.learning_container_year import LearningContainerYear
@@ -97,7 +99,6 @@ def get_valid_form_data(academic_year, person, learning_unit_year=None):
             learning_container=learning_container,
             start_year=academic_year.year,
             end_year=academic_year.year,
-            periodicity=learning_unit_periodicity.ANNUAL
         )
 
         learning_unit_year = LearningUnitYearFactory.build(
@@ -106,8 +107,12 @@ def get_valid_form_data(academic_year, person, learning_unit_year=None):
             learning_container_year=container_year,
             subtype=learning_unit_year_subtypes.FULL,
             campus=campus,
-            language=language
+            language=language,
+            periodicity=learning_unit_year_periodicity.ANNUAL
         )
+
+    cm_lcy = LearningComponentYear.objects.filter(learningunitcomponent__learning_unit_year=learning_unit_year).first()
+    pp_lcy = LearningComponentYear.objects.filter(learningunitcomponent__learning_unit_year=learning_unit_year).last()
 
     return {
         # Learning unit year data model form
@@ -126,9 +131,9 @@ def get_valid_form_data(academic_year, person, learning_unit_year=None):
         'attribution_procedure': learning_unit_year.attribution_procedure,
         'campus': learning_unit_year.campus.id,
         'language': learning_unit_year.language.pk,
+        'periodicity': learning_unit_year.periodicity,
 
         # Learning unit data model form
-        'periodicity': ANNUAL,
         'faculty_remark': learning_unit_year.learning_unit.faculty_remark,
         'other_remark': learning_unit_year.learning_unit.other_remark,
 
@@ -143,6 +148,19 @@ def get_valid_form_data(academic_year, person, learning_unit_year=None):
         'requirement_entity-entity': requirement_entity_version.id,
         'allocation_entity-entity': requirement_entity_version.id,
         'additional_requirement_entity_1-entity': '',
+
+        # Learning component year data model form
+        'form-0-id': cm_lcy and cm_lcy.pk,
+        'form-1-id': pp_lcy and pp_lcy.pk,
+        'form-TOTAL_FORMS': '2',
+        'form-INITIAL_FORMS': '0' if not cm_lcy else '2',
+        'form-MAX_NUM_FORMS': '2',
+        'form-0-hourly_volume_total_annual': 20,
+        'form-0-hourly_volume_partial_q1': 10,
+        'form-0-hourly_volume_partial_q2': 10,
+        'form-1-hourly_volume_total_annual': 20,
+        'form-1-hourly_volume_partial_q1': 10,
+        'form-1-hourly_volume_partial_q2': 10,
     }
 
 
@@ -295,7 +313,7 @@ class TestFullFormIsValid(LearningUnitFullFormContextMixin):
 
     def _test_learning_unit_model_form_instance(self, full_form):
         form_instance = full_form.forms[LearningUnitModelForm]
-        fields_to_validate = ['faculty_remark', 'other_remark', 'periodicity']
+        fields_to_validate = ['faculty_remark', 'other_remark']
         self._assert_equal_values(form_instance.instance, self.post_data, fields_to_validate)
 
     def _test_learning_container_model_form_instance(self, full_form):
@@ -305,7 +323,7 @@ class TestFullFormIsValid(LearningUnitFullFormContextMixin):
         form_instance = full_form.forms[LearningUnitYearModelForm]
         fields_to_validate = ['acronym', 'specific_title', 'specific_title_english', 'credits',
                               'session', 'quadrimester', 'status', 'internship_subtype', 'attribution_procedure',
-                              'subtype', ]
+                              'subtype', 'periodicity']
         self._assert_equal_values(form_instance.instance, self.post_data, fields_to_validate)
         self.assertEqual(form_instance.instance.academic_year.id, self.post_data['academic_year'])
 
@@ -470,6 +488,7 @@ class TestFullFormSave(LearningUnitFullFormContextMixin):
         })
 
     def test_when_update_instance(self):
+        self.post_data = get_valid_form_data(self.current_academic_year, self.person, self.learning_unit_year)
         EntityContainerYear.objects.filter(type__in=[ADDITIONAL_REQUIREMENT_ENTITY_1, ADDITIONAL_REQUIREMENT_ENTITY_2],
                                            learning_container_year=self.learning_unit_year.learning_container_year
                                            ).delete()
@@ -488,6 +507,14 @@ class TestFullFormSave(LearningUnitFullFormContextMixin):
             current_count = self._count_records(model_class)
             self.assertEqual(current_count, initial_count, model_class.objects.all())
 
+    def test_default_acronym_component(self):
+        default_acronym_component={
+            LECTURING: "PM1",
+            PRACTICAL_EXERCISES: "PP1",
+            None: "NT1"
+        }
+        self.assertEqual(default_acronym_component, DEFAULT_ACRONYM_COMPONENT)
+
     def test_when_create_instance(self):
         initial_counts = self._get_initial_counts()
         acronym = 'LAGRO1200'
@@ -505,10 +532,21 @@ class TestFullFormSave(LearningUnitFullFormContextMixin):
         form = _instanciate_form(self.current_academic_year, post_data=post_data, person=self.person,
                                  start_year=self.current_academic_year.year)
         self.assertTrue(form.is_valid(), form.errors)
-        form.save()
+        saved_luy = form.save()
         self.assertEqual(LearningUnitYear.objects.filter(acronym='LAGRO1200').count(), 1)
+        self.assertEqual(LearningComponentYear.objects.filter(
+            learning_container_year=self.learning_unit_year.learning_container_year).count(), 4)
 
         self._assert_correctly_create_records_in_all_learning_unit_structure(initial_counts)
+        self.assertEqual(LearningComponentYear.objects.filter(
+            learning_container_year=saved_luy.learning_container_year
+        ).count(), 2)
+        self.assertEqual(
+            LearningComponentYear.objects.get(
+                learning_container_year=saved_luy.learning_container_year, type=LECTURING).acronym, "PM1")
+        self.assertEqual(
+            LearningComponentYear.objects.get(
+                learning_container_year=saved_luy.learning_container_year, type=PRACTICAL_EXERCISES).acronym, "PP1")
 
     def test_when_type_is_internship(self):
         EntityContainerYear.objects.filter(type__in=[ADDITIONAL_REQUIREMENT_ENTITY_1, ADDITIONAL_REQUIREMENT_ENTITY_2],
@@ -530,6 +568,49 @@ class TestFullFormSave(LearningUnitFullFormContextMixin):
         self.assertEqual(saved_luy.credits, 99)
         self.assertEqual(saved_luy.learning_container_year.container_type, INTERNSHIP)
         self.assertEqual(saved_luy.internship_subtype, TEACHING_INTERNSHIP)
+        learning_component_year_list = LearningComponentYear.objects.filter(
+            learning_container_year=saved_luy.learning_container_year
+        )
+        self.assertEqual(learning_component_year_list.count(), 2)
+        self.assertEqual(
+            EntityComponentYear.objects.filter(
+                learning_component_year__in=learning_component_year_list).count(), 2)
+        self.assertEqual(
+            LearningComponentYear.objects.get(
+                learning_container_year=saved_luy.learning_container_year, type=LECTURING).acronym, "PM1")
+        self.assertEqual(
+            LearningComponentYear.objects.get(
+                learning_container_year=saved_luy.learning_container_year, type=PRACTICAL_EXERCISES).acronym, "PP1")
+
+    def test_when_type_is_dissertation(self):
+        EntityContainerYear.objects.filter(type__in=[ADDITIONAL_REQUIREMENT_ENTITY_1, ADDITIONAL_REQUIREMENT_ENTITY_2],
+                                           learning_container_year=self.learning_unit_year.learning_container_year
+                                           ).delete()
+
+        self.post_data['credits'] = 99
+        self.post_data['container_type'] = DISSERTATION
+
+        form = FullForm(self.person,
+                        self.learning_unit_year.academic_year,
+                        start_year=self.current_academic_year.year,
+                        data=self.post_data)
+
+        self.assertTrue(form.is_valid(), form.errors)
+        saved_luy = form.save()
+
+        self.assertEqual(saved_luy.credits, 99)
+        self.assertEqual(saved_luy.learning_container_year.container_type, DISSERTATION)
+        learning_component_year_list = LearningComponentYear.objects.filter(
+            learning_container_year=saved_luy.learning_container_year
+        )
+        self.assertEqual(learning_component_year_list.count(), 1)
+        self.assertEqual(
+            EntityComponentYear.objects.filter(
+                learning_component_year__in=learning_component_year_list).count(), 1)
+        learning_component_year = LearningComponentYear.objects.get(
+                learning_container_year=saved_luy.learning_container_year, type=None)
+        self.assertEqual(learning_component_year.acronym, DEFAULT_ACRONYM_COMPONENT[None])
+        self.assertEqual(learning_component_year.type, None)
 
     def _assert_correctly_create_records_in_all_learning_unit_structure(self, initial_counts):
         # NUMBER_OF_POSTPONMENTS = 7

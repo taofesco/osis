@@ -25,6 +25,7 @@
 ##############################################################################
 import re
 
+from ckeditor.fields import RichTextField
 from django.core.exceptions import ValidationError
 from django.core.validators import MinValueValidator, MaxValueValidator, RegexValidator
 from django.db import models
@@ -32,15 +33,15 @@ from django.db.models import Q
 from django.utils.functional import cached_property
 from django.utils.translation import ugettext_lazy as _
 
-from base.models import entity_container_year
+from base.models import entity_container_year as mdl_entity_container_year
 from base.models.academic_year import current_academic_year, compute_max_academic_year_adjournment, AcademicYear, \
     MAX_ACADEMIC_YEAR_FACULTY
 from base.models.enums import active_status, learning_container_year_types
 from base.models.enums import learning_unit_year_subtypes, internship_subtypes, \
     learning_unit_year_session, entity_container_year_link_type, learning_unit_year_quadrimesters, attribution_procedure
 from base.models.enums.learning_container_year_types import COURSE, INTERNSHIP
+from base.models.enums.learning_unit_year_periodicity import PERIODICITY_TYPES, ANNUAL, BIENNIAL_EVEN, BIENNIAL_ODD
 from base.models.learning_unit import LEARNING_UNIT_ACRONYM_REGEX_ALL, REGEX_BY_SUBTYPE
-from base.models.proposal_learning_unit import ProposalLearningUnit
 from osis_common.models.serializable_model import SerializableModel, SerializableModelAdmin
 
 AUTHORIZED_REGEX_CHARS = "$*+.^"
@@ -70,7 +71,6 @@ class LearningUnitYearWithContainerManager(models.Manager):
 
 
 class LearningUnitYear(SerializableModel):
-    existing_proposal_in_epc = models.BooleanField(default=False)
     external_id = models.CharField(max_length=100, blank=True, null=True)
     academic_year = models.ForeignKey(AcademicYear,  verbose_name=_('academic_year'),
                                       validators=[academic_year_validator])
@@ -86,7 +86,8 @@ class LearningUnitYear(SerializableModel):
     subtype = models.CharField(max_length=50, choices=learning_unit_year_subtypes.LEARNING_UNIT_YEAR_SUBTYPES,
                                default=learning_unit_year_subtypes.FULL)
     credits = models.DecimalField(max_digits=5, decimal_places=2, null=True,
-                                  validators=[MinValueValidator(MINIMUM_CREDITS), MaxValueValidator(MAXIMUM_CREDITS)])
+                                  validators=[MinValueValidator(MINIMUM_CREDITS), MaxValueValidator(MAXIMUM_CREDITS)],
+                                  verbose_name=_('credits'))
     decimal_scores = models.BooleanField(default=False)
     structure = models.ForeignKey('Structure', blank=True, null=True)
     internship_subtype = models.CharField(max_length=250, blank=True, null=True,
@@ -94,20 +95,25 @@ class LearningUnitYear(SerializableModel):
                                           choices=internship_subtypes.INTERNSHIP_SUBTYPES)
     status = models.BooleanField(default=False, verbose_name=_('active_title'))
     session = models.CharField(max_length=50, blank=True, null=True,
-                               choices=learning_unit_year_session.LEARNING_UNIT_YEAR_SESSION)
-    quadrimester = models.CharField(max_length=4, blank=True, null=True, verbose_name=_('quadrimester'),
+                               choices=learning_unit_year_session.LEARNING_UNIT_YEAR_SESSION,
+                               verbose_name=_('session_title'))
+    quadrimester = models.CharField(max_length=9, blank=True, null=True, verbose_name=_('quadrimester'),
                                     choices=learning_unit_year_quadrimesters.LEARNING_UNIT_YEAR_QUADRIMESTERS)
     attribution_procedure = models.CharField(max_length=20, blank=True, null=True, verbose_name=_('procedure'),
                                              choices=attribution_procedure.ATTRIBUTION_PROCEDURES)
     summary_locked = models.BooleanField(default=False, verbose_name=_("summary_locked"))
 
-    mobility_modality = models.CharField(max_length=250, verbose_name=_('Modalities specific to IN and OUT mobility'),
+    bibliography = RichTextField(blank=True, null=True, verbose_name=_('bibliography'))
+    mobility_modality = models.CharField(max_length=250, verbose_name=_('Mobility'),
                                          blank=True, null=True)
     professional_integration = models.BooleanField(default=False, verbose_name=_('professional_integration'))
 
     campus = models.ForeignKey('Campus', null=True)
 
     language = models.ForeignKey('reference.Language', null=True, verbose_name=_('language'))
+
+    periodicity = models.CharField(max_length=20, choices=PERIODICITY_TYPES, default=ANNUAL,
+                                   verbose_name=_('periodicity'))
 
     objects_with_container = LearningUnitYearWithContainerManager()
     _warnings = None
@@ -200,8 +206,15 @@ class LearningUnitYear(SerializableModel):
                                    self.learning_container_year.container_type == INTERNSHIP and \
                                    not self.internship_subtype else self.internship_subtype
 
-    def is_in_proposal(self):
-        return ProposalLearningUnit.objects.filter(learning_unit_year=self).exists()
+    @property
+    def get_previous_acronym(self):
+        return find_lt_learning_unit_year_with_different_acronym(self)
+
+    @property
+    def periodicity_verbose(self):
+        if self.periodicity:
+            return _(self.periodicity)
+        return None
 
     def find_gte_learning_units_year(self):
         return LearningUnitYear.objects.filter(learning_unit=self.learning_unit,
@@ -218,17 +231,12 @@ class LearningUnitYear(SerializableModel):
 
     # FIXME move this method to business/perm file
     def can_update_by_faculty_manager(self):
-        result = False
-
         if not self.learning_container_year:
-            return result
+            return False
 
         current_year = current_academic_year().year
         year = self.academic_year.year
-
-        if year <= current_year + MAX_ACADEMIC_YEAR_FACULTY:
-            result = True
-        return result
+        return current_year <= year <= current_year + MAX_ACADEMIC_YEAR_FACULTY
 
     def is_full(self):
         return self.subtype == learning_unit_year_subtypes.FULL
@@ -237,8 +245,9 @@ class LearningUnitYear(SerializableModel):
         return self.subtype == learning_unit_year_subtypes.PARTIM
 
     def get_entity(self, entity_type):
-        entity_container_yr = entity_container_year.search(link_type=entity_type,
-                                                           learning_container_year=self.learning_container_year).get()
+        entity_container_yr = mdl_entity_container_year.search(
+            link_type=entity_type, learning_container_year=self.learning_container_year
+        ).get()
         return entity_container_yr.entity if entity_container_yr else None
 
     def clean(self):
@@ -262,7 +271,10 @@ class LearningUnitYear(SerializableModel):
             self._warnings.extend(self._check_partim_parent_credits())
             self._warnings.extend(self._check_internship_subtype())
             self._warnings.extend(self._check_partim_parent_status())
+            self._warnings.extend(self._check_partim_parent_periodicity())
             self._warnings.extend(self._check_learning_component_year_warnings())
+            self._warnings.extend(self._check_learning_container_year_warnings())
+            self._warnings.extend(self._check_entity_container_year_warnings())
         return self._warnings
 
     def _check_partim_parent_credits(self):
@@ -289,11 +301,35 @@ class LearningUnitYear(SerializableModel):
                 warnings.append(_("The parent is inactive and there is at least one partim active"))
         return warnings
 
+    def _check_partim_parent_periodicity(self):
+        warnings = []
+        if self.parent:
+            if self.parent.periodicity in [BIENNIAL_EVEN, BIENNIAL_ODD] and self.periodicity != self.parent.periodicity:
+                warnings.append(_("This partim is %(partim_periodicity)s and the parent is %(parent_periodicty)s")
+                                % {'partim_periodicity': self.periodicity_verbose,
+                                   'parent_periodicty': self.parent.periodicity_verbose})
+        else:
+            if self.periodicity in [BIENNIAL_EVEN, BIENNIAL_ODD] and \
+                    find_partims_with_different_periodicity(self).exists():
+                warnings.append(_("The parent is %(parent_periodicty)s and there is at least one partim which is not "
+                                  "%(parent_periodicty)s") % {'parent_periodicty': self.periodicity_verbose})
+        return warnings
+
     def _check_learning_component_year_warnings(self):
         _warnings = []
         for learning_unit_component in self.learningunitcomponent_set.all().select_related('learning_component_year'):
             _warnings.extend(learning_unit_component.learning_component_year.warnings)
 
+        return _warnings
+
+    def _check_learning_container_year_warnings(self):
+        return self.learning_container_year.warnings
+
+    def _check_entity_container_year_warnings(self):
+        _warnings = []
+        entity_container_years = mdl_entity_container_year.find_by_learning_container_year(self.learning_container_year)
+        for entity_container_year in entity_container_years:
+            _warnings.extend(entity_container_year.warnings)
         return _warnings
 
     def is_external(self):
@@ -343,7 +379,7 @@ def search(academic_year_id=None, acronym=None, learning_container_year_id=None,
 
     if title:
         queryset = queryset.\
-            filter(Q(specific_title__icontains=title) | Q(learning_container_year__common_title__icontains=title))
+            filter(Q(specific_title__iregex=title) | Q(learning_container_year__common_title__iregex=title))
 
     if subtype:
         queryset = queryset.filter(subtype=subtype)
@@ -355,9 +391,10 @@ def search(academic_year_id=None, acronym=None, learning_container_year_id=None,
         queryset = queryset.filter(learning_container_year__container_type=container_type)
 
     if tutor:
-        filter_by_first_name = {_build_tutor_filter(name_type='first_name'): tutor}
-        filter_by_last_name = {_build_tutor_filter(name_type='last_name'): tutor}
-        queryset = queryset.filter(Q(**filter_by_first_name) | Q(**filter_by_last_name)).distinct()
+        for name in tutor.split():
+            filter_by_first_name = {_build_tutor_filter(name_type='first_name'): name}
+            filter_by_last_name = {_build_tutor_filter(name_type='last_name'): name}
+            queryset = queryset.filter(Q(**filter_by_first_name) | Q(**filter_by_last_name)).distinct()
 
     if summary_responsible:
         queryset = find_summary_responsible_by_name(queryset, summary_responsible)
@@ -377,7 +414,7 @@ def find_summary_responsible_by_name(queryset, name):
 
 def _build_tutor_filter(name_type):
     return '__'.join(['learningunitcomponent', 'learning_component_year', 'attributionchargenew', 'attribution',
-                      'tutor', 'person', name_type, 'icontains'])
+                      'tutor', 'person', name_type, 'iregex'])
 
 
 def convert_status_bool(status):
@@ -403,8 +440,9 @@ def find_lt_year_acronym(academic_yr, acronym):
 
 
 def check_if_acronym_regex_is_valid(acronym):
-    if isinstance(acronym, str):
-        return re.fullmatch(REGEX_ACRONYM_CHARSET, acronym.upper())
+    return isinstance(acronym, str) and \
+           not acronym.startswith('*') and \
+           re.fullmatch(REGEX_ACRONYM_CHARSET, acronym.upper()) is not None
 
 
 def find_max_credits_of_related_partims(a_learning_unit_year):
@@ -413,6 +451,10 @@ def find_max_credits_of_related_partims(a_learning_unit_year):
 
 def find_partims_with_active_status(a_learning_unit_year):
     return a_learning_unit_year.get_partims_related().filter(status=True)
+
+
+def find_partims_with_different_periodicity(a_learning_unit_year):
+    return a_learning_unit_year.get_partims_related().exclude(periodicity=a_learning_unit_year.periodicity)
 
 
 def find_by_learning_unit(a_learning_unit):
@@ -425,3 +467,11 @@ def find_by_entities(entities):
 
 def find_latest_by_learning_unit(a_learning_unit):
     return search(learning_unit=a_learning_unit).order_by('academic_year').last()
+
+
+def find_lt_learning_unit_year_with_different_acronym(a_learning_unit_yr):
+    return LearningUnitYear.objects.filter(learning_unit__id=a_learning_unit_yr.learning_unit.id,
+                                           academic_year__year__lt=a_learning_unit_yr.academic_year.year,
+                                           proposallearningunit__isnull=True)\
+        .order_by('-academic_year')\
+        .exclude(acronym__iexact=a_learning_unit_yr.acronym).first()

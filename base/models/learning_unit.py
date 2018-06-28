@@ -29,9 +29,7 @@ from django.db.models import Max
 from django.utils.translation import ugettext_lazy as _
 
 from base.models.academic_year import current_academic_year, AcademicYear
-from base.models.enums.learning_unit_periodicity import PERIODICITY_TYPES, ANNUAL
 from base.models.enums.learning_unit_year_subtypes import PARTIM, FULL
-from base.models.proposal_learning_unit import ProposalLearningUnit
 from osis_common.models.serializable_model import SerializableModelAdmin, SerializableModel
 
 LEARNING_UNIT_ACRONYM_REGEX_BASE = "^[BLMWX][A-Z]{2,4}\d{4}"
@@ -51,10 +49,11 @@ REGEX_BY_SUBTYPE = {
 class LearningUnitAdmin(SerializableModelAdmin):
     list_display = ('learning_container', 'acronym', 'title', 'start_year', 'end_year', 'changed')
     search_fields = ['learningunityear__acronym', 'learningunityear__specific_title', 'learning_container__external_id']
-    list_filter = ('periodicity', 'start_year')
+    list_filter = ('start_year',)
 
 
 class LearningUnit(SerializableModel):
+    existing_proposal_in_epc = models.BooleanField(default=False)
     external_id = models.CharField(max_length=100, blank=True, null=True)
     learning_container = models.ForeignKey('LearningContainer', blank=True, null=True)
     changed = models.DateTimeField(null=True, auto_now=True)
@@ -62,8 +61,7 @@ class LearningUnit(SerializableModel):
     end_year = models.IntegerField(blank=True, null=True, verbose_name=_('end_year_title'))
     # TODO is it useful?
     progress = None
-    periodicity = models.CharField(max_length=20, choices=PERIODICITY_TYPES, default=ANNUAL,
-                                   verbose_name=_('periodicity'))
+
     faculty_remark = models.TextField(blank=True, null=True, verbose_name=_('faculty_remark'))
     other_remark = models.TextField(blank=True, null=True, verbose_name=_('other_remark'))
 
@@ -83,12 +81,6 @@ class LearningUnit(SerializableModel):
     def title(self):
         return self.most_recent_learning_unit_year().specific_title
 
-    @property
-    def periodicity_verbose(self):
-        if self.periodicity:
-            return _(self.periodicity)
-        return None
-
     def delete(self, *args, **kwargs):
         if self.start_year < 2015:
             raise IntegrityError(_('Prohibition to delete a learning unit before 2015.'))
@@ -96,9 +88,6 @@ class LearningUnit(SerializableModel):
 
     def is_past(self):
         return self.end_year and current_academic_year().year > self.end_year
-
-    def has_proposal(self):
-        return ProposalLearningUnit.objects.filter(learning_unit_year__learning_unit=self).exists()
 
     def most_recent_learning_unit_year(self):
         return self.learningunityear_set.filter(learning_unit_id=self.id).latest('academic_year__year')
@@ -137,19 +126,6 @@ class LearningUnit(SerializableModel):
                 learningunityear__subtype=PARTIM, learning_container=self.learning_container
             )
         return []
-
-    def clean(self):
-        parent = self.parent or self
-        children = self.children or [self]
-
-        if parent.periodicity == ANNUAL:
-            return
-
-        for child in children:
-            if child.periodicity == ANNUAL:
-                raise ValidationError(
-                    {'periodicity': _('The periodicity of the parent and the partims do not match')}
-                )
 
     @property
     def max_end_year(self):

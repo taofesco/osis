@@ -23,11 +23,15 @@
 #    see http://www.gnu.org/licenses/.
 #
 ##############################################################################
+from unittest import mock
+
 from django.contrib.auth.models import Permission, Group
 from django.contrib.contenttypes.models import ContentType
 from django.test import TestCase
+from django.utils.translation import ugettext_lazy as _
 
-from base.business.education_group import can_user_edit_administrative_data
+from base.business.education_group import can_user_edit_administrative_data, prepare_xls_content, create_xls, \
+    XLS_DESCRIPTION, XLS_FILENAME, WORKSHEET_TITLE, EDUCATION_GROUP_TITLES, ORDER_COL, ORDER_DIRECTION
 from base.models.enums import offer_year_entity_type
 from base.models.person import Person, CENTRAL_MANAGER_GROUP
 from base.tests.factories.education_group_year import EducationGroupYearFactory
@@ -39,6 +43,10 @@ from base.tests.factories.person import PersonFactory
 from base.tests.factories.person_entity import PersonEntityFactory
 from base.tests.factories.program_manager import ProgramManagerFactory
 from base.tests.factories.user import UserFactory
+from base.models.enums import education_group_categories
+from base.tests.factories.education_group_type import EducationGroupTypeFactory
+from base.tests.factories.academic_year import create_current_academic_year
+from osis_common.document import xls_build
 
 
 class EducationGroupTestCase(TestCase):
@@ -122,3 +130,75 @@ def _create_entity_and_version_related_to(organization, acronym, parent=None):
 def _add_to_group(user, group_name):
     group, created = Group.objects.get_or_create(name=group_name)
     group.user_set.add(user)
+
+
+class EducationGroupXlsTestCase(TestCase):
+    def setUp(self):
+        self.academic_year = create_current_academic_year()
+        self.education_group_type_group = EducationGroupTypeFactory(category=education_group_categories.GROUP)
+        self.education_group_year_1 = EducationGroupYearFactory(academic_year=self.academic_year, acronym="PREMIER")
+        self.education_group_year_1.entity_management = EntityVersionFactory()
+        self.education_group_year_2 = EducationGroupYearFactory(academic_year=self.academic_year, acronym="DEUXIEME")
+        self.education_group_year_2.entity_management = EntityVersionFactory()
+        self.user = UserFactory()
+
+    def test_prepare_xls_content_no_data(self):
+        self.assertEqual(prepare_xls_content([]), [])
+
+    def test_prepare_xls_content_with_data(self):
+        data = prepare_xls_content([self.education_group_year_1])
+        self.assertEqual(len(data), 1)
+        self.assertEqual(data[0], get_xls_data(self.education_group_year_1))
+
+    @mock.patch("osis_common.document.xls_build.generate_xls")
+    def test_generate_xls_data_with_no_data(self, mock_generate_xls):
+        create_xls(self.user, [], None, {ORDER_COL: None, ORDER_DIRECTION: None})
+
+        expected_argument = _generate_xls_build_parameter([], self.user)
+        mock_generate_xls.assert_called_with(expected_argument, None)
+
+    @mock.patch("osis_common.document.xls_build.generate_xls")
+    def test_generate_xls_data_with_asc_ordering(self, mock_generate_xls):
+        create_xls(self.user,
+                   [self.education_group_year_1, self.education_group_year_2],
+                   None,
+                   {ORDER_COL: 'acronym', ORDER_DIRECTION: None})
+
+        xls_data = [get_xls_data(self.education_group_year_2), get_xls_data(self.education_group_year_1)]
+
+        expected_argument = _generate_xls_build_parameter(xls_data, self.user)
+        mock_generate_xls.assert_called_with(expected_argument, None)
+
+    @mock.patch("osis_common.document.xls_build.generate_xls")
+    def test_generate_xls_data_with_desc_ordering(self, mock_generate_xls):
+        create_xls(self.user,
+                   [self.education_group_year_1, self.education_group_year_2],
+                   None,
+                   {ORDER_COL: 'acronym', ORDER_DIRECTION: 'desc'})
+
+        xls_data = [get_xls_data(self.education_group_year_1), get_xls_data(self.education_group_year_2)]
+
+        expected_argument = _generate_xls_build_parameter(xls_data, self.user)
+        mock_generate_xls.assert_called_with(expected_argument, None)
+
+
+def get_xls_data(an_education_group_year):
+    return [an_education_group_year.academic_year.name,
+            an_education_group_year.acronym,
+            an_education_group_year.title,
+            an_education_group_year.education_group_type,
+            an_education_group_year.entity_management.acronym,
+            an_education_group_year.partial_acronym]
+
+
+def _generate_xls_build_parameter(xls_data, user):
+    return {
+        xls_build.LIST_DESCRIPTION_KEY: _(XLS_DESCRIPTION),
+        xls_build.FILENAME_KEY: _(XLS_FILENAME),
+        xls_build.USER_KEY: user.username,
+        xls_build.WORKSHEETS_DATA: [{
+            xls_build.CONTENT_KEY: xls_data,
+            xls_build.HEADER_TITLES_KEY: EDUCATION_GROUP_TITLES,
+            xls_build.WORKSHEET_TITLE_KEY: _(WORKSHEET_TITLE),
+        }]
+    }

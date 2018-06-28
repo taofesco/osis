@@ -27,6 +27,7 @@ from django.core.exceptions import ObjectDoesNotExist
 from django.db import models
 from django.db.models import Prefetch
 
+from django.utils.translation import ugettext_lazy as _
 from base.models import entity_version
 from base.models.enums import entity_container_year_link_type
 from base.models.enums.entity_container_year_link_type import REQUIREMENT_ENTITIES
@@ -45,6 +46,7 @@ class EntityContainerYear(SerializableModel):
     entity = models.ForeignKey('Entity')
     learning_container_year = models.ForeignKey('LearningContainerYear')
     type = models.CharField(max_length=35, choices=entity_container_year_link_type.ENTITY_CONTAINER_YEAR_LINK_TYPES)
+    _warnings = None
 
     class Meta:
         unique_together = ('learning_container_year', 'type',)
@@ -55,6 +57,16 @@ class EntityContainerYear(SerializableModel):
     def get_latest_entity_version(self):
         if self.entity.entity_versions:
             return self.entity.entity_versions[-1]
+
+    @property
+    def warnings(self):
+        if self._warnings is None:
+            self._warnings = []
+            if not entity_version.get_by_entity_and_date(self.entity,
+                                                         self.learning_container_year.academic_year.start_date):
+                self._warnings.append(_("The linked %(entity)s does not exist at the start date of the academic year"
+                                        " linked to this learning unit") % {'entity': _(self.type.lower())})
+        return self._warnings
 
 
 def find_last_entity_version_grouped_by_linktypes(learning_container_year, link_type=None):
@@ -115,9 +127,8 @@ def find_all_additional_requirement_entities(learning_container_year):
     return next(iter(results.values()), None)
 
 
-def find_by_learning_container_year(a_learning_container_year, a_entity_container_year_link_type):
-    return EntityContainerYear.objects.filter(learning_container_year=a_learning_container_year,
-                                              type=a_entity_container_year_link_type)
+def find_by_learning_container_year(a_learning_container_year):
+    return EntityContainerYear.objects.filter(learning_container_year=a_learning_container_year)
 
 
 def find_entities_grouped_by_linktype(a_learning_container_year):

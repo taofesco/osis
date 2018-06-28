@@ -36,8 +36,8 @@ from django.test import TestCase, RequestFactory
 from django.utils.translation import ugettext_lazy as _
 
 from base.forms.education_group_general_informations import EducationGroupGeneralInformationsForm
-from base.forms.education_groups import EducationGroupFilter, MAX_RECORDS
 from base.models.admission_condition import AdmissionCondition, AdmissionConditionLine
+from base.forms.education_groups import EducationGroupFilter
 from base.models.enums import education_group_categories, offer_year_entity_type, academic_calendar_type
 from base.tests.factories.academic_year import AcademicYearFactory
 from base.tests.factories.education_group_language import EducationGroupLanguageFactory
@@ -101,7 +101,7 @@ class EducationGroupSearch(TestCase):
                                    entity=oph_entity,
                                    type=offer_year_entity_type.ENTITY_MANAGEMENT)
 
-        cls.user = UserFactory()
+        cls.user = PersonFactory().user
         cls.user.user_permissions.add(Permission.objects.get(codename="can_access_education_group"))
         cls.url = reverse("education_groups")
 
@@ -129,7 +129,7 @@ class EducationGroupSearch(TestCase):
 
         context = response.context
         self.assertIsInstance(context["form"], EducationGroupFilter)
-        self.assertEqual(context["object_list"], None)
+        self.assertEqual(context["object_list_count"], 0)
         self.assertEqual(context["experimental_phase"], True)
 
     def test_without_get_data(self):
@@ -139,7 +139,7 @@ class EducationGroupSearch(TestCase):
 
         context = response.context
         self.assertIsInstance(context["form"], EducationGroupFilter)
-        self.assertEqual(context["object_list"], None)
+        self.assertEqual(context["object_list_count"], 0)
         self.assertEqual(context["experimental_phase"], True)
 
     def test_initial_form_data(self):
@@ -160,19 +160,6 @@ class EducationGroupSearch(TestCase):
         self.assertEqual(len(context["object_list"]), 0)
         messages = [str(m) for m in context["messages"]]
         self.assertIn(_('no_result'), messages)
-
-    @mock.patch.object(EducationGroupFilter, "get_object_list", lambda self: list(range(0, MAX_RECORDS+2)))
-    def test_with_too_many_results(self):
-        response = self.client.get(self.url, data={"category": education_group_categories.MINI_TRAINING})
-
-        self.assertTemplateUsed(response, "education_groups.html")
-
-        context = response.context
-        self.assertIsInstance(context["form"], EducationGroupFilter)
-        self.assertEqual(context["experimental_phase"], True)
-        self.assertEqual(context["object_list"], None)
-        messages = [str(m) for m in context["messages"]]
-        self.assertIn(_('too_many_results'), messages)
 
     def test_search_with_acronym_only(self):
         response = self.client.get(self.url, data={"acronym": self.education_group_arke2a.acronym})
@@ -289,7 +276,7 @@ class EducationGroupRead(TestCase):
         cls.education_group_language_child_1 = \
             EducationGroupLanguageFactory(education_group_year=cls.education_group_child_1)
 
-        cls.user = UserFactory()
+        cls.user = PersonFactory().user
         cls.user.user_permissions.add(Permission.objects.get(codename="can_access_education_group"))
         cls.url = reverse("education_group_read", args=[cls.education_group_child_1.id])
 

@@ -26,12 +26,11 @@
 from django.contrib.postgres.fields import JSONField
 from django.core.exceptions import ObjectDoesNotExist
 from django.db import models
-from django.db.models import Q
 from django.utils.translation import ugettext_lazy as _
 
 from base.models.enums import proposal_type, proposal_state
 from osis_common.models.osis_model_admin import OsisModelAdmin
-from base.models import entity, entity_version
+from base.models import entity, entity_version, learning_unit_year
 
 
 class ProposalLearningUnitAdmin(OsisModelAdmin):
@@ -85,16 +84,11 @@ def find_by_learning_unit(a_learning_unit):
         return None
 
 
-def search(academic_year_id=None, acronym=None, entity_folder_id=None, folder_id=None, proposal_type=None,
-           proposal_state=None, learning_container_year_id=None, tutor=None, *args, **kwargs):
+def search(entity_folder_id=None, folder_id=None, proposal_type=None,
+           proposal_state=None, **kwargs):
 
-    queryset = ProposalLearningUnit.objects
-
-    if academic_year_id:
-        queryset = queryset.filter(learning_unit_year__academic_year=academic_year_id)
-
-    if acronym:
-        queryset = queryset.filter(learning_unit_year__acronym__icontains=acronym)
+    learning_unit_year_qs = learning_unit_year.search(**kwargs)
+    queryset = ProposalLearningUnit.objects.filter(learning_unit_year__in=learning_unit_year_qs)
 
     if entity_folder_id:
         queryset = queryset.filter(entity_id=entity_folder_id)
@@ -108,23 +102,7 @@ def search(academic_year_id=None, acronym=None, entity_folder_id=None, folder_id
     if proposal_state:
         queryset = queryset.filter(state=proposal_state)
 
-    if learning_container_year_id is not None:
-        if isinstance(learning_container_year_id, list):
-            queryset = queryset.filter(learning_unit_year__learning_container_year__in=learning_container_year_id)
-        elif learning_container_year_id:
-            queryset = queryset.filter(learning_unit_year__learning_container_year=learning_container_year_id)
-
-    if tutor:
-        filter_by_first_name = {_build_tutor_filter(name_type='first_name'): tutor}
-        filter_by_last_name = {_build_tutor_filter(name_type='last_name'): tutor}
-        queryset = queryset.filter(Q(**filter_by_first_name) | Q(**filter_by_last_name)).distinct()
-
     return queryset.select_related('learning_unit_year')
-
-
-def _build_tutor_filter(name_type):
-    return '__'.join(['learning_unit_year', 'learningunitcomponent', 'learning_component_year', 'attributionchargenew',
-                      'attribution', 'tutor', 'person', name_type, 'icontains'])
 
 
 def count_search_results(**kwargs):
@@ -134,3 +112,11 @@ def count_search_results(**kwargs):
 def find_distinct_folder_entities():
     entities = ProposalLearningUnit.objects.distinct('entity').values_list('entity__id', flat=True)
     return entity.Entity.objects.filter(pk__in=entities)
+
+
+def is_learning_unit_year_in_proposal(luy):
+    return ProposalLearningUnit.objects.filter(learning_unit_year=luy).exists()
+
+
+def is_learning_unit_in_proposal(lu):
+    return ProposalLearningUnit.objects.filter(learning_unit_year__learning_unit=lu).exists()

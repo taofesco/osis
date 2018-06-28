@@ -26,6 +26,8 @@
 from django.core.exceptions import ObjectDoesNotExist
 from django.db import models
 
+from base.models import academic_calendar
+from base.models import entity_version
 from base.models.abstracts.abstract_calendar import AbstractCalendar
 from base.models.academic_year import current_academic_year
 from osis_common.models.osis_model_admin import OsisModelAdmin
@@ -55,3 +57,52 @@ def find_by_entity_and_reference_for_current_academic_year(entity_id, reference)
             .select_related('entity', 'academic_calendar__academic_year').get()
     except ObjectDoesNotExist:
         return None
+
+
+def find_interval_dates_for_entity(ac_year, reference, entity):
+    return next((
+        date_computed for entity_id, date_computed in build_calendar_by_entities(ac_year, reference).items()
+        if entity.id == entity_id
+    ), None)
+
+
+def build_calendar_by_entities(ac_year, reference):
+    """
+    This function will compute date for each entity. If entity calendar not exist,
+    get default date to academic calendar"""
+    entity_structure = entity_version.build_current_entity_version_structure_in_memory(date=ac_year.end_date)
+    entities_id = list(entity_structure.keys())
+    ac_calendar = academic_calendar.get_by_reference_and_academic_year(reference, ac_year)
+    all_entities_calendars = EntityCalendar.objects.filter(entity__in=entities_id, academic_calendar=ac_calendar)\
+                                                   .select_related('entity')
+
+    # Specific date for an entity [record found on entity calendar]
+    entity_calendar_computed = {}
+    for entity_calendar in all_entities_calendars:
+        # FIXME: We should use date OR datetime in all database model
+        entity_calendar_computed[entity_calendar.entity_id] = {
+            'start_date': entity_calendar.start_date.date(),
+            'end_date': entity_calendar.end_date.date(),
+        }
+        entities_id.remove(entity_calendar.entity_id)
+
+    default_dates = {'start_date': ac_calendar.start_date, 'end_date': ac_calendar.end_date}
+    entity_calendar_computed.update({
+        entity_id: _get_start_end_date_of_parent(entity_id, entity_structure, entity_calendar_computed, default_dates)
+        for entity_id in entities_id
+    })
+    return entity_calendar_computed
+
+
+def _get_start_end_date_of_parent(entity_id, entity_structure, entity_calendar_computed, default_date):
+    # Case found start/end date for entity
+    if entity_id in entity_calendar_computed:
+        return entity_calendar_computed[entity_id]
+
+    # Case have parent, lookup start/end date in parent
+    if entity_structure[entity_id]['entity_version_parent']:
+        parent_entity_id = entity_structure[entity_id]['entity_version_parent'].entity_id
+        return _get_start_end_date_of_parent(parent_entity_id, entity_structure, entity_calendar_computed, default_date)
+
+    # Case no entity calendar at all
+    return default_date

@@ -40,7 +40,7 @@ from base.forms.entity import EntitySearchForm
 from base.forms.entity_calendar import EntityCalendarEducationalInformationForm
 from base.models import entity_version as entity_version_mdl
 from base.models.entity_version import EntityVersion
-from base.views.common import display_success_messages
+from base.views.common import display_success_messages, paginate_queryset
 from . import layout
 
 logger = logging.getLogger(settings.DEFAULT_LOGGER)
@@ -69,15 +69,7 @@ def entities_search(request):
     form = EntitySearchForm(request.GET or None)
 
     entities_version_list = form.get_entities().order_by(order_by)
-
-    paginator = Paginator(entities_version_list, 20)
-    page = request.GET.get('page', 1)
-    try:
-        entities_version_list = paginator.page(page)
-    except PageNotAnInteger:
-        entities_version_list = paginator.page(1)
-    except EmptyPage:
-        entities_version_list = paginator.page(paginator.num_pages)
+    entities_version_list = paginate_queryset(entities_version_list, request.GET)
 
     return render(request, "entities.html", {'entities_version': entities_version_list, 'form': form})
 

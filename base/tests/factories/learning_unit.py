@@ -28,7 +28,6 @@ import factory.fuzzy
 import string
 import datetime
 import operator
-from base.models.enums import learning_unit_periodicity
 from base.tests.factories.learning_container import LearningContainerFactory
 from django.utils import timezone
 from factory.django import DjangoModelFactory
@@ -41,13 +40,13 @@ class LearningUnitFactory(DjangoModelFactory):
     class Meta:
         model = "base.LearningUnit"
 
+    existing_proposal_in_epc = False
     learning_container = factory.SubFactory(LearningContainerFactory)
     external_id = factory.fuzzy.FuzzyText(length=10, chars=string.digits)
     changed = factory.fuzzy.FuzzyDateTime(datetime.datetime(2016, 1, 1, tzinfo=get_tzinfo()),
                                           datetime.datetime(2017, 3, 1, tzinfo=get_tzinfo()))
     start_year = factory.fuzzy.FuzzyInteger(2015, timezone.now().year)
     end_year = factory.LazyAttribute(lambda obj: factory.fuzzy.FuzzyInteger(obj.start_year + 1, obj.start_year + 9).fuzz())
-    periodicity = factory.Iterator(learning_unit_periodicity.PERIODICITY_TYPES, getter=operator.itemgetter(0))
     faculty_remark = factory.fuzzy.FuzzyText(length=255)
     other_remark = factory.fuzzy.FuzzyText(length=255)
 
@@ -56,11 +55,11 @@ class LearningUnitFakerFactory(DjangoModelFactory):
     class Meta:
         model = "base.LearningUnit"
 
+    existing_proposal_in_epc = False
     learning_container = factory.SubFactory(LearningContainerFactory)
     external_id = factory.fuzzy.FuzzyText(length=10, chars=string.digits)
     changed = fake.date_time_this_decade(before_now=True, after_now=True, tzinfo=get_tzinfo())
     start_year = factory.fuzzy.FuzzyInteger(2015, timezone.now().year)
     end_year = factory.LazyAttribute(lambda obj: factory.fuzzy.FuzzyInteger(obj.start_year + 1, obj.start_year + 9).fuzz())
-    periodicity = factory.Iterator(learning_unit_periodicity.PERIODICITY_TYPES, getter=operator.itemgetter(0))
     faculty_remark = factory.fuzzy.FuzzyText(length=255)
     other_remark = factory.fuzzy.FuzzyText(length=255)

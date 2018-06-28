@@ -31,13 +31,18 @@ from django.contrib import messages
 from django.contrib.auth import authenticate, logout
 from django.contrib.auth.decorators import login_required, permission_required, user_passes_test
 from django.contrib.auth.views import login as django_login
+from django.core.paginator import Paginator, PageNotAnInteger, EmptyPage
+from django.http import QueryDict
 from django.shortcuts import redirect
+from django.urls import reverse
 from django.utils import translation
 from django.utils.translation import ugettext_lazy as _
 
 from base import models as mdl
 from base.models.utils import native
 from . import layout
+
+ITEMS_PER_PAGE = 25
 
 logger = logging.getLogger(settings.DEFAULT_LOGGER)
 
@@ -218,3 +223,28 @@ def check_if_display_message(request, results):
 def display_messages_by_level(request, messages_by_level):
     for level, msgs in messages_by_level.items():
         display_messages(request, msgs, level, extra_tags='safe')
+
+
+def paginate_queryset(qs, request_get):
+    paginator = Paginator(qs, ITEMS_PER_PAGE)
+
+    page = request_get.get('page')
+    try:
+        paginated_qs = paginator.page(page)
+    except PageNotAnInteger:
+        paginated_qs = paginator.page(1)
+    except EmptyPage:
+        paginated_qs = paginator.page(paginator.num_pages)
+    return paginated_qs
+
+
+def reverse_url_with_query_string(*args, **kwargs):
+    query = kwargs.pop("query", {})
+    url = reverse(*args, **kwargs)
+    if not query:
+        return url
+
+    formatted_query = {key: value if value else "" for key, value in query.items()}
+    q = QueryDict(mutable=True)
+    q.update(formatted_query)
+    return "{path}?{query}".format(path=url, query=q.urlencode())

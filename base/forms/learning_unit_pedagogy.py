@@ -26,7 +26,7 @@
 from ckeditor.widgets import CKEditorWidget
 from django import forms
 
-from base.business.learning_unit import find_language_in_settings
+from base.business.learning_unit import find_language_in_settings, CMS_LABEL_PEDAGOGY
 from base.business.learning_units.perms import can_edit_summary_locked_field
 from base.forms.common import set_trans_txt
 from base.models.learning_unit_year import LearningUnitYear
@@ -35,9 +35,6 @@ from cms.models import translated_text
 
 
 class LearningUnitPedagogyForm(forms.Form):
-    text_labels_name = ['resume', 'bibliography', 'teaching_methods', 'evaluation_methods',
-                        'other_informations', 'online_resources']
-
     def __init__(self, *args, learning_unit_year=None, language_code=None, **kwargs):
         self.learning_unit_year = learning_unit_year
         self.language = find_language_in_settings(language_code)
@@ -55,7 +52,7 @@ class LearningUnitPedagogyForm(forms.Form):
         return translated_text.search(entity=entity_name.LEARNING_UNIT_YEAR,
                                       reference=self.learning_unit_year.id,
                                       language=language_iso,
-                                      text_labels_name=self.text_labels_name)
+                                      text_labels_name=CMS_LABEL_PEDAGOGY)
 
 
 class LearningUnitPedagogyEditForm(forms.Form):
@@ -95,10 +92,10 @@ class SummaryModelForm(forms.ModelForm):
 
     class Meta:
         model = LearningUnitYear
-        fields = ["summary_locked", 'mobility_modality']
+        fields = ["summary_locked", 'bibliography', 'mobility_modality']
 
 
-class BibliographyModelForm(forms.ModelForm):
+class TeachingMaterialModelForm(forms.ModelForm):
     def __init__(self, *args, **kwargs):
         person = kwargs.pop('person')
         super().__init__(*args, **kwargs)

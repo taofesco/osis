@@ -29,7 +29,7 @@ from django.http import QueryDict
 from django.test import TestCase
 from django.utils.translation import ugettext_lazy as _
 
-from base.forms.learning_unit.search_form import filter_is_borrowed_learning_unit_year, SearchForm, LearningUnitYearForm
+from base.forms.learning_unit.search_form import filter_is_borrowed_learning_unit_year, LearningUnitSearchForm, LearningUnitYearForm
 from base.models.enums import entity_container_year_link_type, entity_type, learning_container_year_types
 from base.models.group_element_year import GroupElementYear
 from base.models.learning_unit_year import LearningUnitYear
@@ -41,6 +41,7 @@ from base.tests.factories.entity_version import EntityVersionFactory
 from base.tests.factories.group_element_year import GroupElementYearFactory
 from base.tests.factories.learning_unit_year import LearningUnitYearFactory
 from base.tests.factories.offer_year_entity import OfferYearEntityFactory
+from base.forms.search.search_form import get_research_criteria
 
 
 class TestSearchForm(TestCase):
@@ -56,12 +57,12 @@ class TestSearchForm(TestCase):
             "tutor": "Jean Marcel",
             "academic_year_id": str(self.academic_years[0].id),
         })
-        form = SearchForm(data)
+        form = LearningUnitSearchForm(data)
         self.assertTrue(form.is_valid())
         expected_research_criteria = [(_('academic_year_small'), self.academic_years[0]),
                                       (_('requirement_entity_small'), "INFO"),
                                       (_('tutor'), "Jean Marcel")]
-        actual_research_criteria = form.get_research_criteria()
+        actual_research_criteria = get_research_criteria(form)
         self.assertListEqual(expected_research_criteria, actual_research_criteria)
 
     def test_get_research_criteria_with_choice_field(self):
@@ -74,8 +75,9 @@ class TestSearchForm(TestCase):
         self.assertTrue(form.is_valid())
         expected_research_criteria = [(_('academic_year_small'), self.academic_years[0]),
                                       (_('type'), _(learning_container_year_types.COURSE))]
-        actual_research_criteria = form.get_research_criteria()
+        actual_research_criteria = get_research_criteria(form)
         self.assertListEqual(expected_research_criteria, actual_research_criteria)
+
 
 class TestFilterIsBorrowedLearningUnitYear(TestCase):
     @classmethod
@@ -156,8 +158,8 @@ def generate_learning_unit_year_with_associated_education_group(academic_year, s
     offer_year_entity = OfferYearEntityFactory(entity=entity_version.entity,
                                                education_group_year__academic_year=academic_year)
 
-    branch_group = GroupElementYearFactory(child_branch=offer_year_entity.education_group_year, parent=None)
-    leaf_group = GroupElementYearFactory(child_branch=None, child_leaf=luy,
-                                         parent=offer_year_entity.education_group_year)
+    GroupElementYearFactory(child_branch=offer_year_entity.education_group_year, parent=None)
+    GroupElementYearFactory(child_branch=None, child_leaf=luy,
+                            parent=offer_year_entity.education_group_year)
 
     return luy

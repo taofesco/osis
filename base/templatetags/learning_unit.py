@@ -1,4 +1,4 @@
-##############################################################################
+#############################################################################
 #
 #    OSIS stands for Open Student Information System. It's an application
 #    designed to manage the core business of higher education institutions,
@@ -27,6 +27,7 @@ from django import template
 from django.utils.safestring import mark_safe
 from django.utils.translation import ugettext_lazy as _
 
+from base.models.learning_unit_year import find_lt_learning_unit_year_with_different_acronym
 from base.models.proposal_learning_unit import ProposalLearningUnit
 
 register = template.Library()
@@ -102,8 +103,10 @@ def dl_tooltip(differences, key, **kwargs):
                                              "The value of this attribute is not annualized")
         value = get_style_of_value("font-style:italic", "The value of this attribute is not annualized", value)
 
-    return mark_safe("<dl><dt {difference}>{label_text}</dt><dd {difference}>{value}</dd></dl>".format(
-        difference=difference, label_text=label_text, value=_(str(value))))
+    html_id = "id='id_{}'".format(key.lower())
+
+    return mark_safe("<dl><dt {difference}>{label_text}</dt><dd {difference} {id}>{value}</dd></dl>".format(
+        difference=difference, id=html_id, label_text=label_text, value=_(str(value))))
 
 
 def get_style_of_value(style, title, value):
@@ -118,5 +121,18 @@ def get_style_of_label_text(label_text, style, title):
 
 
 @register.filter
-def get_old_acronym(differences):
-    return differences.get('acronym', None)
+def get_previous_acronym(luy):
+    if has_proposal(luy):
+        return _get_acronym_from_proposal(luy)
+    else:
+        previous_luy = find_lt_learning_unit_year_with_different_acronym(luy)
+        return previous_luy.acronym if previous_luy else None
+
+
+def _get_acronym_from_proposal(luy):
+    proposal = ProposalLearningUnit.objects \
+        .filter(learning_unit_year=luy) \
+        .order_by('-learning_unit_year__academic_year__year').first()
+    if proposal and proposal.initial_data and proposal.initial_data.get('learning_unit_year'):
+        return proposal.initial_data['learning_unit_year']['acronym']
+    return None

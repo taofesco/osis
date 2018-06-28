@@ -29,7 +29,7 @@ import operator
 import factory
 import factory.fuzzy
 from django.conf import settings
-from django.contrib.auth.models import Group
+from django.contrib.auth.models import Group, Permission
 
 from base import models as mdl
 from base.models.person import FACULTY_MANAGER_GROUP, CENTRAL_MANAGER_GROUP
@@ -67,18 +67,30 @@ class PersonWithoutUserFactory(PersonFactory):
     email = factory.LazyAttribute(generate_person_email)
 
 
+class PersonWithPermissionsFactory:
+    def __init__(self, *permissions, **kwargs):
+        perms_obj = [Permission.objects.get_or_create(defaults={"name" :p}, codename=p)[0] for p in permissions]
+        self.person = PersonFactory(**kwargs)
+        self.person.user.user_permissions.add(*perms_obj)
+
+    def __new__(cls, *permissions, **kwargs):
+        obj = super().__new__(cls)
+        obj.__init__(*permissions, **kwargs)
+        return obj.person
+
+
 class PersonWithGroupsFactory:
     groups_name = ()
 
-    def __init__(self, *args, **kwargs):
+    def __init__(self, **kwargs):
         groups_obj = [Group.objects.get_or_create(name=name)[0] for name in self.groups_name]
 
         self.person = PersonFactory(**kwargs)
         self.person.user.groups.add(*groups_obj)
 
-    def __new__(cls, *args, **kwargs):
+    def __new__(cls, **kwargs):
         obj = super().__new__(cls)
-        obj.__init__(*args, **kwargs)
+        obj.__init__(**kwargs)
         return obj.person
 
 

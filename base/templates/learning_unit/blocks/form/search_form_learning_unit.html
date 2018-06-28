@@ -1,5 +1,5 @@
 {% extends "blocks/forms/search_form.html" %}
-{% load bootstrap3 %}
+{% load bootstrap3 format %}
 
 {% comment "License" %}
     * OSIS stands for Open Student Information System. It's an application
@@ -26,59 +26,52 @@
 {% endcomment %}
 
 {% block search_form_row_1 %}
-    <div class="col-md-2">
-        {% bootstrap_field form.academic_year_id %}
-    </div>
-
-    <div class="col-md-2">
-        {% bootstrap_field form.acronym %}
-    </div>
-
-    <div class="col-md-4">
-        {% bootstrap_field form.title %}
-    </div>
-
-    <div class="col-md-2">
-        {% bootstrap_field form.container_type %}
-    </div>
-
-    <div class="col-md-2">
-        {% bootstrap_field form.subtype %}
-    </div>
+    {% bootstrap_field form.academic_year_id form_group_class="col-md-2" %}
+    {% bootstrap_field form.acronym form_group_class="col-md-2" %}
+    {% bootstrap_field form.title form_group_class="col-md-4" %}
+    {% bootstrap_field form.container_type form_group_class="col-md-2" %}
+    {% bootstrap_field form.subtype form_group_class="col-md-2" %}
 {% endblock %}
 
 {% block search_form_row_2 %}
     {% with activity_search_type=1 service_search_type=2 borrowed_search_type=5 %}
-    <div class="col-md-2">
-        {% bootstrap_field form.status %}
-    </div>
-    <div class="col-md-2">
-        {% bootstrap_field form.tutor %}
-    </div>
-    <div class="col-md-2">
-        {% bootstrap_field form.requirement_entity_acronym %}
-    </div>
-    {% if search_type == service_search_type %}
-        <div class="col-md-2">
-            {% bootstrap_field form.allocation_entity_acronym %}
-        </div>
-    {% elif search_type == borrowed_search_type %}
-        <div class="col-md-3">
-            {% bootstrap_field form.faculty_borrowing_acronym %}
-        </div>
+        {% bootstrap_field form.status form_group_class="col-md-2" %}
+
+        {% url 'search_tutors' as url_search_tutors %}
+        {% with span_search_tutor='<a href="%s" class="link_data_lookup"><span class="glyphicon glyphicon-search" aria-hidden="true"></span></a>'|format:url_search_tutors%}
+            {% bootstrap_field form.tutor form_group_class="col-md-2" %}
+        {% endwith %}
+
+        {% bootstrap_field form.requirement_entity_acronym form_group_class="col-md-2" %}
+
+    {% if search_type == service_search_type or search_type == activity_search_type or search_type == borrowed_search_type%}
+        {% bootstrap_field form.allocation_entity_acronym form_group_class="col-md-2" %}
+        {% bootstrap_field form.with_entity_subordinated form_group_class="col-md-2" %}
     {% endif %}
 
-    {% if search_type == activity_search_type or search_type == borrowed_search_type %}
-        <div class="col-md-2">
-            {% bootstrap_field form.allocation_entity_acronym %}
-        </div>
+
+    {% endwith %}
+
+{% endblock %}
+
+{% block search_form_buttons %}
+    {% with borrowed_search_type=5 %}
+    {% if search_type == borrowed_search_type %}
+    {% else %}
+        {{ block.super }}
     {% endif %}
-    {% if search_type == activity_search_type or search_type == service_search_type or search_type == borrowed_search_type %}
-        <div class="col-md-2">
-            {% bootstrap_field form.with_entity_subordinated %}
+    {% endwith %}
+{% endblock %}
+
+{% block extras %}
+    {% with borrowed_search_type=5 %}
+    {% if search_type == borrowed_search_type %}
+        <div class="row" style="margin-top:10px;">
+            {% bootstrap_field form.faculty_borrowing_acronym form_group_class="col-md-3" %}
+            <div class="col-md-1 text-right" style="line-height:70px;">
+                {% bootstrap_button "" value=_('learning_unit_search') button_type="submit" button_class="btn-primary" icon="search" %}
+            </div>
         </div>
     {% endif %}
     {% endwith %}
-    <input type="hidden" id="xls_status" name="xls_status">
-
 {% endblock %}

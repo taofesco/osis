@@ -28,7 +28,9 @@ from django.http import QueryDict
 from django.utils.functional import cached_property
 from django.utils.translation import ugettext_lazy as _
 
+from base.business import learning_container_year
 from base.business.utils.model import merge_two_dicts
+from base.forms.learning_unit.edition_volume import SimplifiedVolumeManagementForm
 from base.forms.learning_unit.entity_form import EntityContainerBaseForm
 from base.forms.learning_unit.learning_unit_create import LearningUnitYearModelForm, \
     LearningContainerYearModelForm, LearningContainerModelForm, \
@@ -38,12 +40,14 @@ from base.forms.utils.acronym_field import split_acronym
 from base.forms.utils.choice_field import add_blank
 from base.models import learning_unit_year
 from base.models.academic_year import current_academic_year, LEARNING_UNIT_CREATION_SPAN_YEARS
+from base.models.entity_container_year import EntityContainerYear
 from base.models.enums import learning_unit_year_subtypes
+from base.models.learning_component_year import LearningComponentYear
 from base.models.learning_unit import LearningUnit
 
 PARTIM_FORM_READ_ONLY_FIELD = {
     'acronym_0', 'acronym_1', 'common_title', 'common_title_english',
-    'requirement_entity', 'allocation_entity', 'periodicity',
+    'requirement_entity', 'allocation_entity',
     'academic_year', 'container_type', 'internship_subtype',
     'additional_requirement_entity_1', 'additional_requirement_entity_2'
 }
@@ -78,7 +82,7 @@ class LearningUnitPartimModelForm(LearningUnitModelForm):
                                                   label=_('end_year_title'))
 
     class Meta(LearningUnitModelForm.Meta):
-        fields = ('periodicity', 'faculty_remark', 'other_remark', 'end_year')
+        fields = ('faculty_remark', 'other_remark', 'end_year')
 
 
 def merge_data(data, inherit_lu_values):
@@ -95,10 +99,11 @@ class PartimForm(LearningUnitBaseForm):
         LearningUnitYearModelForm,
         LearningContainerModelForm,
         LearningContainerYearModelForm,
-        EntityContainerBaseForm
+        EntityContainerBaseForm,
+        SimplifiedVolumeManagementForm
     ]
 
-    form_cls_to_validate = [LearningUnitPartimModelForm, LearningUnitYearModelForm]
+    form_cls_to_validate = [LearningUnitPartimModelForm, LearningUnitYearModelForm, SimplifiedVolumeManagementForm]
 
     def __init__(self, person, learning_unit_full_instance, academic_year, learning_unit_instance=None,
                  data=None, *args, **kwargs):
@@ -112,9 +117,8 @@ class PartimForm(LearningUnitBaseForm):
         self.learning_unit_instance = learning_unit_instance
 
         # Inherit values cannot be changed by user
-        inherit_lu_values = self._get_inherit_learning_unit_full_value()
         inherit_luy_values = self._get_inherit_learning_unit_year_full_value()
-        instances_data = self._build_instance_data(data, inherit_lu_values, inherit_luy_values)
+        instances_data = self._build_instance_data(data, inherit_luy_values)
 
         super().__init__(instances_data, *args, **kwargs)
         self.disable_fields(PARTIM_FORM_READ_ONLY_FIELD)
@@ -129,9 +133,9 @@ class PartimForm(LearningUnitBaseForm):
                                          learning_unit=self.learning_unit_full_instance.id,
                                          subtype=learning_unit_year_subtypes.FULL).get()
 
-    def _build_instance_data(self, data, inherit_lu_values, inherit_luy_values):
+    def _build_instance_data(self, data, inherit_luy_values):
         return {
-            LearningUnitPartimModelForm: self._build_instance_data_learning_unit(data, inherit_lu_values),
+            LearningUnitPartimModelForm: self._build_instance_data_learning_unit(data),
             LearningUnitYearModelForm: self._build_instance_data_learning_unit_year(data, inherit_luy_values),
             # Cannot be modify by user [No DATA args provided]
             LearningContainerModelForm: {
@@ -144,6 +148,12 @@ class PartimForm(LearningUnitBaseForm):
             EntityContainerBaseForm: {
                 'learning_container_year': self.learning_unit_year_full.learning_container_year,
                 'person': self.person
+            },
+            SimplifiedVolumeManagementForm: {
+                'data': data,
+                'queryset': LearningComponentYear.objects.filter(
+                    learningunitcomponent__learning_unit_year=self.instance)
+                if self.instance else LearningComponentYear.objects.none()
             }
         }
 
@@ -156,21 +166,18 @@ class PartimForm(LearningUnitBaseForm):
             'subtype': self.subtype
         }
 
-    def _build_instance_data_learning_unit(self, data, inherit_lu_values):
+    def _build_instance_data_learning_unit(self, data):
         return {
-            'data': merge_data(data, inherit_lu_values),
+            'data': data,
             'instance': self.instance.learning_unit if self.instance else None,
-            'initial': inherit_lu_values if not self.instance else None,
             'start_year': self.learning_unit_year_full.academic_year.year,
             'max_end_year': self.learning_unit_year_full.learning_unit.max_end_year
         }
 
     def _get_inherit_learning_unit_year_full_value(self):
         """This function will return the inherit value come from learning unit year FULL"""
-        return {
-            field: value for field, value in self._get_initial_learning_unit_year_form().items()
-            if field in PARTIM_FORM_READ_ONLY_FIELD
-        }
+        return {field: value for field, value in self._get_initial_learning_unit_year_form().items()
+                if field in PARTIM_FORM_READ_ONLY_FIELD}
 
     def _get_initial_learning_unit_year_form(self):
         acronym = self.instance.acronym if self.instance else self.learning_unit_year_full.acronym
@@ -187,7 +194,8 @@ class PartimForm(LearningUnitBaseForm):
             'specific_title': self.learning_unit_year_full.specific_title,
             'specific_title_english': self.learning_unit_year_full.specific_title_english,
             'language': self.learning_unit_year_full.language,
-            'campus': self.learning_unit_year_full.campus
+            'campus': self.learning_unit_year_full.campus,
+            'periodicity': self.learning_unit_year_full.periodicity
         }
         acronym_splited = split_acronym(acronym)
         initial_learning_unit_year.update({
@@ -195,33 +203,31 @@ class PartimForm(LearningUnitBaseForm):
         })
         return initial_learning_unit_year
 
-    def _get_inherit_learning_unit_full_value(self):
-        """This function will return the inherit value come from learning unit FULL"""
-        return {
-            'periodicity': self.learning_unit_full_instance.periodicity
-        }
-
     def save(self, commit=True):
         start_year = self.instance.learning_unit.start_year if self.instance else \
                         self.learning_unit_full_instance.start_year
 
+        lcy = self.learning_unit_year_full.learning_container_year
         # Save learning unit
         learning_unit = self.learning_unit_form.save(
             start_year=start_year,
-            learning_container=self.learning_unit_year_full.learning_container_year.learning_container,
+            learning_container=lcy.learning_container,
             commit=commit
         )
-
-        # Get entity container form full learning container
-        entity_container_years = self._get_entity_container_year()
 
         # Save learning unit year
-        learning_unit_yr = self.forms[LearningUnitYearModelForm].save(
-            learning_container_year=self.learning_unit_year_full.learning_container_year,
+        learning_unit_yr = self.learning_unit_year_form.save(
+            learning_container_year=lcy,
             learning_unit=learning_unit,
-            entity_container_years=entity_container_years,
             commit=commit
         )
+
+        self.simplified_volume_management_form.save_all_forms(
+            learning_unit_yr,
+            EntityContainerYear.objects.filter(learning_container_year=lcy),
+            commit=commit
+        )
+
         return learning_unit_yr
 
     def _get_entity_container_year(self):

@@ -27,6 +27,7 @@ from django.db import models
 from django.utils.translation import ugettext_lazy as _
 
 from attribution.models.attribution_new import AttributionNew
+from base.business.learning_container_year import get_learning_container_year_warnings
 from base.models import learning_unit_year
 from base.models.enums import learning_unit_year_subtypes, learning_container_year_types
 from base.models.enums import vacant_declaration_type
@@ -57,6 +58,8 @@ class LearningContainerYear(SerializableModel):
                                                choices=vacant_declaration_type.DECLARATION_TYPE)
     in_charge = models.BooleanField(default=False)
 
+    _warnings = None
+
     def __str__(self):
         return u"%s - %s" % (self.acronym, self.common_title)
 
@@ -65,6 +68,12 @@ class LearningContainerYear(SerializableModel):
         permissions = (
             ("can_access_learningcontaineryear", "Can access learning container year"),
         )
+
+    @property
+    def warnings(self):
+        if self._warnings is None:
+            self._warnings = get_learning_container_year_warnings(self)
+        return self._warnings
 
     def get_partims_related(self):
         return learning_unit_year.search(learning_container_year_id=self,

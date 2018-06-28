@@ -11,3 +11,9 @@
 [submodule "partnership"]
 	path = partnership
 	url = https://github.com/uclouvain/osis-partnership.git
+[submodule "dissertation"]
+	path = dissertation
+	url = https://github.com/uclouvain/osis-dissertation.git
+[submodule "assistant"]
+	path = assistant
+	url = https://github.com/uclouvain/osis-assistant.git

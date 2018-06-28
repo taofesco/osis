@@ -42,15 +42,17 @@ from django.views.decorators.http import require_http_methods
 from base import models as mdl
 from base.business import education_group as education_group_business
 from base.business.education_group import assert_category_of_education_group_year
+from base.business.education_groups import perms
 from base.business.learning_unit import find_language_in_settings
 from base.forms.education_group_general_informations import EducationGroupGeneralInformationsForm
 from base.forms.education_group_pedagogy_edit import EducationGroupPedagogyEditForm
-from base.forms.education_groups import EducationGroupFilter, MAX_RECORDS
 from base.forms.education_groups_administrative_data import CourseEnrollmentForm, AdministrativeDataFormset
 from base.models.admission_condition import AdmissionConditionLine, AdmissionCondition
 from base.models.education_group_year import EducationGroupYear
 from base.models.enums import academic_calendar_type
 from base.models.enums import education_group_categories
+from base.models.person import Person
+from base.views.learning_units.common import get_text_label_translated
 from cms import models as mdl_cms
 from cms.enums import entity_name
 from cms.models.text_label import TextLabel
@@ -70,46 +72,17 @@ NUMBER_SESSIONS = 3
 
 @login_required
 @permission_required('base.can_access_education_group', raise_exception=True)
-def education_groups(request):
-    if request.GET:
-        form = EducationGroupFilter(request.GET)
-    else:
-        current_academic_year = mdl.academic_year.current_academic_year()
-        form = EducationGroupFilter(initial={'academic_year': current_academic_year,
-                                             'category': education_group_categories.TRAINING})
-
-    object_list = None
-    if form.is_valid():
-        object_list = form.get_object_list()
-        if not _check_if_display_message(request, object_list):
-            object_list = None
-
-    context = {
-        'form': form,
-        'object_list': object_list,
-        'experimental_phase': True
-    }
-    return layout.render(request, "education_groups.html", context)
-
-
-def _check_if_display_message(request, an_education_groups):
-    if not an_education_groups:
-        messages.add_message(request, messages.WARNING, _('no_result'))
-    elif len(an_education_groups) > MAX_RECORDS:
-        messages.add_message(request, messages.WARNING, _('too_many_results'))
-        return False
-    return True
-
-
-@login_required
-@permission_required('base.can_access_education_group', raise_exception=True)
 def education_group_read(request, education_group_year_id):
+    person = get_object_or_404(Person, user=request.user)
     root = request.GET.get('root')
     education_group_year = get_object_or_404(EducationGroupYear, id=education_group_year_id)
     education_group_languages = [education_group_language.language.name for education_group_language in
                                  mdl.education_group_language.find_by_education_group_year(education_group_year)]
     enums = mdl.enums.education_group_categories
     parent = _get_education_group_root(root, education_group_year)
+
+    can_create_education_group = perms.is_eligible_to_add_education_group(person)
+    can_change_education_group = perms.is_eligible_to_change_education_group(person)
 
     return layout.render(request, "education_group/tab_identification.html", locals())
 
@@ -365,8 +338,7 @@ def education_group_year_pedagogy_edit(request, education_group_year_id):
     form.load_initial()
     context['form'] = form
     user_language = mdl.person.get_user_interface_language(request.user)
-    context['text_label_translated'] = next((txt for txt in text_lb.translated_text_labels
-                                             if txt.language == user_language), None)
+    context['text_label_translated'] = get_text_label_translated(text_lb, user_language)
     context['language_translated'] = find_language_in_settings(language)
 
     return layout.render(request, 'education_group/pedagogy_edit.html', context)

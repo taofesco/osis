@@ -182,6 +182,16 @@ def find_all_responsible_by_learning_unit_year(learning_unit_year):
                               .order_by("tutor__person")
 
 
+def find_all_summary_responsibles_by_learning_unit_years(learning_unit_years):
+    summary_responsibles_group_by_luy = {}
+    all_attributions = Attribution.objects.filter(
+        learning_unit_year__in=learning_unit_years,
+        summary_responsible=True).select_related('tutor__person')
+    for attribution in all_attributions:
+        summary_responsibles_group_by_luy.setdefault(attribution.learning_unit_year_id, []).append(attribution.tutor)
+    return summary_responsibles_group_by_luy
+
+
 def find_by_tutor(tutor):
     if tutor:
         return [att.learning_unit_year for att in list(search(tutor=tutor))]

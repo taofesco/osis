@@ -25,7 +25,6 @@
 ##############################################################################
 from django import forms
 from django.db import models
-from django.db.models.fields import BLANK_CHOICE_DASH
 from django.forms import ModelChoiceField
 from django.utils.functional import lazy
 from django.utils.translation import ugettext_lazy as _
@@ -34,8 +33,8 @@ from base.business.entity import get_entities_ids
 from base.forms.bootstrap import BootstrapForm
 from base.models import academic_year, education_group_year, offer_year_entity
 from base.models.education_group_type import EducationGroupType
-from base.models.enums import offer_year_entity_type
 from base.models.enums import education_group_categories
+from base.models.enums import offer_year_entity_type
 
 MAX_RECORDS = 1000
 
@@ -67,16 +66,18 @@ class ModelChoiceFieldWithData(forms.ModelChoiceField):
 
 class EducationGroupFilter(BootstrapForm):
     academic_year = forms.ModelChoiceField(queryset=academic_year.find_academic_years(), required=False,
-                                           empty_label=_('all_label'))
+                                           empty_label=_('all_label'), label=_('academic_year_small'))
 
     category = forms.ChoiceField(choices=[("", _('all_label'))] + list(education_group_categories.CATEGORIES),
-                                 required=False)
+                                 required=False, label=_('category'))
 
     education_group_type = ModelChoiceFieldWithData(queryset=EducationGroupType.objects.all(), required=False,
-                                                    empty_label=_('all_label'))
+                                                    empty_label=_('all_label'), label=_('type'))
 
-    acronym = title = requirement_entity_acronym = partial_acronym = forms.CharField(max_length=20, required=False)
-
+    acronym = forms.CharField(max_length=40, required=False, label=_('acronym'))
+    title = forms.CharField(max_length=255, required=False, label=_('title'))
+    requirement_entity_acronym = forms.CharField(max_length=20, required=False, label=_('entity'))
+    partial_acronym = forms.CharField(max_length=15, required=False, label=_('code'))
     with_entity_subordinated = forms.BooleanField(required=False)
 
     def clean_category(self):
@@ -88,13 +89,17 @@ class EducationGroupFilter(BootstrapForm):
         clean_data = {key: value for key, value in self.cleaned_data.items() if value is not None}
 
         entity_versions_prefetch = models.Prefetch('entity__entityversion_set', to_attr='entity_versions')
+
         offer_year_entity_prefetch = models.Prefetch('offeryearentity_set',
             queryset=offer_year_entity.search(type=offer_year_entity_type.ENTITY_MANAGEMENT)\
                                                      .prefetch_related(entity_versions_prefetch),
                                                      to_attr='offer_year_entities')
+
         if clean_data.get('requirement_entity_acronym'):
-            clean_data['id'] = _get_filter_entity_management(clean_data['requirement_entity_acronym'],
-                                                             clean_data.get('with_entity_subordinated',False))
+            clean_data['id'] = _get_filter_entity_management(
+                clean_data['requirement_entity_acronym'], clean_data.get('with_entity_subordinated',False)
+            )
+
         education_groups = education_group_year.search(**clean_data).prefetch_related(offer_year_entity_prefetch)
         return [_append_entity_management(education_group) for education_group in education_groups]
 

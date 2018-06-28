@@ -3,9 +3,8 @@
 <div class="panel panel-default">
     <div class="panel-body">
         <div class="form-group">
-            <label>{% trans 'institution'%}</label><br>
-
             {% if learning_unit_year.campus %}
+                <label>{% trans 'institution'%}</label><br>
                 {{ learning_unit_year.campus.organization.name }}
             {% endif %}
         </div>

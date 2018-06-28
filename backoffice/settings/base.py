@@ -356,7 +356,8 @@ SELENIUM_SETTINGS = {
 # BOOTSTRAP3 Configuration
 BOOTSTRAP3 = {
     'set_placeholder': False,
-    'success_css_class': ''
+    'success_css_class': '',
+    'required_css_class': "required_field",
 }
 
 CACHE_ENABLED = os.environ.get("CACHE_ENABLED", "False").lower() == 'true'

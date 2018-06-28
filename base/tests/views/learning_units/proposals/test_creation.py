@@ -36,7 +36,7 @@ from base.forms.learning_unit.learning_unit_create import LearningUnitModelForm,
     LearningContainerYearModelForm
 from base.forms.learning_unit_proposal import ProposalLearningUnitForm, CreationProposalBaseForm
 from base.models.enums import learning_unit_year_subtypes, learning_container_year_types, organization_type, \
-    entity_type, learning_unit_periodicity
+    entity_type, learning_unit_year_periodicity
 from base.models.learning_unit_year import LearningUnitYear
 from base.models.person import FACULTY_MANAGER_GROUP
 from base.models.proposal_learning_unit import ProposalLearningUnit
@@ -88,12 +88,23 @@ class LearningUnitViewTestCase(TestCase):
             "campus": self.campus.id,
             "common_title": "Common UE title",
             "language": self.language.pk,
-            "periodicity": learning_unit_periodicity.ANNUAL,
+            "periodicity": learning_unit_year_periodicity.ANNUAL,
             "entity": self.entity_version.id,
             "folder_id": 1,
             'requirement_entity-entity': self.entity_version.id,
             'allocation_entity-entity': self.entity_version.id,
             'additional_requirement_entity_1-entity': '',
+
+            # Learning component year data model form
+            'form-TOTAL_FORMS': '2',
+            'form-INITIAL_FORMS': '0',
+            'form-MAX_NUM_FORMS': '2',
+            'form-0-hourly_volume_total_annual': 20,
+            'form-0-hourly_volume_partial_q1': 10,
+            'form-0-hourly_volume_partial_q2': 10,
+            'form-1-hourly_volume_total_annual': 20,
+            'form-1-hourly_volume_partial_q1': 10,
+            'form-1-hourly_volume_partial_q2': 10,
         }
 
     def test_get_proposal_learning_unit_creation_form(self):
@@ -170,12 +181,11 @@ class LearningUnitViewTestCase(TestCase):
         learning_unit_form = CreationProposalBaseForm(self.get_empty_required_fields(), person=self.person)
         self.assertFalse(learning_unit_form.is_valid(), learning_unit_form.errors)
         luy_errors = learning_unit_form.learning_unit_form_container.forms[LearningUnitYearModelForm].errors
-        lu_errors = learning_unit_form.learning_unit_form_container.forms[LearningUnitModelForm].errors
         lcy_errors = learning_unit_form.learning_unit_form_container.forms[LearningContainerYearModelForm].errors
 
         self.assertEqual(luy_errors['acronym'], [_('field_is_required'), _('invalid_acronym')])
         self.assertEqual(lcy_errors['container_type'], [_('field_is_required')])
-        self.assertEqual(lu_errors['periodicity'], [_('field_is_required')])
+        self.assertEqual(luy_errors['periodicity'], [_('field_is_required')])
         self.assertEqual(luy_errors['language'], [_('field_is_required')])
         self.assertEqual(luy_errors['campus'], [_('field_is_required')])
 

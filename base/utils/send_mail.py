@@ -221,7 +221,7 @@ def send_message_after_all_encoded_by_manager(persons, enrollments, learning_uni
             enrollment.learning_unit_enrollment.offer_enrollment.student.person.last_name,
             enrollment.learning_unit_enrollment.offer_enrollment.student.person.first_name,
             enrollment.score_final,
-            _(enrollment.justification_final) if enrollment.justification_final else None,
+            enrollment.justification_final if enrollment.justification_final else None,
         ) for enrollment in enrollments]
     enrollments_headers = (
         'acronym',
@@ -230,9 +230,10 @@ def send_message_after_all_encoded_by_manager(persons, enrollments, learning_uni
         'lastname',
         'firstname',
         'score',
-        'documentation'
+        'justification'
     )
-    table = message_config.create_table('enrollments', enrollments_headers, enrollments_data)
+    table = message_config.create_table('enrollments', enrollments_headers, enrollments_data,
+                                        data_translatable=['justification'])
     attachment = build_scores_sheet_attachment(enrollments)
     message_content = message_config.create_message_content(html_template_ref, txt_template_ref,
                                                             [table], receivers, template_base_data, suject_data,

@@ -35,7 +35,7 @@ from base.models import proposal_learning_unit, entity_container_year
 from base.models.entity_container_year import EntityContainerYear
 from base.models.enums import organization_type, proposal_type, proposal_state, entity_type, \
     learning_container_year_types, learning_unit_year_quadrimesters, entity_container_year_link_type, \
-    learning_unit_periodicity, internship_subtypes, learning_unit_year_subtypes
+    learning_unit_year_periodicity, internship_subtypes, learning_unit_year_subtypes
 from base.models.enums.proposal_state import ProposalState
 from base.models.learning_unit_year import LearningUnitYear
 from base.models.person import FACULTY_MANAGER_GROUP, CENTRAL_MANAGER_GROUP
@@ -70,7 +70,9 @@ class TestSave(TestCase):
             subtype=learning_unit_year_subtypes.FULL,
             academic_year=current_academic_year,
             learning_container_year=learning_container_year,
-            campus=CampusFactory(organization=an_organization, is_administration=True)
+            campus=CampusFactory(organization=an_organization, is_administration=True),
+            periodicity=learning_unit_year_periodicity.ANNUAL,
+            internship_subtype=None
         )
 
         today = datetime.date.today()
@@ -99,7 +101,7 @@ class TestSave(TestCase):
             "container_type": self.learning_unit_year.learning_container_year.container_type,
             "internship_subtype": "",
             "credits": "4",
-            "periodicity": learning_unit_periodicity.BIENNIAL_ODD,
+            "periodicity": learning_unit_year_periodicity.BIENNIAL_ODD,
             "status": False,
             "language": self.language.pk,
             "quadrimester": learning_unit_year_quadrimesters.Q1,
@@ -111,6 +113,17 @@ class TestSave(TestCase):
             'allocation_entity-entity': self.entity_version.id,
             'additional_requirement_entity_1-entity': self.entity_version.id,
             'additional_requirement_entity_2-entity': self.entity_version.id,
+
+            # Learning component year data model form
+            'form-TOTAL_FORMS': '2',
+            'form-INITIAL_FORMS': '0',
+            'form-MAX_NUM_FORMS': '2',
+            'form-0-hourly_volume_total_annual': 20,
+            'form-0-hourly_volume_partial_q1': 10,
+            'form-0-hourly_volume_partial_q2': 10,
+            'form-1-hourly_volume_total_annual': 20,
+            'form-1-hourly_volume_partial_q1': 10,
+            'form-1-hourly_volume_partial_q2': 10,
         }
 
     def test_learning_unit_proposal_form_get_as_faculty_manager(self):
@@ -244,10 +257,10 @@ class TestSave(TestCase):
                 "language": self.learning_unit_year.language.pk,
                 "credits": self.learning_unit_year.credits,
                 "campus": self.learning_unit_year.campus.id,
+                "periodicity": self.learning_unit_year.periodicity,
             },
             "learning_unit": {
                 "id": self.learning_unit_year.learning_unit.id,
-                "periodicity": self.learning_unit_year.learning_unit.periodicity,
                 'end_year': self.learning_unit_year.learning_unit.end_year
             },
             "entities": {

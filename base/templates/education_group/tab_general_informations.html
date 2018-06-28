@@ -1,5 +1,5 @@
-{% extends "layout.html" %}
-{% load i18n %}
+{% extends "education_group/layout_detail.html" %}
+{% load i18n  getattr %}
 {% load staticfiles %}
 {% comment "License" %}
 * OSIS stands for Open Student Information System. It's an application
@@ -25,13 +25,9 @@
 * see http://www.gnu.org/licenses/.
 {% endcomment %}
 
-{% block breadcrumb %}
-{% include "education_group/breadcrumb.html" %}
-{% endblock %}
-{% load getattr %}
+
 {% block content %}
 
-{% include "education_group/header.html" %}
 {% url 'education_group_pedagogy_edit' education_group_year_id=education_group_year.id as post_url %}
 <div class="panel panel-default">
     <div class="panel-body" id="tabs">

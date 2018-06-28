@@ -24,13 +24,19 @@
 #
 ##############################################################################
 from django.test import TestCase
+from django.utils.translation import ugettext_lazy as _
 
 from attribution.models import attribution
 from base.models import learning_unit_year
+from base.models.entity_component_year import EntityComponentYear
+from base.models.enums import learning_unit_year_periodicity
 from base.models.enums import learning_unit_year_subtypes
-from base.models.learning_unit_year import find_max_credits_of_related_partims
+from base.models.enums.entity_container_year_link_type import REQUIREMENT_ENTITY
+from base.models.enums.learning_component_year_type import LECTURING, PRACTICAL_EXERCISES
+from base.models.learning_component_year import LearningComponentYear
+from base.models.learning_unit_year import find_max_credits_of_related_partims, check_if_acronym_regex_is_valid
 from base.tests.factories.academic_year import create_current_academic_year
-from base.tests.factories.business.learning_units import GenerateAcademicYear
+from base.tests.factories.business.learning_units import GenerateAcademicYear, GenerateContainer
 from base.tests.factories.external_learning_unit_year import ExternalLearningUnitYearFactory
 from base.tests.factories.learning_container_year import LearningContainerYearFactory
 from base.tests.factories.learning_unit import LearningUnitFactory
@@ -149,7 +155,6 @@ class LearningUnitYearTest(TestCase):
                                       specific_title=a_specific_title,
                                       learning_container_year=lunit_container_yr)
 
-
         self.assertEqual(learning_unit_year.search(title="{} en plus".format(a_common_title)).count(), 0)
         self.assertEqual(learning_unit_year.search(title=a_common_title)[0], luy)
         self.assertEqual(learning_unit_year.search(title=common_part)[0], luy)
@@ -201,15 +206,22 @@ class LearningUnitYearTest(TestCase):
         self.assertEqual(self.learning_unit_year.container_common_title, '')
 
     def test_can_be_updated_by_faculty_manager(self):
+        previous_academic_years = GenerateAcademicYear(start_year=self.academic_year.year-3,
+                                                       end_year=self.academic_year.year-1).academic_years
         next_academic_years = GenerateAcademicYear(start_year=self.academic_year.year+1,
                                                    end_year=self.academic_year.year+3).academic_years
-
+        previous_luys = [LearningUnitYearFactory(academic_year=ac, learning_unit=self.learning_unit_year.learning_unit)
+                         for ac in previous_academic_years]
         next_luys = [LearningUnitYearFactory(academic_year=ac, learning_unit=self.learning_unit_year.learning_unit)
                      for ac in next_academic_years]
+
+        for luy in previous_luys:
+            self.assertFalse(luy.can_update_by_faculty_manager())
 
         self.assertTrue(self.learning_unit_year.can_update_by_faculty_manager())
         self.assertTrue(next_luys[0].can_update_by_faculty_manager())
         self.assertTrue(next_luys[1].can_update_by_faculty_manager())
+
         self.assertFalse(next_luys[2].can_update_by_faculty_manager())
 
     def test_is_external(self):
@@ -220,3 +232,277 @@ class LearningUnitYearTest(TestCase):
     def test_is_not_external(self):
         luy = LearningUnitYearFactory()
         self.assertFalse(luy.is_external())
+
+    def test_check_if_acronym_regex_is_valid(self):
+        self.assertTrue(check_if_acronym_regex_is_valid('TEST*'))
+        self.assertTrue(check_if_acronym_regex_is_valid('TE*ST'))
+        self.assertFalse(check_if_acronym_regex_is_valid('*TEST'))
+        self.assertFalse(check_if_acronym_regex_is_valid('?TEST'))
+        self.assertFalse(check_if_acronym_regex_is_valid(self.learning_unit_year))
+
+
+class LearningUnitYearWarningsTest(TestCase):
+    def setUp(self):
+        self.start_year = 2010
+        self.end_year = 2020
+        self.generated_ac_years = GenerateAcademicYear(self.start_year, self.end_year)
+        self.generated_container = GenerateContainer(self.start_year, self.end_year)
+        self.luy_full = self.generated_container.generated_container_years[0].learning_unit_year_full
+        self.learning_component_year_full_lecturing = LearningComponentYear.objects.filter(
+            type=LECTURING,
+            learningunitcomponent__learning_unit_year=self.luy_full
+        ).first()
+        self.entity_component_year_full_lecturing_requirement = EntityComponentYear.objects.get(
+            learning_component_year=self.learning_component_year_full_lecturing,
+            entity_container_year__type=REQUIREMENT_ENTITY
+        )
+
+    def test_warning_volumes_vol_tot(self):
+        self.learning_component_year_full_lecturing.hourly_volume_partial_q1 = 15.0
+        self.learning_component_year_full_lecturing.hourly_volume_partial_q2 = 15.0
+        self.learning_component_year_full_lecturing.hourly_volume_total_annual = 40.0
+        self.learning_component_year_full_lecturing.planned_classes = 1
+        self.learning_component_year_full_lecturing.save()
+
+        self.entity_component_year_full_lecturing_requirement.repartition_volume = 30.0
+        self.entity_component_year_full_lecturing_requirement.save()
+
+        excepted_error = "{} ({})".format(_('Volumes are inconsistent'), _('Vol_tot is not equal to vol_q1 + vol_q2'))
+        self.assertIn(excepted_error, self.learning_component_year_full_lecturing.warnings)
+        self.assertIn(excepted_error, self.luy_full.warnings)
+
+    def test_warning_volumes_vol_global(self):
+        self.learning_component_year_full_lecturing.hourly_volume_partial_q1 = 15.0
+        self.learning_component_year_full_lecturing.hourly_volume_partial_q2 = 15.0
+        self.learning_component_year_full_lecturing.hourly_volume_total_annual = 30.0
+        self.learning_component_year_full_lecturing.planned_classes = 1
+        self.learning_component_year_full_lecturing.save()
+
+        self.entity_component_year_full_lecturing_requirement.repartition_volume = 40.0
+        self.entity_component_year_full_lecturing_requirement.save()
+
+        excepted_error = "{} ({})".format(
+            _('Volumes are inconsistent'), _('Vol_global is not equal to Vol_tot * planned_classes'))
+        self.assertIn(excepted_error, self.learning_component_year_full_lecturing.warnings)
+        self.assertIn(excepted_error, self.luy_full.warnings)
+
+    def test_warning_volumes_vol_global_and_total(self):
+        self.entity_component_year_full_lecturing_requirement.repartition_volume = 42.0
+        self.entity_component_year_full_lecturing_requirement.save()
+
+        self.learning_component_year_full_lecturing.hourly_volume_partial_q1 = 10.0
+        self.learning_component_year_full_lecturing.hourly_volume_partial_q2 = 15.0
+        self.learning_component_year_full_lecturing.hourly_volume_total_annual = 36.0
+        self.learning_component_year_full_lecturing.planned_classes = 2
+        self.learning_component_year_full_lecturing.save()
+
+        excepted_error_1 = "{} ({})".format(
+            _('Volumes are inconsistent'), _('Vol_global is not equal to Vol_tot * planned_classes'))
+        self.assertIn(excepted_error_1, self.learning_component_year_full_lecturing.warnings)
+        self.assertIn(excepted_error_1, self.luy_full.warnings)
+
+        excepted_error_2 = "{} ({})".format(_('Volumes are inconsistent'), _('Vol_tot is not equal to vol_q1 + vol_q2'))
+        self.assertIn(excepted_error_2, self.learning_component_year_full_lecturing.warnings)
+        self.assertIn(excepted_error_2, self.luy_full.warnings)
+
+    def test_warning_volumes_no_warning(self):
+        self.luy_full.credits = self.luy_full.credits + 1
+        self.luy_full.save()
+
+        test_cases = [
+            {'vol_q1': 15, 'vol_q2': 15, 'vol_tot_annual': 30, 'planned_classes': 1, 'vol_tot_global': 30},
+            {'vol_q1': 10, 'vol_q2': 20, 'vol_tot_annual': 30, 'planned_classes': 2, 'vol_tot_global': 60}
+        ]
+
+        for case in test_cases:
+            with self.subTest(case=case):
+                self.learning_component_year_full_lecturing.hourly_volume_partial_q1 = case.get('vol_q1')
+                self.learning_component_year_full_lecturing.hourly_volume_partial_q2 = case.get('vol_q2')
+                self.learning_component_year_full_lecturing.hourly_volume_total_annual = case.get('vol_tot_annual')
+                self.learning_component_year_full_lecturing.planned_classes = case.get('planned_classes')
+                self.learning_component_year_full_lecturing.save()
+
+                self.entity_component_year_full_lecturing_requirement.repartition_volume = case.get('vol_tot_global')
+                self.entity_component_year_full_lecturing_requirement.save()
+
+                self.assertFalse(self.learning_component_year_full_lecturing.warnings)
+                self.assertFalse(self.luy_full.warnings)
+
+    def test_warning_all_volumes_partim_greater_than_full(self):
+        luy_partim = self.generated_container.generated_container_years[0].learning_unit_year_partim
+        learning_component_year_partim_lecturing = LearningComponentYear.objects.filter(
+            type=LECTURING,
+            learningunitcomponent__learning_unit_year=luy_partim
+        ).first()
+        entity_component_year_partim_lecturing_requirement = EntityComponentYear.objects.get(
+            learning_component_year=learning_component_year_partim_lecturing,
+            entity_container_year__type=REQUIREMENT_ENTITY
+        )
+
+        self.learning_component_year_full_lecturing.hourly_volume_partial_q1 = 15.0
+        self.learning_component_year_full_lecturing.hourly_volume_partial_q2 = 15.0
+        self.learning_component_year_full_lecturing.hourly_volume_total_annual = 30.0
+        self.learning_component_year_full_lecturing.planned_classes = 1
+        self.learning_component_year_full_lecturing.save()
+        self.entity_component_year_full_lecturing_requirement.repartition_volume = 30.0
+        self.entity_component_year_full_lecturing_requirement.save()
+
+        learning_component_year_partim_lecturing.hourly_volume_partial_q1 = 20.0
+        learning_component_year_partim_lecturing.hourly_volume_partial_q2 = 20.0
+        learning_component_year_partim_lecturing.hourly_volume_total_annual = 40.0
+        learning_component_year_partim_lecturing.planned_classes = 2
+        learning_component_year_partim_lecturing.save()
+        entity_component_year_partim_lecturing_requirement.repartition_volume = 80.0
+        entity_component_year_partim_lecturing_requirement.save()
+
+        excepted_error = "{} ({})".format(
+            _('Volumes are inconsistent'),
+            _('At least a partim volume value is greater than corresponding volume of parent'))
+        self.assertIn(excepted_error, self.luy_full.learning_container_year.warnings)
+        self.assertIn(excepted_error, self.luy_full.warnings)
+        self.assertIn(excepted_error, luy_partim.warnings)
+
+    def test_warning_one_volume_partim_greater_than_full(self):
+        luy_partim = self.generated_container.generated_container_years[0].learning_unit_year_partim
+        learning_component_year_partim_lecturing = LearningComponentYear.objects.filter(
+            type=LECTURING,
+            learningunitcomponent__learning_unit_year=luy_partim
+        ).first()
+        entity_component_year_partim_lecturing_requirement = EntityComponentYear.objects.get(
+            learning_component_year=learning_component_year_partim_lecturing,
+            entity_container_year__type=REQUIREMENT_ENTITY
+        )
+
+        self.learning_component_year_full_lecturing.hourly_volume_partial_q1 = 15.0
+        self.learning_component_year_full_lecturing.hourly_volume_partial_q2 = 15.0
+        self.learning_component_year_full_lecturing.hourly_volume_total_annual = 30.0
+        self.learning_component_year_full_lecturing.planned_classes = 1
+        self.learning_component_year_full_lecturing.save()
+        self.entity_component_year_full_lecturing_requirement.repartition_volume = 30.0
+        self.entity_component_year_full_lecturing_requirement.save()
+
+        learning_component_year_partim_lecturing.hourly_volume_partial_q1 = 10.0
+        learning_component_year_partim_lecturing.hourly_volume_partial_q2 = 10.0
+        learning_component_year_partim_lecturing.hourly_volume_total_annual = 20.0
+        learning_component_year_partim_lecturing.planned_classes = 1
+        learning_component_year_partim_lecturing.save()
+        entity_component_year_partim_lecturing_requirement.repartition_volume = 80.0
+        entity_component_year_partim_lecturing_requirement.save()
+
+        excepted_error = "{} ({})".format(
+            _('Volumes are inconsistent'),
+            _('At least a partim volume value is greater than corresponding volume of parent'))
+        self.assertIn(excepted_error, self.luy_full.learning_container_year.warnings)
+        self.assertIn(excepted_error, self.luy_full.warnings)
+        self.assertIn(excepted_error, luy_partim.warnings)
+
+    def test_no_warning_when_volumes_ok_but_other_component_of_partim_has_higher_values(self):
+        self.luy_full.credits = self.luy_full.credits + 1
+        self.luy_full.save()
+
+        luy_partim = self.generated_container.generated_container_years[0].learning_unit_year_partim
+
+        learning_component_year_partim_lecturing = LearningComponentYear.objects.filter(
+            type=LECTURING,
+            learningunitcomponent__learning_unit_year=luy_partim
+        ).first()
+        entity_component_year_partim_lecturing_requirement = EntityComponentYear.objects.get(
+            learning_component_year=learning_component_year_partim_lecturing,
+            entity_container_year__type=REQUIREMENT_ENTITY
+        )
+
+        learning_component_year_partim_practical = LearningComponentYear.objects.filter(
+            type=PRACTICAL_EXERCISES,
+            learningunitcomponent__learning_unit_year=luy_partim
+        ).first()
+        entity_component_year_partim_lecturing_practical = EntityComponentYear.objects.get(
+            learning_component_year=learning_component_year_partim_practical,
+            entity_container_year__type=REQUIREMENT_ENTITY
+        )
+
+        learning_component_year_full_practical = LearningComponentYear.objects.filter(
+            type=PRACTICAL_EXERCISES,
+            learningunitcomponent__learning_unit_year=self.luy_full
+        ).first()
+        entity_component_year_full_practical = EntityComponentYear.objects.get(
+            learning_component_year=learning_component_year_full_practical,
+            entity_container_year__type=REQUIREMENT_ENTITY
+        )
+
+        self.learning_component_year_full_lecturing.hourly_volume_partial_q1 = 15.0
+        self.learning_component_year_full_lecturing.hourly_volume_partial_q2 = 15.0
+        self.learning_component_year_full_lecturing.hourly_volume_total_annual = 30.0
+        self.learning_component_year_full_lecturing.planned_classes = 1
+        self.learning_component_year_full_lecturing.save()
+        self.entity_component_year_full_lecturing_requirement.repartition_volume = 30.0
+        self.entity_component_year_full_lecturing_requirement.save()
+
+        learning_component_year_partim_lecturing.hourly_volume_partial_q1 = 10.0
+        learning_component_year_partim_lecturing.hourly_volume_partial_q2 = 10.0
+        learning_component_year_partim_lecturing.hourly_volume_total_annual = 20.0
+        learning_component_year_partim_lecturing.planned_classes = 1
+        learning_component_year_partim_lecturing.save()
+        entity_component_year_partim_lecturing_requirement.repartition_volume = 20.0
+        entity_component_year_partim_lecturing_requirement.save()
+
+        learning_component_year_full_practical.hourly_volume_partial_q1 = 10.0
+        learning_component_year_full_practical.hourly_volume_partial_q2 = 15.0
+        learning_component_year_full_practical.hourly_volume_total_annual = 25.0
+        learning_component_year_full_practical.planned_classes = 1
+        learning_component_year_full_practical.save()
+        entity_component_year_full_practical.repartition_volume = 25.0
+        entity_component_year_full_practical.save()
+
+        learning_component_year_partim_practical.hourly_volume_partial_q1 = 10.0
+        learning_component_year_partim_practical.hourly_volume_partial_q2 = 10.0
+        learning_component_year_partim_practical.hourly_volume_total_annual = 20.0
+        learning_component_year_partim_practical.planned_classes = 1
+        learning_component_year_partim_practical.save()
+        entity_component_year_partim_lecturing_practical.repartition_volume = 25.0
+        entity_component_year_partim_lecturing_practical.save()
+
+        self.assertFalse(self.luy_full.learning_container_year.warnings)
+        self.assertFalse(self.luy_full.warnings)
+
+    def test_warning_when_partim_parent_periodicity_different_from_parent(self):
+        # Set Parent UE to biannual odd
+        self.luy_full.periodicity = learning_unit_year_periodicity.BIENNIAL_ODD
+        self.luy_full.save()
+        # Set Partim UE to annual
+        luy_partim = self.generated_container.generated_container_years[0].learning_unit_year_partim
+        luy_partim.periodicity = learning_unit_year_periodicity.ANNUAL
+        luy_partim.save()
+
+        expected_result = [
+            _("The parent is %(parent_periodicty)s and there is at least one partim which is not "
+              "%(parent_periodicty)s") % {'parent_periodicty': self.luy_full.periodicity_verbose}
+        ]
+        result = self.luy_full._check_partim_parent_periodicity()
+        self.assertEqual(result, expected_result)
+
+    def test_warning_when_partim_parent_periodicity_different_from_partim(self):
+        # Set Parent UE to biannual even
+        self.luy_full.periodicity = learning_unit_year_periodicity.BIENNIAL_EVEN
+        self.luy_full.save()
+        # Set Partim UE to biannual odd
+        luy_partim = self.generated_container.generated_container_years[0].learning_unit_year_partim
+        luy_partim.periodicity = learning_unit_year_periodicity.BIENNIAL_ODD
+        luy_partim.save()
+
+        expected_result = [
+            _("This partim is %(partim_periodicity)s and the parent is %(parent_periodicty)s") % {
+                'partim_periodicity': luy_partim.periodicity_verbose,
+                'parent_periodicty': self.luy_full.periodicity_verbose
+            }
+        ]
+        result = luy_partim._check_partim_parent_periodicity()
+        self.assertEqual(result, expected_result)
+
+    def test_no_warning_when_partim_parent_periodicity_different(self):
+        """In this test, we ensure that if parent is annual, the partim can be annual/bi-annual"""
+        self.luy_full.periodicity = learning_unit_year_periodicity.ANNUAL
+        self.luy_full.save()
+        luy_partim = self.generated_container.generated_container_years[0].learning_unit_year_partim
+        luy_partim.periodicity = learning_unit_year_periodicity.BIENNIAL_ODD
+        result = luy_partim._check_partim_parent_periodicity()
+        self.assertFalse(result)

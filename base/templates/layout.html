@@ -79,6 +79,7 @@
 </head>
 <body {% if environment == 'DEV' %} class="devmode" {% elif environment == 'LOCAL' %} class="localmode" {% elif environment == 'QA' %} class="qamode" {% endif %}>
     {% analytical_body_top %}
+    {% block layout_navbar_top %}
     <nav class="navbar navbar-default navbar-fixed-top">
         <div class="container">
             <!-- Brand and toggle get grouped for better mobile display -->
@@ -211,6 +212,7 @@
             </div>
         </div>
     </nav>
+    {% endblock %}
     {% if environment == 'DEV' %}
         <div class="devorange">DEV</div>
     {% elif environment == 'LOCAL'%}
@@ -264,11 +266,15 @@
                     {% for warning in warnings %}
                          <li>{{ warning }}</li>
                     {% endfor %}
+                    </ul>
                 </div>
             </div>
         {% endif %}
 
         {% include "template_messages.html" %}
+    
+        {% block header_content %}
+        {% endblock %}
         {% block content %}
         {% endblock %}
         <br>

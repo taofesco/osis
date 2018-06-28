@@ -28,16 +28,20 @@ from collections import OrderedDict
 from django import forms
 from django.db import transaction
 from django.db.models import Prefetch
-from django.forms import formset_factory
+from django.forms import formset_factory, modelformset_factory
 from django.utils.translation import ugettext_lazy as _
 
 from base.business.learning_unit_year_with_context import ENTITY_TYPES_VOLUME
 from base.business.learning_units import edition
 from base.business.learning_units.edition import check_postponement_conflict_report_errors
+from base.forms.learning_unit.learning_unit_create import DEFAULT_ACRONYM_COMPONENT
 from base.forms.utils.emptyfield import EmptyField
 from base.models.entity_component_year import EntityComponentYear
 from base.models.enums import entity_container_year_link_type as entity_types
 from base.models.enums.component_type import PRACTICAL_EXERCISES, LECTURING
+from base.models.enums.learning_container_year_types import CONTAINER_TYPE_WITH_DEFAULT_COMPONENT, \
+    LEARNING_CONTAINER_YEAR_TYPES_CANT_UPDATE_BY_FACULTY
+from base.models.learning_component_year import LearningComponentYear
 from base.models.learning_unit_component import LearningUnitComponent
 
 
@@ -57,8 +61,9 @@ class VolumeEditionForm(forms.Form):
     add_field = EmptyField(label='+')
     volume_q2 = VolumeField(label=_('partial_volume_2Q'), help_text=_('partial_volume_2'))
     equal_field_1 = EmptyField(label='=')
+    volume_total = VolumeField(label=_('Vol. annual'),
+                               help_text=_('The annual volume must be equal to the sum of the volumes Q1 and Q2'))
     help_volume_total = "{} = {} + {}".format(_('Volume total annual'), _('partial_volume_1'), _('partial_volume_2'))
-    volume_total = VolumeField(label=_('Vol. tot. annual'), help_text=help_volume_total)
     closing_parenthesis_field = EmptyField(label=')')
     mult_field = EmptyField(label='*')
     planned_classes = forms.IntegerField(label=_('planned_classes_pc'), help_text=_('planned_classes'), min_value=0)
@@ -80,9 +85,6 @@ class VolumeEditionForm(forms.Form):
 
         super().__init__(*args, **kwargs)
         help_volume_global = "{} = {} * {}".format(_('volume_global'), _('Volume total annual'), _('planned_classes'))
-        self.fields['volume_total_requirement_entities'] = VolumeField(
-            label=_('vol_global'), help_text=help_volume_global)
-        self.fields['equal_field_3'] = EmptyField(label='=')
 
         # Append dynamic fields
         entities_to_add = [entity for entity in ENTITY_TYPES_VOLUME if entity in self.entities]
@@ -92,7 +94,10 @@ class VolumeEditionForm(forms.Form):
             if i != len(entities_to_add) - 1:
                 self.fields["add" + key.lower()] = EmptyField(label='+')
 
-        if self.is_faculty_manager and self.learning_unit_year.is_full():
+        if self.is_faculty_manager \
+                and self.learning_unit_year.is_full() \
+                and self.learning_unit_year.learning_container_year.container_type \
+                in LEARNING_CONTAINER_YEAR_TYPES_CANT_UPDATE_BY_FACULTY:
             self._disable_central_manager_fields()
 
     def _disable_central_manager_fields(self):
@@ -104,65 +109,6 @@ class VolumeEditionForm(forms.Form):
         entity_keys = [self.requirement_entity_key, self.additional_requirement_entity_1_key,
                        self.additional_requirement_entity_2_key]
         return [self.fields[key] for key in entity_keys if key in self.fields]
-
-    def clean(self):
-        cleaned_data = super().clean().copy()
-
-        self._check_tot_annual_equal_to_q1_q2(cleaned_data)
-        self._check_tot_req_entities_equal_to_tot_annual_mult_cp(cleaned_data)
-        self._check_tot_req_entities_equal_to_vol_req_entity(cleaned_data)
-
-    def _check_tot_annual_equal_to_q1_q2(self, cleaned_data):
-        total_annual = cleaned_data.get('volume_total', 0)
-        q1 = cleaned_data.get('volume_q1', 0)
-        q2 = cleaned_data.get('volume_q2', 0)
-
-        if total_annual != (q1 + q2):
-            self.add_error("volume_total", _('vol_tot_not_equal_to_q1_q2'))
-
-    def _check_tot_req_entities_equal_to_vol_req_entity(self, cleaned_data):
-        requirement_entity = cleaned_data.get(self.requirement_entity_key, 0)
-        # Optional fields
-        additional_requirement_entity_1 = cleaned_data.get(self.additional_requirement_entity_1_key, 0)
-        additional_requirement_entity_2 = cleaned_data.get(self.additional_requirement_entity_2_key, 0)
-        total = requirement_entity + additional_requirement_entity_1 + additional_requirement_entity_2
-
-        if cleaned_data.get('volume_total_requirement_entities') != total:
-            error_msg = ' + '.join([self.entities.get(t).acronym for t in ENTITY_TYPES_VOLUME if self.entities.get(t)])
-            error_msg += ' = {}'.format(_('vol_global'))
-            self.add_error("volume_total_requirement_entities", error_msg)
-
-    def _check_tot_req_entities_equal_to_tot_annual_mult_cp(self, cleaned_data):
-        total_annual = cleaned_data.get('volume_total', 0)
-        cp = cleaned_data.get('planned_classes', 0)
-        total_requirement_entities = cleaned_data.get('volume_total_requirement_entities', 0)
-
-        if total_requirement_entities != (total_annual * cp):
-            self.add_error('volume_total_requirement_entities', _('vol_tot_req_entities_not_equal_to_vol_tot_mult_cp'))
-
-    def validate_parent_partim_component(self, parent_data):
-        self._parent_data = parent_data
-
-        self._compare_parent_partim('volume_total', 'vol_tot_full_must_be_greater_or_equal_than_partim')
-        self._compare_parent_partim('volume_q1', 'vol_q1_full_must_be_greater_or_equal_to_partim')
-        self._compare_parent_partim('volume_q2', 'vol_q2_full_must_be_greater_or_equal_to_partim')
-        self._compare_parent_partim('planned_classes', 'planned_classes_full_must_be_greater_or_equal_to_partim')
-        self._compare_parent_partim(self.requirement_entity_key,
-                                    'entity_requirement_full_must_be_greater_or_equal_to_partim')
-        self._compare_additional_entities(self.additional_requirement_entity_1_key)
-        self._compare_additional_entities(self.additional_requirement_entity_2_key)
-
-        return self.errors
-
-    def _compare_additional_entities(self, key):
-        # Verify if we have additional_requirement entity
-        if key in self._parent_data and key in self.cleaned_data:
-            self._compare_parent_partim(key, 'entity_requirement_full_must_be_greater_or_equal_to_partim')
-
-    def _compare_parent_partim(self, key, msg):
-        partim_data = self.cleaned_data or self.initial
-        if self._parent_data[key] < partim_data[key]:
-            self.add_error(key, _(msg))
 
     def save(self, postponement):
         if not self.changed_data:
@@ -239,22 +185,6 @@ class VolumeEditionBaseFormset(forms.BaseFormSet):
         # Field's name must be in lowercase
         return {k.lower(): v for k, v in component_dict.items()}
 
-    def validate_parent_partim(self, parent_formset):
-        # Check CM
-        is_cm_valid = self._validate_parent_partim_by_type(parent_formset, LECTURING)
-        # Check TP
-        is_tp_valid = self._validate_parent_partim_by_type(parent_formset, PRACTICAL_EXERCISES)
-        return is_cm_valid and is_tp_valid
-
-    def _validate_parent_partim_by_type(self, parent_formset, component_type):
-
-        parent_form = parent_formset.get_form_by_type(component_type)
-        partim_form = self.get_form_by_type(component_type)
-
-        errors = partim_form.validate_parent_partim_component(parent_form.cleaned_data or parent_form.initial)
-
-        return not errors
-
     def get_form_by_type(self, component_type):
         return next(form for form in self.forms if form.component.type == component_type)
 
@@ -294,15 +224,7 @@ class VolumeEditionFormsetContainer:
         if not all([formset.is_valid() for formset in self.formsets.values()]):
             return False
 
-        if not self._is_container_valid():
-            return False
-
         return True
-
-    def _is_container_valid(self):
-        # Check consistency between formsets
-        return all(self.formsets[luy].validate_parent_partim(self.formsets[self.parent]) for luy in self.formsets
-                   if luy != self.parent)
 
     def save(self):
         for formset in self.formsets.values():
@@ -322,3 +244,122 @@ class VolumeEditionFormsetContainer:
             for name, error in form_errors.items():
                 errors["{}-{}-{}".format(formset.prefix, i, name)] = error
         return errors
+
+
+class SimplifiedVolumeForm(forms.ModelForm):
+    _learning_unit_year = None
+    _entity_containers = []
+
+    add_field = EmptyField(label="+")
+    equal_field = EmptyField(label='=')
+
+    def __init__(self, *args, **kwargs):
+        self.component_type = kwargs.pop('component_type')
+        super().__init__(*args, **kwargs)
+        self.instance.type = self.component_type
+        self.instance.acronym = DEFAULT_ACRONYM_COMPONENT[self.component_type]
+
+    class Meta:
+        model = LearningComponentYear
+        fields = ('planned_classes', 'hourly_volume_total_annual', 'hourly_volume_partial_q1',
+                  'hourly_volume_partial_q2')
+
+    def save(self, commit=True):
+        if self.need_to_create_untyped_component():
+            self.instance.acronym = DEFAULT_ACRONYM_COMPONENT[None]
+            self.instance.type = None
+            # In case of untyped component, we just need to create only 1 component (not more)
+            if not self.is_first_form_in_formset():
+                return None
+        return self._create_structure_components(commit)
+
+    def need_to_create_untyped_component(self):
+        container_type = self._learning_unit_year.learning_container_year.container_type
+        return container_type not in CONTAINER_TYPE_WITH_DEFAULT_COMPONENT
+
+    def is_first_form_in_formset(self):
+        return self.prefix == "form-0"
+
+    def _create_structure_components(self, commit):
+        self.instance.learning_container_year = self._learning_unit_year.learning_container_year
+        instance = super().save(commit)
+        LearningUnitComponent.objects.get_or_create(
+            learning_unit_year=self._learning_unit_year,
+            learning_component_year=instance
+        )
+        requirement_entity_containers = self._get_requirement_entity_container()
+        for requirement_entity_container in requirement_entity_containers:
+            if not self.instance.hourly_volume_total_annual and self.initial:
+                self._get_initial_volume_data()
+            learning_unit_components = LearningUnitComponent.objects.filter(
+                learning_unit_year__learning_container_year=self._learning_unit_year.learning_container_year)
+            self._create_entity_component_years(learning_unit_components, requirement_entity_container)
+        return instance
+
+    def _create_entity_component_years(self, learning_unit_components, requirement_entity_container):
+        for learning_unit_component in learning_unit_components:
+            EntityComponentYear.objects.get_or_create(
+                entity_container_year=requirement_entity_container,
+                learning_component_year=learning_unit_component.learning_component_year
+            )
+
+    def _get_initial_volume_data(self):
+        self.instance.hourly_volume_total_annual = self.initial.get('hourly_volume_total_annual')
+        self.instance.hourly_volume_partial_q1 = self.initial.get('hourly_volume_partial_q1')
+        self.instance.hourly_volume_partial_q2 = self.initial.get('hourly_volume_partial_q2')
+        self.instance.save()
+
+    def _get_requirement_entity_container(self):
+        requirement_entity_containers = []
+        for entity_container_year in self._entity_containers:
+            if entity_container_year and entity_container_year.type != entity_types.ALLOCATION_ENTITY:
+                requirement_entity_containers.append(entity_container_year)
+        return requirement_entity_containers
+
+
+class SimplifiedVolumeFormset(forms.BaseModelFormSet):
+    def get_form_kwargs(self, index):
+        kwargs = super().get_form_kwargs(index)
+        kwargs['component_type'] = [LECTURING, PRACTICAL_EXERCISES][index]
+        return kwargs
+
+    @property
+    def fields(self):
+        fields = OrderedDict()
+        for form_instance in self.forms:
+            fields.update(form_instance.fields)
+        return fields
+
+    @property
+    def instances_data(self):
+        data = {}
+        zip_form_and_initial_forms = zip(self.forms, self.initial_forms)
+        for form_instance, initial_form in zip_form_and_initial_forms:
+            for col in ['hourly_volume_total_annual', 'hourly_volume_partial_q1', 'hourly_volume_partial_q2']:
+                value = getattr(form_instance.instance, col, None) or getattr(initial_form.instance, col, None)
+                data[_(form_instance.instance.type) + ' (' + self.label_fields[col].lower() + ')'] = value
+        return data
+
+    @property
+    def label_fields(self):
+        """ Return a dictionary with the label of all fields """
+        data = {}
+        for form_instance in self.forms:
+            data.update({
+                key: field.label for key, field in form_instance.fields.items()
+            })
+        return data
+
+    def save_all_forms(self, learning_unit_year, entity_container_years, commit=True):
+        lcy = learning_unit_year.learning_container_year
+
+        for form in self.forms:
+            form._learning_unit_year = learning_unit_year
+            form._entity_containers = entity_container_years
+
+        return super().save(commit)
+
+
+SimplifiedVolumeManagementForm = modelformset_factory(model=LearningComponentYear, form=SimplifiedVolumeForm,
+                                                      formset=SimplifiedVolumeFormset,
+                                                      extra=2, max_num=2)

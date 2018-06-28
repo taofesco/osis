@@ -68,7 +68,6 @@ class LearningComponentYearTest(TestCase):
                                                         learning_container=learning_container)
         # Composant annualisé est associé à son composant et à son conteneur annualisé
         learning_component_year = LearningComponentYear(learning_container_year=learning_container_year,
-                                                        title="Cours magistral",
                                                         acronym="/C",
                                                         comment="TEST")
 

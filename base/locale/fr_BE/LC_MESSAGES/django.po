@@ -1853,9 +1853,6 @@ msgstr "Classes prévues"
 msgid "planned_classes_pc"
 msgstr "C.P."
 
-msgid "total_volume"
-msgstr "Volume total annuel"
-
 msgid "total_volume_voltot"
 msgstr "Vol.tot"
 
@@ -1865,35 +1862,11 @@ msgstr "Gestion des volumes horaires"
 msgid "volumes_validation_success"
 msgstr "Les données entrées respectent les règles de calculs des volumes horaires."
 
-msgid "vol_tot_not_equal_to_q1_q2"
-msgstr "Vol.tot = Q1 + Q2"
-
-msgid "vol_tot_req_entities_not_equal_to_entity"
-msgstr "Le volume total de charge n'est pas égal à la somme des volumes de charge"
-
-msgid "vol_tot_req_entities_not_equal_to_vol_tot_mult_cp"
-msgstr "Vol.global = Vol.tot * C.P"
-
-msgid "vol_tot_full_must_be_greater_or_equal_than_partim"
-msgstr "Vol.tot du cours principal >= Vol.tot du partim"
-
-msgid "vol_q1_full_must_be_greater_or_equal_to_partim"
-msgstr "Q1 du cours principal >= Q1 du partim"
-
-msgid "vol_q2_full_must_be_greater_or_equal_to_partim"
-msgstr "Q2 du cours principal >= Q2 du partim"
-
-msgid "planned_classes_full_must_be_greater_or_equal_to_partim"
-msgstr "C.P. du cours principal >= C.P. du partim"
-
-msgid "entity_requirement_full_must_be_greater_or_equal_to_partim"
-msgstr "Entité de charge du cours principal >= Entité de charge du partim"
-
 msgid "end_date_gt_begin_date"
 msgstr "L'année de fin doit etre égale ou supérieur à l'année de départ"
 
 msgid "session_title"
-msgstr "Sessions"
+msgstr "Session dérogation"
 
 msgid "remarks_title"
 msgstr "Remarques"
@@ -2247,8 +2220,8 @@ msgstr "l'unité d'enseignement"
 msgid "Delete from this academic year"
 msgstr "Supprimer à partir de cette année académique"
 
-msgid "Delete all the learning unit"
-msgstr "Supprimer toute l'unité d'enseignement (sur toutes les années académiques)"
+msgid "Delete the learning unit for all academic years"
+msgstr "Supprimer l'unité d'enseignement pour toutes les années académiques"
 
 msgid "You asked the deletion of the learning unit %(acronym)s from the year %(year)s"
 msgstr "Vous avez demandé la suppression de l'unité d'enseignement %(acronym)s à partir de l'année %(year)s"
@@ -2454,23 +2427,20 @@ msgstr "Entité académique"
 msgid "folder_number"
 msgstr "Dossier n°{}"
 
-msgid "produce_xls"
-msgstr "Produire un excel avec la liste des résultats"
-
-msgid "produce_xls_lu"
-msgstr "Xls avec les activités"
+msgid "produce_xls_lus"
+msgstr "Les unités d'enseignement"
 
 msgid "%(date)s must be set within %(start_date)s and %(end_date)s"
 msgstr "%(date)s doit être comprise entre %(start_date)s et %(end_date)s"
 
-msgid "cancel_proposal"
-msgstr "Annuler proposition"
+msgid "Cancel the proposal"
+msgstr "Annuler la proposition"
 
-msgid "edit_proposal"
-msgstr "Editer proposition"
+msgid "Edit the proposal"
+msgstr "Editer la proposition"
 
-msgid "Consolidate proposal"
-msgstr "Consolider proposition"
+msgid "Consolidate the proposal"
+msgstr "Consolider la proposition"
 
 msgid "msg_confirm_cancel_proposal"
 msgstr "Etes-vous certain de vouloir annuler la proposition ?"
@@ -2505,11 +2475,14 @@ msgstr "Suppléé"
 msgid "not_end_year"
 msgstr "pas de fin prévue"
 
-msgid "edit_learning_unit_end_date"
-msgstr "Modifier la date de fin l'unité d'enseignement"
+msgid "Modify"
+msgstr "Modifier"
 
-msgid "new_partim"
-msgstr "Créer un nouveau partim"
+msgid "Edit learning unit end date"
+msgstr "Modifier la date de fin de l'unité d'enseignement"
+
+msgid "Modify end date"
+msgstr "Modifier la date de fin"
 
 msgid "partim"
 msgstr "Partim"
@@ -2556,7 +2529,7 @@ msgstr "Assurez-vous que cette valeur est supérieure à %(limit_value)s."
 msgid "Entity_not_exist"
 msgstr "L'entité %(entity_acronym)s n'existe pas pour l'année académique sélectionnée %(academic_year)s"
 
-msgid "edit_learning_unit"
+msgid "Edit the learning unit"
 msgstr "Modifier l'unité d'enseignement"
 
 msgid "requirement_entity_end_date_too_short"
@@ -2647,7 +2620,7 @@ msgid "by"
 msgstr "Par"
 
 msgid "summary_locked"
-msgstr "mise-à-jour bloquée"
+msgstr "mise-à-jour bloquée pour l'enseignant"
 
 msgid "get_back_to_initial"
 msgstr "Retour à l'état initial"
@@ -2706,19 +2679,25 @@ msgstr "Interdiction de supprimer une unité d'enseignement avant 2015."
 msgid "The entity '%(acronym)s' doesn't exist anymore in %(year)s"
 msgstr "L'entité '%(acronym)s' n'existe plus en %(year)s"
 
-msgctxt "bibliography"
+msgctxt "teachingmaterial"
 msgid "title"
 msgstr "titre"
 
-msgctxt "bibliography"
+msgctxt "teachingmaterial"
 msgid "mandatory"
 msgstr "obligatoire"
 
 msgid "Bibliography"
 msgstr "Bibliographie"
 
-msgid "Modalities specific to IN and OUT mobility"
-msgstr "Modalités propres à la mobilité IN et OUT"
+msgid "bibliography"
+msgstr "bibliographie"
+
+msgid "Teaching material"
+msgstr "Supports de cours"
+
+msgid "Mobility"
+msgstr "Mobilité"
 
 msgid "updated"
 msgstr "Mis à jour"
@@ -2865,7 +2844,7 @@ msgid "start_year"
 msgstr "Début"
 
 msgid "produce_xls_attributions"
-msgstr "Xls avec les activités et les attributions"
+msgstr "Les unités d'enseignement et les attributions"
 
 msgid "produce_xls_proposals"
 msgstr "Xls avec les propositions"
@@ -2876,23 +2855,23 @@ msgstr "Date proposition"
 msgid "search_type"
 msgstr "Type de recherche"
 
-msgid "The linked entity does not exist at the start date of the academic year linked to this learning unit"
-msgstr "L'entité liée n'existe pas à la date de début de l'année académique liée à cette unité d'enseignement"
+msgid "The linked %(entity)s does not exist at the start date of the academic year linked to this learning unit"
+msgstr "L'%(entity)s liée n'existe pas à la date de début de l'année académique liée à cette unité d'enseignement"
 
 msgid "COURSE_ENROLLMENT"
 msgstr "Inscription aux cours"
 
 msgid "vol_global"
-msgstr "Vol.global"
+msgstr "Vol. global"
 
 msgid "volume_global"
 msgstr "volume total global"
 
-msgid "Vol. tot. annual"
-msgstr "Vol. tot. annuel"
+msgid "Vol. annual"
+msgstr "Vol. annuel"
 
-msgid "Volume total annual"
-msgstr "Volume total annuel"
+msgid "Volume annual"
+msgstr "Volume annuel"
 
 msgid "missing_internship_subtype"
 msgstr "Il est nécessaire d'indiquer le sous-type de stage"
@@ -2948,6 +2927,15 @@ msgstr "Les volumes sont inconsistants"
 msgid "planned classes cannot be 0"
 msgstr "le nombre de classes prévues ne peut être 0"
 
+msgid "Vol_tot is not equal to vol_q1 + vol_q2"
+msgstr "Le volume total doit être égal à la somme des volumes de Q1 et de Q2"
+
+msgid "Vol_global is not equal to Vol_tot * planned_classes"
+msgstr "Le volume global doit être égal au volume annuel multiplié par le nombre de classes"
+
+msgid "At least a partim volume value is greater than corresponding volume of parent"
+msgstr "Au moins une valeur de volume d'un partim est supérieure à celle du volume correspondant du parent"
+
 msgid "url of the learning unit"
 msgstr "URL de l'unité d'enseignement"
 
@@ -2975,6 +2963,9 @@ msgstr "Nouvelle unité d'enseignement externe"
 msgid "New partim"
 msgstr "Nouveau partim"
 
+msgid "middle_name"
+msgstr "Deuxième nom"
+
 msgid "Select the missing term for the offer"
 msgstr "Sélectionner le terme manquant de l'offre"
 
@@ -2989,6 +2980,93 @@ msgstr "Désolé mais vous ne pouvez pas supprimer le terme d'une offre"
 
 msgid "Do you want to remove the term?"
 msgstr "Voulez-vous supprimer le terme ?"
+
+msgid "Export"
+msgstr "Exporter"
+
+msgid "produce_xls_lus_desc"
+msgstr "Produire un fichier Excel avec la liste des unités d'enseignement"
+
+msgid "produce_xls_attributions_desc"
+msgstr "Produire un fichier Excel avec la liste des unités d'enseignement et les attributions"
+
+msgid "hourly volume total annual"
+msgstr "volume horaire total annuel"
+
+msgid "hourly volume partial q1"
+msgstr "volume horaire partiel q1"
+
+msgid "hourly volume partial q2"
+msgstr "volume horaire partiel q2"
+
+msgid "volume declared vacant"
+msgstr "volume déclaré vacant"
+
+msgid "Xls with education groups"
+msgstr "Xls avec les formations"
+
+msgid "education_groups_filename"
+msgstr "formations"
+
+msgid "list_education_groups"
+msgstr "Liste d'organisations de formation"
+
+msgid "Q1 and Q2"
+msgstr "Q1 et Q2"
+
+msgid "Q1 or Q2"
+msgstr "Q1 ou Q2"
+
+msgid "New Education Group"
+msgstr "Nouveau Groupement"
+
+msgid "The repartition volume of %(col_name)s has been already modified. ({%(new_value)s} instead of {%(current_value)s})"
+msgstr "La répartition de volume de %(col_name)s a déjà été modifiée. ({%(new_value)s} a la place de {%(current_value)s})"
+
+msgid "untyped"
+msgstr "Non-typée"
+
+msgid "validity"
+msgstr "validité"
+
+msgid "Education group year <a href='%(link)s'> %(acronym)s (%(academic_year)s) </a> successfuly created."
+msgstr "Formation <a href='%(link)s'> %(acronym)s (%(academic_year)s) </a> créée avec succès."
+
+msgid "minimum credits"
+msgstr "crédits minimum"
+
+msgid "maximum credits"
+msgstr "crédits maximum"
+
+msgid "EDUCATION_GROUP_EDITION"
+msgstr "Edition programme"
+
+msgid "The learning unit %(acronym)s is not included in any education group"
+msgstr "L'unité d'enseignement %(acronym)s n'est incluse dans aucun groupement"
+
+msgid "No enrollment for this learning unit"
+msgstr "Il n'y a aucune inscription pour cette unité d'enseignement"
+
+msgid "Changed"
+msgstr "Modification apportée"
+
+msgid "Other teacher(s)"
+msgstr "Autre(s) enseignant(s)"
+
+msgid "Summary responsible(s)"
+msgstr "Responsable(s) des informations"
+
+msgid "The annual volume must be equal to the sum of the volumes Q1 and Q2"
+msgstr "Le volume annuel doit être égal à la somme des volumes Q1 et Q2"
+
+msgid "The global volume corresponding to the product of the annual volume and the number of planned classes must be equal to the sum of the volumes for each entity"
+msgstr "Le volume global correspondant au volume annuel multiplié par le nombre de classes doit être égal à la somme des volumes pour chaque entité"
+
+msgid "This partim is %(partim_periodicity)s and the parent is %(parent_periodicty)s"
+msgstr "Ce partim est %(partim_periodicity)s alors que l'UE parent est %(parent_periodicty)s"
+
+msgid "The parent is %(parent_periodicty)s and there is at least one partim which is not %(parent_periodicty)s"
+msgstr "L'UE parent est %(parent_periodicty)s et au moins un partim n'est pas %(parent_periodicty)s"
 
 msgid "Admission Conditions for Bachelors"
 msgstr "Conditions d'admissions pour Bacheliers"

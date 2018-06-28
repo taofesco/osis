@@ -219,8 +219,7 @@ class LearningUnitYearDeletion(TestCase):
 
     def test_delete_learning_unit_component_class(self):
         # Composant annualisé est associé à son composant et à son conteneur annualisé
-        learning_component_year = LearningComponentYearFactory(title="Cours magistral",
-                                                               acronym="/C",
+        learning_component_year = LearningComponentYearFactory(acronym="/C",
                                                                comment="TEST")
         learning_container_year = learning_component_year.learning_container_year
 
@@ -355,20 +354,20 @@ class LearningUnitYearDeletion(TestCase):
 
         # Cannot remove FULL COURSE
         self.assertFalse(
-            base.business.learning_units.perms.can_delete_learning_unit_year(learning_unit_year, person))
+            base.business.learning_units.perms.is_eligible_to_delete_learning_unit_year(learning_unit_year, person))
 
         # Can remove PARTIM COURSE
         learning_unit_year.subtype = learning_unit_year_subtypes.PARTIM
         learning_unit_year.save()
         self.assertTrue(
-            base.business.learning_units.perms.can_delete_learning_unit_year(learning_unit_year, person))
+            base.business.learning_units.perms.is_eligible_to_delete_learning_unit_year(learning_unit_year, person))
 
         # With both role, greatest is taken
         add_to_group(person.user, CENTRAL_MANAGER_GROUP)
         learning_unit_year.subtype = learning_unit_year_subtypes.FULL
         learning_unit_year.save()
         self.assertTrue(
-            base.business.learning_units.perms.can_delete_learning_unit_year(learning_unit_year, person))
+            base.business.learning_units.perms.is_eligible_to_delete_learning_unit_year(learning_unit_year, person))
 
 
 def add_to_group(user, group_name):

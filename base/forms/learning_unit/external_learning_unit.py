@@ -210,7 +210,6 @@ class ExternalLearningUnitBaseForm(LearningUnitBaseForm):
         learning_unit_year = self.learning_unit_year_form.save(
             learning_container_year=container_year,
             learning_unit=learning_unit,
-            entity_container_years=[],
             commit=commit
         )
 

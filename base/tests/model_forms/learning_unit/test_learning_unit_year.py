@@ -23,26 +23,27 @@
 #    see http://www.gnu.org/licenses/.
 #
 ##############################################################################
+import datetime
+
 from django.contrib.auth.models import Group
 from django.test import TestCase
 from django.utils.translation import ugettext_lazy as _
 
 from base.forms.learning_unit.learning_unit_create import LearningUnitYearModelForm
 from base.forms.utils.acronym_field import PartimAcronymField, AcronymField
-from base.models.entity_component_year import EntityComponentYear
 from base.models.enums import learning_container_year_types, organization_type
 from base.models.enums.attribution_procedure import INTERNAL_TEAM
 from base.models.enums.entity_container_year_link_type import REQUIREMENT_ENTITY, ALLOCATION_ENTITY, \
-    ADDITIONAL_REQUIREMENT_ENTITY_2, ADDITIONAL_REQUIREMENT_ENTITY_1, REQUIREMENT_ENTITIES
+    ADDITIONAL_REQUIREMENT_ENTITY_2, ADDITIONAL_REQUIREMENT_ENTITY_1
 from base.models.enums.internship_subtypes import PROFESSIONAL_INTERNSHIP
-from base.models.enums.learning_container_year_types import MASTER_THESIS, OTHER_INDIVIDUAL
+from base.models.enums.learning_unit_year_periodicity import ANNUAL
 from base.models.enums.learning_unit_year_subtypes import FULL, PARTIM
-from base.models.learning_component_year import LearningComponentYear
 from base.models.learning_unit_year import LearningUnitYear
 from base.models.person import CENTRAL_MANAGER_GROUP, FACULTY_MANAGER_GROUP
 from base.tests.factories.academic_year import create_current_academic_year
 from base.tests.factories.campus import CampusFactory
 from base.tests.factories.entity_container_year import EntityContainerYearFactory
+from base.tests.factories.entity_version import EntityVersionFactory
 from base.tests.factories.learning_container import LearningContainerFactory
 from base.tests.factories.learning_container_year import LearningContainerYearFactory
 from base.tests.factories.learning_unit import LearningUnitFactory
@@ -81,6 +82,24 @@ class TestLearningUnitYearModelFormInit(TestCase):
                                               instance=LearningUnitYearFactory())
         self.assertTrue(self.form.fields['academic_year'].disabled)
 
+    def test_case_update_internship_subtype_is_disabled(self):
+        container = LearningContainerYearFactory(container_type=learning_container_year_types.COURSE)
+        self.form = LearningUnitYearModelForm(
+            data=None, person=self.central_manager, subtype=PARTIM,
+            instance=LearningUnitYearFactory(learning_container_year=container)
+        )
+
+        self.assertTrue(self.form.fields['internship_subtype'].disabled)
+
+        container.container_type = learning_container_year_types.INTERNSHIP
+        container.save()
+        self.form = LearningUnitYearModelForm(
+            data=None, person=self.central_manager, subtype=PARTIM,
+            instance=LearningUnitYearFactory(learning_container_year=container)
+        )
+
+        self.assertFalse(self.form.fields['internship_subtype'].disabled)
+
 
 class TestLearningUnitYearModelFormSave(TestCase):
     """Tests LearningUnitYearModelForm.save()"""
@@ -114,7 +133,19 @@ class TestLearningUnitYearModelFormSave(TestCase):
             'internship_subtype': PROFESSIONAL_INTERNSHIP,
             'attribution_procedure': INTERNAL_TEAM,
             'campus': campus.pk,
-            'language': self.language.pk
+            'language': self.language.pk,
+            'periodicity': ANNUAL,
+
+            # Learning component year data model form
+            'form-TOTAL_FORMS': '2',
+            'form-INITIAL_FORMS': '0',
+            'form-MAX_NUM_FORMS': '2',
+            'form-0-hourly_volume_total_annual': 20,
+            'form-0-hourly_volume_partial_q1': 10,
+            'form-0-hourly_volume_partial_q2': 10,
+            'form-1-hourly_volume_total_annual': 20,
+            'form-1-hourly_volume_partial_q1': 10,
+            'form-1-hourly_volume_partial_q2': 10,
         }
 
         self.requirement_entity = EntityContainerYearFactory(type=REQUIREMENT_ENTITY,
@@ -128,26 +159,37 @@ class TestLearningUnitYearModelFormSave(TestCase):
             type=ADDITIONAL_REQUIREMENT_ENTITY_2,
             learning_container_year=self.learning_container_year)
 
+        EntityVersionFactory(entity=self.additional_requirement_entity_1.entity,
+                             start_date=self.learning_container_year.academic_year.start_date,
+                             end_date=self.learning_container_year.academic_year.end_date)
+
+        EntityVersionFactory(entity=self.additional_requirement_entity_2.entity,
+                             start_date=self.learning_container_year.academic_year.start_date,
+                             end_date=self.learning_container_year.academic_year.end_date)
+
+        self.allocation_entity_version = EntityVersionFactory(
+            entity=self.allocation_entity.entity, start_date=self.learning_container_year.academic_year.start_date,
+            end_date=self.learning_container_year.academic_year.end_date)
+
+        self.requirement_entity_version = EntityVersionFactory(
+            entity=self.requirement_entity.entity, start_date=self.learning_container_year.academic_year.start_date,
+            end_date=self.learning_container_year.academic_year.end_date)
+
         self.entity_container_years = [self.requirement_entity, self.allocation_entity,
                                        self.additional_requirement_entity_1, self.additional_requirement_entity_2]
 
     def test_case_missing_required_learning_container_year_kwarg(self):
         with self.assertRaises(KeyError):
-            self.form.save(learning_unit=self.learning_unit, entity_container_years=[])
+            self.form.save(learning_unit=self.learning_unit)
 
     def test_case_missing_required_learning_unit_kwarg(self):
         with self.assertRaises(KeyError):
-            self.form.save(learning_container_year=self.learning_container_year, entity_container_years=[])
-
-    def test_case_missing_required_entity_container_years_kwarg(self):
-        with self.assertRaises(KeyError):
-            self.form.save(learning_container_year=self.learning_container_year, learning_unit=self.learning_unit)
+            self.form.save(learning_container_year=self.learning_container_year)
 
     def test_post_data_correctly_saved_case_creation(self):
         form = LearningUnitYearModelForm(data=self.post_data, person=self.central_manager, subtype=FULL)
         self.assertTrue(form.is_valid(), form.errors)
-        luy = form.save(learning_container_year=self.learning_container_year, learning_unit=self.learning_unit,
-                        entity_container_years=[])
+        luy = form.save(learning_container_year=self.learning_container_year, learning_unit=self.learning_unit)
 
         self.assertEqual(luy.acronym, ''.join([self.post_data['acronym_0'], self.post_data['acronym_1']]))
         self.assertEqual(luy.academic_year.pk, self.post_data['academic_year'])
@@ -160,42 +202,6 @@ class TestLearningUnitYearModelFormSave(TestCase):
         self.assertEqual(luy.internship_subtype, self.post_data['internship_subtype'])
         self.assertEqual(luy.attribution_procedure, self.post_data['attribution_procedure'])
 
-    def test_components_are_correctly_saved_when_creation_of_container_type_master_thesis(self):
-        self.learning_container_year.container_type = MASTER_THESIS
-        self.learning_container_year.save()
-        form = LearningUnitYearModelForm(data=self.post_data, person=self.central_manager, subtype=FULL)
-        self.assertTrue(form.is_valid(), form.errors)
-        luy = form.save(learning_container_year=self.learning_container_year, learning_unit=self.learning_unit,
-                        entity_container_years=[])
-
-        qs = LearningComponentYear.objects.filter(learningunitcomponent__learning_unit_year=luy).order_by('acronym')
-        self.assertEqual(qs.count(), 2, "should assert 2 components are created (1 TP - 1 LECTURING)")
-        self.assertListEqual(list(qs.values_list('acronym', flat=True)), ['CM1', 'TP1'],
-                             " acronyms should be ='CM1' and 'TP1")
-
-    def test_components_are_correctly_saved_when_creation_of_container_type_other_individual(self):
-        self.learning_container_year.container_type = OTHER_INDIVIDUAL
-        self.learning_container_year.save()
-        form = LearningUnitYearModelForm(data=self.post_data, person=self.central_manager, subtype=FULL)
-        self.assertTrue(form.is_valid(), form.errors)
-        luy = form.save(learning_container_year=self.learning_container_year, learning_unit=self.learning_unit,
-                        entity_container_years=[])
-
-        qs = LearningComponentYear.objects.filter(learningunitcomponent__learning_unit_year=luy).order_by('acronym')
-        self.assertEqual(qs.count(), 1, "should assert 1 only component of type=None is created with acronym 'NT1'")
-        self.assertListEqual(list(qs.values_list('acronym', flat=True)), ['NT1'])
-
-    def test_entity_components_year_correctly_saved(self):
-        form = LearningUnitYearModelForm(data=self.post_data, person=self.central_manager, subtype=FULL)
-        self.assertTrue(form.is_valid(), form.errors)
-        luy = form.save(learning_container_year=self.learning_container_year, learning_unit=self.learning_unit,
-                        entity_container_years=self.entity_container_years)
-
-        qs = EntityComponentYear.objects.filter(learning_component_year__learningunitcomponent__learning_unit_year=luy)
-        self.assertEqual(qs.count(), 6)
-        qs_requirement_entity = qs.filter(entity_container_year=self.requirement_entity)
-        self.assertEqual(qs_requirement_entity.count(), 2)
-
     def test_case_update_post_data_correctly_saved(self):
         learning_unit_year_to_update = LearningUnitYearFactory(
             learning_unit=self.learning_unit, learning_container_year=self.learning_container_year, subtype=FULL,
@@ -205,15 +211,14 @@ class TestLearningUnitYearModelFormSave(TestCase):
         form = LearningUnitYearModelForm(data=self.post_data, person=self.central_manager, subtype=FULL,
                                          instance=learning_unit_year_to_update)
         self.assertTrue(form.is_valid(), form.errors)
-        luy = form.save(learning_container_year=self.learning_container_year, learning_unit=self.learning_unit,
-                        entity_container_years=self.entity_container_years)
+        luy = form.save(learning_container_year=self.learning_container_year, learning_unit=self.learning_unit)
 
         self.assertEqual(luy, learning_unit_year_to_update)
 
     def test_warnings_credit(self):
         learning_unit_year_to_update = LearningUnitYearFactory(
             learning_unit=self.learning_unit, learning_container_year=self.learning_container_year, subtype=FULL,
-            academic_year = self.current_academic_year
+            academic_year=self.current_academic_year
         )
 
         partim = LearningUnitYearFactory(learning_container_year=self.learning_container_year, subtype=PARTIM,
@@ -245,19 +250,43 @@ class TestLearningUnitYearModelFormSave(TestCase):
         self.assertTrue(form.is_valid(), form.errors)
         self.assertFalse(form.instance.warnings)
 
-    def test_create_entity_components_of_partims(self):
+    def test_single_warnings_entity_container_year(self):
         learning_unit_year_to_update = LearningUnitYearFactory(
-            learning_unit=self.learning_unit, learning_container_year=self.learning_container_year, subtype=FULL)
-        LearningUnitYearFactory(learning_container_year=self.learning_container_year, subtype=PARTIM)
+            learning_unit=self.learning_unit, learning_container_year=self.learning_container_year, subtype=FULL,
+            academic_year=self.current_academic_year
+        )
+        self.requirement_entity_version.start_date = datetime.date(1990, 9, 15)
+        self.requirement_entity_version.end_date = datetime.date(1990, 9, 15)
+        self.requirement_entity_version.save()
+        self.requirement_entity.refresh_from_db()
         form = LearningUnitYearModelForm(data=self.post_data, person=self.central_manager, subtype=FULL,
                                          instance=learning_unit_year_to_update)
         self.assertTrue(form.is_valid(), form.errors)
-        form.save(learning_container_year=self.learning_container_year, learning_unit=self.learning_unit,
-                  entity_container_years=self.entity_container_years)
-        created_entity_components = EntityComponentYear.objects.filter(
-            learning_component_year__learning_container_year=self.learning_container_year).count()
-        learning_units_count = LearningUnitYear.objects.filter(learning_container_year=self.learning_container_year)\
-                                                       .count()
-        components_count = 2  # each learning unit year has 2 components (LECTURING / PRACTICAL)
-        entity_containers_count = len(REQUIREMENT_ENTITIES)
-        self.assertEqual(created_entity_components, components_count * learning_units_count * entity_containers_count)
+        self.assertEqual(len(form.instance.warnings), 1)
+        self.assertEqual(form.instance.warnings,
+                         [_("The linked %(entity)s does not exist at the start date of the academic year linked to this"
+                            " learning unit") % {'entity': _(REQUIREMENT_ENTITY.lower())}])
+
+    def test_multiple_warnings_entity_container_year(self):
+        learning_unit_year_to_update = LearningUnitYearFactory(
+            learning_unit=self.learning_unit, learning_container_year=self.learning_container_year, subtype=FULL,
+            academic_year=self.current_academic_year
+        )
+        self.requirement_entity_version.start_date = datetime.date(1990, 9, 15)
+        self.requirement_entity_version.end_date = datetime.date(1990, 9, 15)
+        self.requirement_entity_version.save()
+        self.requirement_entity.refresh_from_db()
+
+        self.allocation_entity_version.start_date = datetime.date(1990, 9, 15)
+        self.allocation_entity_version.end_date = datetime.date(1990, 9, 15)
+        self.allocation_entity_version.save()
+        self.allocation_entity_version.refresh_from_db()
+
+        form = LearningUnitYearModelForm(data=self.post_data, person=self.central_manager, subtype=FULL,
+                                         instance=learning_unit_year_to_update)
+        self.assertTrue(form.is_valid(), form.errors)
+        self.assertEqual(len(form.instance.warnings), 2)
+        self.assertTrue(_("The linked %(entity)s does not exist at the start date of the academic year linked to this"
+                          " learning unit") % {'entity': _(REQUIREMENT_ENTITY.lower())} in form.instance.warnings)
+        self.assertTrue(_("The linked %(entity)s does not exist at the start date of the academic year linked to this"
+                          " learning unit") % {'entity': _(ALLOCATION_ENTITY.lower())} in form.instance.warnings)

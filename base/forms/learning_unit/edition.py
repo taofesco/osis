@@ -39,8 +39,9 @@ class LearningUnitEndDateForm(forms.Form):
                                            label=_('academic_end_year')
                                            )
 
-    def __init__(self, data, learning_unit, *args, max_year=None, **kwargs):
-        self.learning_unit = learning_unit
+    def __init__(self, data, learning_unit_year, *args, max_year=None, **kwargs):
+        self.learning_unit = learning_unit_year.learning_unit
+        self.learning_unit_year = learning_unit_year
         super().__init__(data, *args, **kwargs)
         end_year = self.learning_unit.end_year
 
@@ -49,7 +50,7 @@ class LearningUnitEndDateForm(forms.Form):
         try:
             queryset = self._get_academic_years(max_year)
 
-            periodicity = self.learning_unit.periodicity
+            periodicity = self.learning_unit_year.periodicity
             self.fields['academic_year'].queryset = filter_biennial(queryset, periodicity)
         except ValueError:
             self.fields['academic_year'].disabled = True

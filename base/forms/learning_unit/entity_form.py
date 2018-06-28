@@ -86,10 +86,6 @@ class EntityContainerYearModelForm(forms.ModelForm):
         if not entity:
             return
 
-        if not entity_version.get_by_entity_and_date(entity, start_date):
-            self.add_error('entity', _("The linked entity does not exist at the start date of the "
-                                       "academic year linked to this learning unit"))
-
 
 class RequirementEntityContainerYearModelForm(EntityContainerYearModelForm):
     entity_type = REQUIREMENT_ENTITY

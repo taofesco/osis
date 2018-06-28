@@ -21,7 +21,9 @@
 {% with disabled_nav=True %}
   {% include "learning_unit/blocks/header.html" %}
 {% endwith %}
-
+<div class="page-header">
+    <h2>{% block h2_title %}{% trans 'modification'|capfirst %}{% endblock %}</h2>
+</div>
 <div class="panel panel-default">
     <div class="panel-heading">
     {% block submit_up %}
@@ -31,10 +33,8 @@
     <div class="panel-body" id="tabs" >
         {% block tabs %}
         {% endblock tabs %}
-        <br>
         <div class="tab-content" id="tab_content">
             <div role="tabpanel" class="tab-pane active">
-
                 {% block form %}
                     <form method="post" id="LearningUnitYearForm"
                           data-validate-url="{% url 'check_acronym' subtype=learning_unit_year.subtype %}">
@@ -50,34 +50,16 @@
                                 {% block learning_unit_identification %}
                                     <div class="panel panel-default">
                                         <div class="panel-body">
-
                                             {% include "learning_unit/blocks/learning_unit_identification.html" %}
-                                            <br>
-                                            <div class="row">
-
-                                                {% block periodicity %}
-                                                    {% bootstrap_field learning_unit_form.periodicity form_group_class="col-md-3" %}
-                                                {% endblock periodicity %}
-
-                                                {% block quadrimester %}
-                                                    {% bootstrap_field learning_unit_year_form.quadrimester form_group_class="col-md-3" %}
-                                                {% endblock quadrimester %}
-
-                                                {% block quadrimester_session_title %}
-                                                    {% bootstrap_field learning_unit_year_form.session form_group_class="col-md-3" %}
-                                                {% endblock quadrimester_session_title %}
-                                                {% bootstrap_field learning_unit_year_form.professional_integration form_group_class="col-md-3" %}
-
-                                            </div>
-
                                             <br>
                                             {% block titles %}
                                                  {% include "learning_unit/blocks/titles.html" %}
                                             {% endblock titles %}
                                         </div>
                                     </div>
-
                                 {% endblock learning_unit_identification %}
+
+                                {% include "learning_unit/blocks/components.html" %}
 
                                 {% block remarks %}
                                     {% include "learning_unit/blocks/remarks.html" %}

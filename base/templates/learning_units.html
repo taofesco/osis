@@ -145,14 +145,22 @@
                         "sSortDescending": "{% trans 'datatable_sortdescending'%}"
                     }
                 }
-            })
-    ;});
+            });
+
+        // If needed could be generalized by giving the anchor a data-value-link attribute equal to the id of the input
+        // that needs to be populated. Then extract this code to a file.
+        $('.link_data_lookup').on("click", function(event){
+            event.preventDefault();
+            var link = $(this).prop("href");
+            w = window.open(link, "id_tutor", 'height=500,width=800,resizable=yes,scrollbars=yes');
+        });
+    });
 
     $("#btn_produce_xls").click(function(e) {
         e.preventDefault();
         var status = $("#xls_status");
         status.val('xls');
-        $("#search_form").submit();
+        $("#download_xls").submit();
         status.val('');
     });
 
@@ -160,7 +168,7 @@
         e.preventDefault();
         var status = $("#xls_status");
         status.val('xls_attribution');
-        $("#search_form").submit();
+        $("#download_xls").submit();
         status.val('');
     });
 

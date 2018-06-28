@@ -84,7 +84,7 @@ class TestProposalXls(TestCase):
                 xls_build.translate(self.proposal_1.state),
                 self.proposal_1.folder,
                 xls_build.translate(self.proposal_1.learning_unit_year.learning_container_year.type_declaration_vacant),
-                xls_build.translate(self.proposal_1.learning_unit_year.learning_unit.periodicity),
+                xls_build.translate(self.proposal_1.learning_unit_year.periodicity),
                 self.proposal_1.learning_unit_year.credits,
                 self.l_unit_yr_1.entities.get('ALLOCATION_ENTITY').acronym,
                 self.proposal_1.date.strftime('%d-%m-%Y')]

@@ -24,6 +24,7 @@
 #
 ##############################################################################
 import datetime
+from django.utils import timezone
 
 from django.contrib.auth.models import Group
 from django.http import Http404
@@ -67,21 +68,28 @@ class FindSummaryCourseSubmissionDatesTestCase(TestCase):
                                                             parent=cls.parent_entity)
         cls.entity_version_without_entity_calendar = EntityVersionFactory(start_date=cls.current_academic_year.start_date,
                                                                           end_date=cls.current_academic_year.end_date)
-        cls.parent_entity_calendar = EntityCalendarFactory(academic_calendar=cls.academic_calendar,
-                                                           entity=cls.parent_entity)
+        cls.parent_entity_calendar = EntityCalendarFactory(
+            academic_calendar=cls.academic_calendar,
+            entity=cls.parent_entity,
+            start_date=timezone.now() - timezone.timedelta(days=40),
+            end_date=timezone.now() + timezone.timedelta(days=20),
+        )
         cls.child_entity_calendar_bis = EntityCalendarFactory(
-            academic_calendar=cls.academic_calendar, entity=cls.child_entity_bis,
-            start_date=cls.parent_entity_calendar.start_date - datetime.timedelta(days=1))
+            academic_calendar=cls.academic_calendar,
+            entity=cls.child_entity_bis,
+            start_date=cls.parent_entity_calendar.start_date - timezone.timedelta(days=5),
+            end_date=cls.parent_entity_calendar.end_date - timezone.timedelta(days=2)
+        )
 
     def test_when_entity_version_has_entity_calendar(self):
         child_entity_dates = find_summary_course_submission_dates_for_entity_version(self.child_entity_version_bis)
-        self.assertEqual(child_entity_dates, {'start_date': self.child_entity_calendar_bis.start_date,
-                                              'end_date': self.child_entity_calendar_bis.end_date})
+        self.assertEqual(child_entity_dates, {'start_date': self.child_entity_calendar_bis.start_date.date(),
+                                              'end_date': self.child_entity_calendar_bis.end_date.date()})
 
     def test_when_parent_has_entity_calendar_instance(self):
         child_entity_dates = find_summary_course_submission_dates_for_entity_version(self.child_entity_version)
-        self.assertEqual(child_entity_dates, {'start_date':self.parent_entity_calendar.start_date,
-                                              'end_date':self.parent_entity_calendar.end_date})
+        self.assertEqual(child_entity_dates, {'start_date':self.parent_entity_calendar.start_date.date(),
+                                              'end_date':self.parent_entity_calendar.end_date.date()})
 
     def test_when_no_parent_has_entity_calendar_instance(self):
         default_entity_dates = find_summary_course_submission_dates_for_entity_version(self.entity_version_without_entity_calendar)

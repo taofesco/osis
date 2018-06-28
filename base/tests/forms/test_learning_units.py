@@ -41,7 +41,7 @@ from base.models.enums import entity_container_year_link_type, entity_type
 from reference.tests.factories.country import CountryFactory
 from base.tests.factories.tutor import TutorFactory
 from base.forms.learning_unit import search_form
-from base.forms.learning_unit.search_form import SearchForm
+from base.forms.learning_unit.search_form import LearningUnitSearchForm
 
 
 class TestLearningUnitForm(TestCase):
@@ -189,7 +189,7 @@ class TestLearningUnitForm(TestCase):
 
     @patch("base.models.learning_unit_year.count_search_results")
     def test_case_maximum_results_reached(self, mock_count):
-        mock_count.return_value = SearchForm.MAX_RECORDS + 1
+        mock_count.return_value = LearningUnitSearchForm.MAX_RECORDS + 1
         form = search_form.LearningUnitYearForm(data=self.get_valid_data())
         form.is_valid()
 

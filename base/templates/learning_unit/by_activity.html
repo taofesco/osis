@@ -40,27 +40,32 @@
             </strong>
 
             <div class="dropdown {{ dropdirection }} text-right">
-                <button id="dLabel" class="btn btn-default" type="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-                    <span class="glyphicon glyphicon-cog" aria-hidden="true"></span> {% trans 'Xls' %}
+                <button id="dLabel" class="btn btn-default" type="button"
+                        data-toggle="dropdown" aria-haspopup="true" aria-expanded="false"
+                        style="margin-right:10px;"
+                        title="{% trans 'Export' %}">
+                    <span class="glyphicon glyphicon-download-alt" aria-hidden="true"></span>
                     <span class="caret"></span>
                 </button>
                 <ul class="dropdown-menu dropdown-menu-large row text-right pull-right">
                     <li>
                         <a id="btn_produce_xls"
-                                style="margin-right:10px;" title="{% trans 'produce_xls' %}" >
-                            <i class="fa fa-table" aria-hidden="true" style="padding-left:10px;"></i>
-                            &nbsp;{% trans 'produce_xls_lu' %}
+                                style="margin-right:10px;" title="{% trans 'produce_xls_lus_desc' %}" >
+                            &nbsp;{% trans 'produce_xls_lus' %}
                         </a>
                     </li>
                     <li>
                         <a id="btn_produce_xls_attributions"
-                                style="margin-right:10px;" title="{% trans 'produce_xls_attribution' %}" >
-                            <i class="fa fa-table" aria-hidden="true" style="padding-left:10px;"></i>
+                                style="margin-right:10px;" title="{% trans 'produce_xls_attributions_desc' %}" >
                             &nbsp;{% trans 'produce_xls_attributions' %}
                         </a>
                     </li>
                 </ul>
             </div>
+            <form id="download_xls" action="{{ request.path }}" method="post">
+                {% csrf_token %}
+                <input type="hidden" id="xls_status" name="xls_status">
+            </form>
 
             <table id="table_learning_units" class="table table-striped table-hover">
             <thead>

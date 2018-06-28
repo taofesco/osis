@@ -36,7 +36,12 @@
     </li>
     <li id="lnk_learning_unit">{% trans 'New partim' %}</li>
 {% else %}
-    <li id="lnk_learning_unit">{% trans 'new_learning_unit' %}</li>
+    {% if form_proposal %}
+        <li id="lnk_learning_unit">{% trans 'proposal_creation' %}</li>
+    {% else %}
+        <li id="lnk_learning_unit">{% trans 'new_learning_unit' %}</li>
+    {% endif %}
+
 {% endif %}
 {% endblock %}
 
@@ -59,8 +64,8 @@
                             <div class="panel-body">
 
                                 <div class="row">
-                                    <div class="col-md-4 acronym-group">
-                                        {% bootstrap_label learning_unit_year_form.acronym.label %}
+                                    <div class="col-md-4 acronym-group required_field">
+                                        {% bootstrap_label learning_unit_year_form.acronym.label label_class="control-label" %}
                                         <abbr title="{% trans 'acronym_rules' %}">
                                             <span class="glyphicon glyphicon-question-sign " title="{% trans 'acronym_rules' %}" style="font-size: 14pt;"></span>
                                         </abbr>
@@ -73,25 +78,23 @@
                                 </div>
                                 <div class="row">
                                     {% bootstrap_field learning_unit_year_form.credits form_group_class="col-md-3" %}
-                                    {% bootstrap_field learning_unit_form.periodicity form_group_class="col-md-3" %}
-                                    {% bootstrap_field learning_unit_year_form.status form_group_class="col-md-3" %}
-                                    {% bootstrap_field learning_unit_year_form.language form_group_class="col-md-3" %}
+                                    {% bootstrap_field learning_unit_year_form.periodicity form_group_class="col-md-3" %}
+                                    {% bootstrap_field learning_unit_year_form.status form_group_class="col-md-2" %}
+                                    {% bootstrap_field learning_unit_year_form.language form_group_class="col-md-4" %}
                                 </div>
                                 <br>
                                 <div class="row">
-                                    {% bootstrap_field learning_unit_year_form.quadrimester form_group_class="col-md-3" %}
-                                    {% bootstrap_field learning_unit_year_form.session form_group_class="col-md-3" %}
                                     {% bootstrap_field learning_unit_year_form.professional_integration form_group_class="col-md-3" %}
                                 </div>
-
                                 <br>
                                 {% block titles %}
                                     {% include "learning_unit/blocks/titles.html" %}
                                 {% endblock titles %}
                             </div>
                         </div>
-
                     {% endblock learning_unit_identification %}
+
+                    {% include "learning_unit/blocks/components.html" %}
 
                     {% block remarks %}
                         {% include "learning_unit/blocks/remarks.html" %}

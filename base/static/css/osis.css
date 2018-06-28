@@ -107,3 +107,7 @@
     color: #5CB85C;
     cursor: help;
 }
+
+.required_field .control-label:after{
+    content:" *";
+}

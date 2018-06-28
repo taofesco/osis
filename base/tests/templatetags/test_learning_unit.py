@@ -25,10 +25,12 @@
 ##############################################################################
 from django.test import TestCase
 from django.utils.translation import ugettext_lazy as _
-from base.templatetags.learning_unit import get_difference_css, has_proposal
-from base.tests.factories.learning_unit_year import LearningUnitYearFactory
+from base.templatetags.learning_unit import get_difference_css, has_proposal, get_previous_acronym
+from base.tests.factories.learning_unit_year import LearningUnitYearFactory, create_learning_units_year
 from base.tests.factories.proposal_learning_unit import ProposalLearningUnitFactory
-
+from base.tests.factories.proposal_learning_unit import ProposalLearningUnitFactory
+from base.tests.factories.learning_unit import LearningUnitFactory
+from base.models.proposal_learning_unit import ProposalLearningUnit
 
 LABEL_VALUE_BEFORE_PROPROSAL = _('value_before_proposal')
 
@@ -56,3 +58,38 @@ class LearningUnitTagTest(TestCase):
         self.assertFalse(has_proposal(luy))
         ProposalLearningUnitFactory(learning_unit_year=luy)
         self.assertTrue(has_proposal(luy))
+
+    def test_previous_acronym(self):
+        learning_unit = LearningUnitFactory()
+        dict_learning_unit_year = create_learning_units_year(2013, 2016, learning_unit)
+
+        lu_yr_1 = dict_learning_unit_year.get(2013)
+        lu_yr_1.acronym = "LBIR1212"
+        lu_yr_1.save()
+
+        lu_yr_2 = dict_learning_unit_year.get(2014)
+        lu_yr_2.acronym = "LBIR1213"
+        lu_yr_2.save()
+
+        lu_yr_3 = dict_learning_unit_year.get(2015)
+        lu_yr_3.acronym = "LBIR1214"
+        lu_yr_3.save()
+
+        self.assertEqual(get_previous_acronym(lu_yr_3), 'LBIR1213')
+        self.assertEqual(get_previous_acronym(lu_yr_2), 'LBIR1212')
+        self.assertIsNone(get_previous_acronym(lu_yr_1))
+
+    def test_previous_acronym_with_acronym(self):
+        learning_unit = LearningUnitFactory()
+        dict_learning_unit_year = create_learning_units_year(2013, 2013, learning_unit)
+
+        l_unit = dict_learning_unit_year.get(2013)
+        initial_acronym = l_unit.acronym
+        new_acronym = "{}9".format(l_unit.acronym)
+        l_unit.acronym = new_acronym
+        l_unit.save()
+
+        ProposalLearningUnitFactory(learning_unit_year=l_unit,
+                                    initial_data={'learning_unit_year': {'acronym': initial_acronym}})
+
+        self.assertEqual(get_previous_acronym(l_unit), initial_acronym)

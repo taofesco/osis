@@ -30,6 +30,7 @@ from django.db import transaction
 from django.utils.functional import cached_property
 from django.utils.translation import ugettext_lazy as _
 
+from base.forms.learning_unit.edition_volume import SimplifiedVolumeManagementForm
 from base.forms.learning_unit.entity_form import EntityContainerBaseForm
 from base.forms.learning_unit.learning_unit_create import LearningUnitModelForm, LearningUnitYearModelForm, \
     LearningContainerModelForm, LearningContainerYearModelForm
@@ -38,6 +39,7 @@ from base.models.academic_year import MAX_ACADEMIC_YEAR_FACULTY, MAX_ACADEMIC_YE
 from base.models.campus import Campus
 from base.models.enums import learning_unit_year_subtypes
 from base.models.enums.learning_container_year_types import LEARNING_CONTAINER_YEAR_TYPES_FOR_FACULTY
+from base.models.learning_component_year import LearningComponentYear
 from reference.models import language
 
 FULL_READ_ONLY_FIELDS = {"acronym", "academic_year", "container_type"}
@@ -52,7 +54,8 @@ FACULTY_OPEN_FIELDS = {
     'common_title_english',
     'specific_title_english',
     "status",
-    "professional_integration"
+    "professional_integration",
+    "id"  # THIS IS A FIX, BUT A BETTER SOLUTION SHOULD BE FIND
 }
 
 
@@ -62,7 +65,8 @@ class LearningUnitBaseForm(metaclass=ABCMeta):
         LearningUnitYearModelForm,
         LearningContainerModelForm,
         LearningContainerYearModelForm,
-        EntityContainerBaseForm
+        EntityContainerBaseForm,
+        SimplifiedVolumeManagementForm
     ]
 
     forms = OrderedDict()
@@ -117,7 +121,8 @@ class LearningUnitBaseForm(metaclass=ABCMeta):
     def instances_data(self):
         data = {}
         for form_instance in self.forms.values():
-            if isinstance(form_instance, EntityContainerBaseForm):
+            # For formset and container
+            if hasattr(form_instance, 'instances_data'):
                 data.update(form_instance.instances_data)
             else:
                 columns = form_instance.fields.keys()
@@ -154,7 +159,8 @@ class LearningUnitBaseForm(metaclass=ABCMeta):
             'learning_unit_form': self.learning_unit_form,
             'learning_unit_year_form': self.learning_unit_year_form,
             'learning_container_year_form': self.learning_container_year_form,
-            'entity_container_form': self.entity_container_form
+            'entity_container_form': self.entity_container_form,
+            'simplified_volume_management_form': self.simplified_volume_management_form
         }
 
     def _validate_no_empty_title(self, common_title):
@@ -184,6 +190,10 @@ class LearningUnitBaseForm(metaclass=ABCMeta):
     @property
     def entity_container_form(self):
         return self.forms.get(EntityContainerBaseForm)
+
+    @property
+    def simplified_volume_management_form(self):
+        return self.forms.get(SimplifiedVolumeManagementForm)
 
     def __iter__(self):
         """Yields the forms in the order they should be rendered"""
@@ -259,7 +269,14 @@ class FullForm(LearningUnitBaseForm):
                 'data': data,
                 'learning_container_year': self.instance.learning_container_year if self.instance else None,
                 'person': self.person
+            },
+            SimplifiedVolumeManagementForm: {
+                'data': data,
+                'queryset': LearningComponentYear.objects.filter(
+                    learningunitcomponent__learning_unit_year=self.instance
+                ) if self.instance else LearningComponentYear.objects.none()
             }
+
         }
 
     def _build_instance_data_learning_container_year(self, data, proposal):
@@ -313,13 +330,22 @@ class FullForm(LearningUnitBaseForm):
             commit=commit
         )
 
-        entity_container_years = self.entity_container_form.save(commit=commit, learning_container_year=container_year)
-
         # Save learning unit year (learning_unit_component +  learning_component_year + entity_component_year)
         learning_unit_yr = self.learning_unit_year_form.save(
             learning_container_year=container_year,
             learning_unit=learning_unit,
-            entity_container_years=entity_container_years,
             commit=commit
         )
+
+        entity_container_years = self.entity_container_form.save(
+            commit=commit,
+            learning_container_year=learning_unit_yr.learning_container_year
+        )
+
+        self.simplified_volume_management_form.save_all_forms(
+            learning_unit_yr,
+            entity_container_years,
+            commit=commit
+        )
+
         return learning_unit_yr

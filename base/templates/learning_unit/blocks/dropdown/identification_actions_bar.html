@@ -33,7 +33,36 @@
             <span class="caret"></span>
         </button>
         <ul class="dropdown-menu dropdown-menu-large row text-right pull-right">
-             {% if "base.can_propose_learningunit" in perms %}
+
+            {% if "base.can_create_learningunit" in perms and can_create_partim %}
+                <li {% if not is_person_linked_to_entity %}class="disabled"{% endif %}>
+                    <a {% if is_person_linked_to_entity %} href="{% url 'learning_unit_create_partim' learning_unit_year_id=learning_unit_year.id %}" {% endif %}>
+                        {% trans 'New partim' %}
+                    </a>
+                </li>
+                <li class="divider"></li>
+            {% endif %}
+
+            {% if "base.can_edit_learningunit" in perms %}
+                <li {% if not can_edit %}class="disabled"{% endif %}>
+                    <a {% if can_edit %} href="{% url "edit_learning_unit" learning_unit_year_id=learning_unit_year.id %}" {% endif %}
+                   data-toggle="tooltip" title="{% trans 'Edit the learning unit' %}">
+                        {% trans 'Modify' %}
+                    </a>
+                </li>
+            {% endif %}
+
+            {% if "base.can_edit_learningunit_date" in perms %}
+                <li {% if not can_edit_date %}class="disabled"{% endif %}>
+                    <a {% if can_edit_date %} href="{% url "learning_unit_edition" learning_unit_year_id=learning_unit_year.id %}" {% endif %}
+                        data-toggle="tooltip" title="{% trans 'Edit learning unit end date' %}">
+                        {% trans 'Modify end date' %}
+                    </a>
+                </li>
+                <li class="divider"></li>
+            {% endif %}
+
+            {% if "base.can_propose_learningunit" in perms %}
             <li {% if not can_propose %}class="disabled"{% endif %}>
                 <a {% if can_propose %} href="{% url "learning_unit_modification_proposal" learning_unit_year_id=learning_unit_year.id %}" {% endif %}>
                     {% trans 'Put in proposal' %}
@@ -44,45 +73,32 @@
                     {% trans 'Put in suppression proposal' %}
                 </a>
             </li>
+            <li class="divider"></li>
             <li {% if not can_edit_learning_unit_proposal %}class="disabled"{% endif %}>
                 <a {% if can_edit_learning_unit_proposal %} href="{{ url_edit_proposal }}" {% endif %}>
-                    {% trans 'edit_proposal' %}
+                    {% trans 'Edit the proposal' %}
                 </a>
             </li>
             <li {% if not can_cancel_proposal %}class="disabled"{% endif %}>
                 <a {% if can_cancel_proposal %}  href="#" data-toggle="modal" data-target="#modalCancelProposal" {% endif %}>
-                    {% trans 'cancel_proposal' %}
+                    {% trans 'Cancel the proposal' %}
                 </a>
             </li>
             <li {% if not can_consolidate_proposal %}class="disabled"{% endif %}>
-                <a {% if can_consolidate_proposal %}href="#" onclick="document.getElementById('form_consolidate').submit();"{% endif %}>{% trans 'Consolidate proposal' %}</a>
+                <a {% if can_consolidate_proposal %}href="#" onclick="document.getElementById('form_consolidate').submit();"{% endif %}>
+                    {% trans 'Consolidate the proposal' %}
+                </a>
             </li>
+            <li class="divider"></li>
             {% endif %}
-            {% if "base.can_edit_learningunit" in perms %}
-                <li class="divider"></li>
-                <li {% if not can_edit %}class="disabled"{% endif %}>
-                    <a {% if can_edit %} href="{% url "edit_learning_unit" learning_unit_year_id=learning_unit_year.id %}" {% endif %}>
-                        {% trans 'edit_learning_unit' %}
-                    </a>
-                </li>
-            {% endif %}
-            {% if "base.can_edit_learningunit_date" in perms %}
-                <li {% if not can_edit_date %}class="disabled"{% endif %}>
-                    <a {% if can_edit_date %} href="{% url "learning_unit_edition" learning_unit_year_id=learning_unit_year.id %}" {% endif %}>
-                        {% trans 'edit_learning_unit_end_date' %}
-                    </a>
-                </li>
-            {% endif %}
+
             {% if "base.can_delete_learningunit" in perms %}
-                <li class="divider"></li>
                 <li {% if not can_delete %}class="disabled"{% endif %}>
-                    <a  {% if can_delete %} href="#" data-toggle="modal" data-target="#modalDeleteLuy" {% endif %}>{% trans 'Delete all the learning unit' %}</a>
-                </li>
-            {% endif %}
-            {% if "base.can_create_learningunit" in perms and can_create_partim %}
-                <li class="divider"></li>
-                <li {% if not is_person_linked_to_entity %}class="disabled"{% endif %}>
-                    <a {% if is_person_linked_to_entity %} href="{% url 'learning_unit_create_partim' learning_unit_year_id=learning_unit_year.id %}" {% endif %}>{% trans 'new_partim' %}</a>
+                    <a  {% if can_delete %} href="#" data-toggle="modal" data-target="#modalDeleteLuy" {% endif %}>
+                        <span data-toggle="tooltip" title="{% trans 'Delete the learning unit for all academic years' %}">
+                            {% trans 'delete' %}
+                        </span>
+                    </a>
                 </li>
             {% endif %}
         </ul>

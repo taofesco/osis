@@ -35,7 +35,7 @@ from base import models as mdl
 from base.business.learning_unit_year_with_context import append_latest_entities
 from base.forms.learning_unit import search_form as learning_units_form
 from base.forms.common import get_clean_data, TooManyResultsException
-from base.forms.learning_unit.search_form import SearchForm
+from base.forms.learning_unit.search_form import LearningUnitSearchForm
 from base.models import entity_version
 from base.models.enums import entity_container_year_link_type, proposal_type, proposal_state
 from base.models.proposal_learning_unit import ProposalLearningUnit
@@ -45,14 +45,15 @@ def _get_entity_folder_id_ordered_by_acronym():
     entities = mdl.proposal_learning_unit.find_distinct_folder_entities()
     entities_sorted_by_acronym = sorted(list(entities), key=lambda t: t.most_recent_acronym)
 
-    return [SearchForm.ALL_LABEL] + [(ent.pk, ent.most_recent_acronym) for ent in entities_sorted_by_acronym]
+    return [LearningUnitSearchForm.ALL_LABEL] + [(ent.pk, ent.most_recent_acronym)
+                                                 for ent in entities_sorted_by_acronym]
 
 
 def _get_sorted_choices(tuple_of_choices):
-    return SearchForm.ALL_CHOICES + tuple(sorted(tuple_of_choices, key=lambda item: item[1]))
+    return LearningUnitSearchForm.ALL_CHOICES + tuple(sorted(tuple_of_choices, key=lambda item: item[1]))
 
 
-class LearningUnitProposalForm(SearchForm):
+class LearningUnitProposalForm(LearningUnitSearchForm):
 
     entity_folder_id = forms.ChoiceField(
         label=_('folder_entity'),
@@ -86,7 +87,8 @@ class LearningUnitProposalForm(SearchForm):
         if not self._has_criteria():
             self.add_error(None, _('minimum_one_criteria'))
         if self.cleaned_data \
-                and mdl.proposal_learning_unit.count_search_results(**self.cleaned_data) > SearchForm.MAX_RECORDS:
+                and mdl.proposal_learning_unit.count_search_results(**self.cleaned_data) > \
+                LearningUnitSearchForm.MAX_RECORDS:
             raise TooManyResultsException
         return get_clean_data(self.cleaned_data)
 

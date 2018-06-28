@@ -31,14 +31,18 @@ from django.forms import model_to_dict
 from django.test import TestCase
 from django.utils.translation import ugettext_lazy as _
 
+from base.forms.learning_unit.edition_volume import SimplifiedVolumeManagementForm
 from base.forms.learning_unit.entity_form import EntityContainerBaseForm
 from base.forms.learning_unit.learning_unit_create import LearningUnitYearModelForm, \
     LearningUnitModelForm, LearningContainerYearModelForm, LearningContainerModelForm
 from base.forms.learning_unit.learning_unit_partim import PARTIM_FORM_READ_ONLY_FIELD, PartimForm, \
     LearningUnitPartimModelForm
 from base.forms.utils import acronym_field
+from base.models.entity_component_year import EntityComponentYear
 from base.models.enums import learning_unit_year_subtypes, organization_type
-from base.models.enums.learning_unit_periodicity import ANNUAL, BIENNIAL_EVEN
+from base.models.enums.learning_component_year_type import LECTURING, PRACTICAL_EXERCISES
+from base.models.enums.learning_unit_year_periodicity import ANNUAL, BIENNIAL_EVEN
+from base.models.learning_component_year import LearningComponentYear
 from base.models.learning_unit import LearningUnit
 from base.models.learning_unit_year import LearningUnitYear
 from base.tests.factories.academic_year import create_current_academic_year
@@ -113,9 +117,7 @@ class TestPartimFormInit(LearningUnitPartimFormContextMixin):
     def test_inherit_initial_values(self):
         """This test will check if field are pre-full in by value of full learning unit year"""
         expected_initials = {
-            LearningUnitPartimModelForm: {
-                'periodicity': self.learning_unit_year_full.learning_unit.periodicity
-            },
+            LearningUnitPartimModelForm: {},
             LearningUnitYearModelForm: {
                 'acronym': ['L', 'BIR1200', ''],
                 'acronym_0': 'L',  # Multiwidget decomposition
@@ -132,7 +134,8 @@ class TestPartimFormInit(LearningUnitPartimFormContextMixin):
                 'specific_title': self.learning_unit_year_full.specific_title,
                 'specific_title_english': self.learning_unit_year_full.specific_title_english,
                 'language': self.learning_unit_year_full.language,
-                'campus': self.learning_unit_year_full.campus
+                'campus': self.learning_unit_year_full.campus,
+                'periodicity': self.learning_unit_year_full.periodicity
             }
         }
         partim_form = _instanciate_form(learning_unit_full=self.learning_unit_year_full.learning_unit,
@@ -157,8 +160,7 @@ class TestPartimFormInit(LearningUnitPartimFormContextMixin):
         expected_disabled_fields = {
             'common_title', 'common_title_english',
             'requirement_entity', 'allocation_entity',
-            'periodicity', 'academic_year',
-            'container_type', 'internship_subtype',
+            'academic_year', 'container_type', 'internship_subtype',
             'additional_requirement_entity_1', 'additional_requirement_entity_2'
         }
         all_fields = partim_form.fields.items()
@@ -170,7 +172,7 @@ class TestPartimFormInit(LearningUnitPartimFormContextMixin):
            in form_cls_to_validate"""
         partim_form = _instanciate_form(learning_unit_full=self.learning_unit_year_full.learning_unit,
                                         academic_year=self.learning_unit_year_full.academic_year)
-        expected_form_cls = [LearningUnitPartimModelForm, LearningUnitYearModelForm]
+        expected_form_cls = [LearningUnitPartimModelForm, LearningUnitYearModelForm, SimplifiedVolumeManagementForm]
         self.assertEqual(partim_form.form_cls_to_validate, expected_form_cls)
 
 
@@ -201,32 +203,6 @@ class TestPartimFormIsValid(LearningUnitPartimFormContextMixin):
         self._test_learning_container_year_model_form_instance(form)
         self._test_entity_container_model_formset_instance(form)
 
-
-    def test_partim_periodicity_annual_with_parent_biannual(self):
-        a_new_learning_unit_partim = LearningUnitYearFactory(
-            academic_year=self.current_academic_year,
-            acronym=FULL_ACRONYM + 'W',
-            subtype=learning_unit_year_subtypes.PARTIM,
-            credits=0,
-            learning_container_year=self.learning_unit_year_full.learning_container_year,
-        )
-        a_new_learning_unit_partim.learning_unit.learning_container = \
-            self.learning_unit_year_full.learning_unit.learning_container
-        a_new_learning_unit_partim.learning_unit.save()
-
-        self.learning_unit_year_full.learning_unit.periodicity = BIENNIAL_EVEN
-        self.learning_unit_year_full.learning_unit.save()
-
-        post_data = get_valid_form_data(a_new_learning_unit_partim)
-        post_data['periodicity'] = ANNUAL
-
-        form = LearningUnitModelForm(data=post_data, instance=a_new_learning_unit_partim.learning_unit)
-
-        # The form should not be valid
-        self.assertFalse(form.is_valid(), form.errors)
-        self.assertEqual(form.errors.get('periodicity'),
-                         [_('The periodicity of the parent and the partims do not match')])
-
     def test_partim_periodicity_biannual_with_parent_annual(self):
         a_new_learning_unit_partim = LearningUnitYearFactory(
             academic_year=self.current_academic_year,
@@ -254,9 +230,6 @@ class TestPartimFormIsValid(LearningUnitPartimFormContextMixin):
         form_instance = partim_form.forms[LearningUnitPartimModelForm]
         fields_to_validate = ['faculty_remark', 'other_remark']
         self._assert_equal_values(form_instance.instance, post_data, fields_to_validate)
-        # Periodicity inherit from parent [Cannot be modify by user]
-        self.assertEqual(form_instance.instance.periodicity,
-                         self.learning_unit_year_full.learning_unit.periodicity)
 
     def _test_learning_unit_year_model_form_instance(self, partim_form, post_data):
         form_instance = partim_form.forms[LearningUnitYearModelForm]
@@ -315,11 +288,7 @@ class TestPartimFormIsValid(LearningUnitPartimFormContextMixin):
 
 class TestPartimFormSave(LearningUnitPartimFormContextMixin):
     """Unit tests for save() for save"""
-    @mock.patch('base.forms.learning_unit.learning_unit_create.LearningUnitModelForm.save')
-    @mock.patch('base.forms.learning_unit.learning_unit_create.LearningUnitYearModelForm.save')
-    @mock.patch('base.forms.learning_unit.learning_unit_partim.PartimForm._get_entity_container_year',
-                side_effect=lambda *args: [])
-    def test_save_method_mocked(self, mock_get_entity_container_year, mock_luy_form_save, mock_lu_form_save):
+    def test_save(self):
         learning_container_year_full = self.learning_unit_year_full.learning_container_year
         a_new_learning_unit_partim = LearningUnitYearFactory.build(
             academic_year=self.current_academic_year,
@@ -328,32 +297,26 @@ class TestPartimFormSave(LearningUnitPartimFormContextMixin):
             language=self.learning_unit_year_full.language
         )
         post_data = get_valid_form_data(a_new_learning_unit_partim)
-        start_year = self.learning_unit_year_full.academic_year.year
 
-        # Define return mock value
-        mock_luy_form_save.return_value = a_new_learning_unit_partim
-        mock_lu_form_save.return_value = a_new_learning_unit_partim.learning_unit
         form = _instanciate_form(learning_unit_full=self.learning_unit_year_full.learning_unit,
                                  academic_year=self.learning_unit_year_full.academic_year,
                                  post_data=post_data, instance=None)
-        self.assertTrue(form.is_valid())
-        form.save()
-        # Ensure call to learning unit model form is done
-        self.assertTrue(mock_lu_form_save.called)
-        mock_lu_form_save.assert_called_once_with(
-            start_year=start_year,
-            learning_container=learning_container_year_full.learning_container,
-            commit=True
+        self.assertTrue(form.is_valid(), form.errors)
+        saved_instance = form.save()
+
+        self.assertIsInstance(saved_instance, LearningUnitYear)
+        self.assertEqual(saved_instance.learning_container_year, learning_container_year_full)
+        learning_component_year_list = LearningComponentYear.objects.filter(
+            learning_container_year=saved_instance.learning_container_year
         )
-        # Ensure call to learning unit year model form is done
-        self.assertTrue(mock_get_entity_container_year.called)
-        self.assertTrue(mock_luy_form_save.called)
-        mock_luy_form_save.assert_called_once_with(
-            learning_container_year=learning_container_year_full,
-            entity_container_years=[],
-            learning_unit=a_new_learning_unit_partim.learning_unit,
-            commit=True
-        )
+        self.assertEqual(learning_component_year_list.count(), 6)
+        self.assertEqual(
+            EntityComponentYear.objects.filter(
+                learning_component_year__in=learning_component_year_list).count(), 18)
+        self.assertTrue(
+            learning_component_year_list.filter(type=LECTURING, acronym="PM1").exists())
+        self.assertTrue(
+            learning_component_year_list.filter(type=PRACTICAL_EXERCISES, acronym="PP1").exists())
 
     def test_save_method_create_new_instance(self):
         partim_acronym = FULL_ACRONYM + 'C'
@@ -457,11 +420,22 @@ def get_valid_form_data(learning_unit_year_partim):
         'status': learning_unit_year_partim.status,
         'language': learning_unit_year_partim.language.id,
         'campus': CampusFactory(name='Louvain-la-Neuve', organization__type=organization_type.MAIN).pk,
+        'periodicity': learning_unit_year_partim.periodicity,
 
         # Learning unit data model form
-        'periodicity': learning_unit_year_partim.learning_unit.periodicity,
         'faculty_remark': learning_unit_year_partim.learning_unit.faculty_remark,
         'other_remark': learning_unit_year_partim.learning_unit.other_remark,
+
+        # Learning component year data model form
+        'form-TOTAL_FORMS': '2',
+        'form-INITIAL_FORMS': '0',
+        'form-MAX_NUM_FORMS': '2',
+        'form-0-hourly_volume_total_annual': 20,
+        'form-0-hourly_volume_partial_q1': 10,
+        'form-0-hourly_volume_partial_q2': 10,
+        'form-1-hourly_volume_total_annual': 20,
+        'form-1-hourly_volume_partial_q1': 10,
+        'form-1-hourly_volume_partial_q2': 10,
     }
 
 

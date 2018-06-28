@@ -27,8 +27,8 @@ from collections import OrderedDict
 
 from django.db import models
 
-from base import models as mdl
 from base.business import entity_version as business_entity_version
+from base.models import entity_container_year, learning_unit_component, entity_component_year, learning_unit_year
 from base.models.enums import entity_container_year_link_type as entity_types
 from osis_common.utils.numbers import to_float_or_zero
 
@@ -47,7 +47,7 @@ class LearningUnitYearWithContext:
 def get_with_context(**learning_unit_year_data):
     entity_container_prefetch = models.Prefetch(
         'learning_container_year__entitycontaineryear_set',
-        queryset=mdl.entity_container_year.search(
+        queryset=entity_container_year.search(
             link_type=ENTITY_TYPES_VOLUME
         ).prefetch_related(
             models.Prefetch('entity__entityversion_set', to_attr='entity_versions')
@@ -57,13 +57,13 @@ def get_with_context(**learning_unit_year_data):
 
     learning_component_prefetch = models.Prefetch(
         'learningunitcomponent_set',
-        queryset=mdl.learning_unit_component.LearningUnitComponent.objects.all().order_by(
+        queryset=learning_unit_component.LearningUnitComponent.objects.all().order_by(
             'learning_component_year__type', 'learning_component_year__acronym'
         ).select_related(
             'learning_component_year'
         ).prefetch_related(
             models.Prefetch('learning_component_year__entitycomponentyear_set',
-                            queryset=mdl.entity_component_year.EntityComponentYear.objects.all()
+                            queryset=entity_component_year.EntityComponentYear.objects.all()
                             .select_related('entity_container_year'),
                             to_attr='entity_components_year'
                             )
@@ -71,42 +71,42 @@ def get_with_context(**learning_unit_year_data):
         to_attr='learning_unit_components'
     )
 
-    learning_units = mdl.learning_unit_year.search(**learning_unit_year_data) \
+    learning_unit_years = learning_unit_year.search(**learning_unit_year_data) \
         .select_related('academic_year', 'learning_container_year') \
         .prefetch_related(entity_container_prefetch) \
         .prefetch_related(learning_component_prefetch) \
         .order_by('academic_year__year', 'acronym')
 
-    learning_units = [append_latest_entities(learning_unit) for learning_unit in learning_units]
-    learning_units = [_append_components(learning_unit) for learning_unit in learning_units]
+    learning_unit_years = [append_latest_entities(luy) for luy in learning_unit_years]
+    learning_unit_years = [_append_components(luy) for luy in learning_unit_years]
 
-    return learning_units
+    return learning_unit_years
 
 
-def append_latest_entities(learning_unit, service_course_search=False):
-    learning_unit.entities = {}
-    learning_container_year = learning_unit.learning_container_year
+def append_latest_entities(learning_unit_year, service_course_search=False):
+    learning_unit_year.entities = {}
+    learning_container_year = learning_unit_year.learning_container_year
 
     for entity_container_yr in getattr(learning_container_year, "entity_containers_year", []):
         link_type = entity_container_yr.type
-        learning_unit.entities[link_type] = entity_container_yr.get_latest_entity_version()
+        learning_unit_year.entities[link_type] = entity_container_yr.get_latest_entity_version()
 
-    requirement_entity_version = learning_unit.entities.get(entity_types.REQUIREMENT_ENTITY)
-    allocation_entity_version = learning_unit.entities.get(entity_types.ALLOCATION_ENTITY)
+    requirement_entity_version = learning_unit_year.entities.get(entity_types.REQUIREMENT_ENTITY)
+    allocation_entity_version = learning_unit_year.entities.get(entity_types.ALLOCATION_ENTITY)
 
     if service_course_search:
-        learning_unit.entities[business_entity_version.SERVICE_COURSE] = is_service_course(
-            learning_unit.academic_year,
+        learning_unit_year.entities[business_entity_version.SERVICE_COURSE] = is_service_course(
+            learning_unit_year.academic_year,
             requirement_entity_version,
             allocation_entity_version)
 
-    return learning_unit
+    return learning_unit_year
 
 
-def _append_components(learning_unit):
-    learning_unit.components = OrderedDict()
-    if learning_unit.learning_unit_components:
-        for learning_unit_component in learning_unit.learning_unit_components:
+def _append_components(learning_unit_year):
+    learning_unit_year.components = OrderedDict()
+    if learning_unit_year.learning_unit_components:
+        for learning_unit_component in learning_unit_year.learning_unit_components:
             component = learning_unit_component.learning_component_year
             entity_components_year = component.entity_components_year
             req_entities_volumes = _get_requirement_entities_volumes(entity_components_year)
@@ -116,7 +116,7 @@ def _append_components(learning_unit):
             volume_global = vol_req_entity + vol_add_req_entity_1 + vol_add_req_entity_2
             planned_classes = component.planned_classes or 0
 
-            learning_unit.components[component] = {
+            learning_unit_year.components[component] = {
                 'VOLUME_TOTAL': to_float_or_zero(component.hourly_volume_total_annual),
                 'VOLUME_Q1': to_float_or_zero(component.hourly_volume_partial_q1),
                 'VOLUME_Q2': to_float_or_zero(component.hourly_volume_partial_q2),
@@ -126,7 +126,7 @@ def _append_components(learning_unit):
                 'VOLUME_' + entity_types.ADDITIONAL_REQUIREMENT_ENTITY_2: vol_add_req_entity_2,
                 'VOLUME_TOTAL_REQUIREMENT_ENTITIES': volume_global,
             }
-    return learning_unit
+    return learning_unit_year
 
 
 def _get_requirement_entities_volumes(entity_components_year):
@@ -160,7 +160,10 @@ def volume_learning_component_year(learning_component_year, entity_components_ye
         'PLANNED_CLASSES': learning_component_year.planned_classes or 1,
         'VOLUME_REQUIREMENT_ENTITY': requirement_vols.get(entity_types.REQUIREMENT_ENTITY, 0),
         'VOLUME_ADDITIONAL_REQUIREMENT_ENTITY_1': requirement_vols.get(entity_types.ADDITIONAL_REQUIREMENT_ENTITY_1, 0),
-        'VOLUME_ADDITIONAL_REQUIREMENT_ENTITY_2': requirement_vols.get(entity_types.ADDITIONAL_REQUIREMENT_ENTITY_2, 0)
+        'VOLUME_ADDITIONAL_REQUIREMENT_ENTITY_2': requirement_vols.get(entity_types.ADDITIONAL_REQUIREMENT_ENTITY_2, 0),
+        'VOLUME_GLOBAL': sum([requirement_vols.get(entity_types.REQUIREMENT_ENTITY, 0),
+                             requirement_vols.get(entity_types.ADDITIONAL_REQUIREMENT_ENTITY_1, 0),
+                             requirement_vols.get(entity_types.ADDITIONAL_REQUIREMENT_ENTITY_2, 0)])
     }
 
 

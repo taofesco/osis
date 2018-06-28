@@ -33,13 +33,13 @@ from django.contrib.messages.storage.fallback import FallbackStorage
 from django.http import HttpResponseForbidden, HttpResponseNotFound, HttpResponse
 from django.test import TestCase, RequestFactory
 from django.urls import reverse
-from django.utils.translation import ugettext_lazy as _
 
 from base.forms.learning_unit.entity_form import EntityContainerBaseForm
 from base.forms.learning_unit.learning_unit_create import LearningUnitModelForm, LearningUnitYearModelForm, \
     LearningContainerYearModelForm
 from base.models.entity_component_year import EntityComponentYear
-from base.models.enums import learning_unit_periodicity, learning_container_year_types, learning_unit_year_subtypes, \
+from base.models.enums import learning_unit_year_periodicity, learning_container_year_types, \
+    learning_unit_year_subtypes, \
     entity_container_year_link_type, vacant_declaration_type, attribution_procedure, entity_type, organization_type
 from base.tests.factories.academic_year import create_current_academic_year, AcademicYearFactory, get_current_year
 from base.tests.factories.business.learning_units import LearningUnitsMixin, GenerateContainer, GenerateAcademicYear
@@ -69,7 +69,7 @@ class TestLearningUnitEditionView(TestCase, LearningUnitsMixin):
         self.client.force_login(self.user)
 
         self.setup_academic_years()
-        self.learning_unit = self.setup_learning_unit(self.current_academic_year.year, learning_unit_periodicity.ANNUAL)
+        self.learning_unit = self.setup_learning_unit(self.current_academic_year.year)
         self.learning_container_year = self.setup_learning_container_year(
             academic_year=self.current_academic_year,
             container_type=learning_container_year_types.COURSE
@@ -78,7 +78,8 @@ class TestLearningUnitEditionView(TestCase, LearningUnitsMixin):
             self.current_academic_year,
             self.learning_unit,
             self.learning_container_year,
-            learning_unit_year_subtypes.FULL
+            learning_unit_year_subtypes.FULL,
+            learning_unit_year_periodicity.ANNUAL
         )
 
         self.a_superuser = SuperUserFactory()
@@ -151,7 +152,8 @@ class TestEditLearningUnit(TestCase):
             subtype=learning_unit_year_subtypes.FULL,
             attribution_procedure=attribution_procedure.INTERNAL_TEAM,
             credits=15,
-            campus=CampusFactory(organization=OrganizationFactory(type=organization_type.MAIN))
+            campus=CampusFactory(organization=OrganizationFactory(type=organization_type.MAIN)),
+            internship_subtype=None,
         )
 
         cls.partim_learning_unit = LearningUnitYearFactory(
@@ -301,11 +303,11 @@ class TestEditLearningUnit(TestCase):
                 "professional_integration": self.learning_unit_year.professional_integration,
                 "campus": self.learning_unit_year.campus.pk,
                 "language": self.learning_unit_year.language.pk,
+                "periodicity": self.learning_unit_year.periodicity
             },
             'learning_unit_form': {
                 "faculty_remark": self.learning_unit_year.learning_unit.faculty_remark,
-                "other_remark": self.learning_unit_year.learning_unit.other_remark,
-                "periodicity": self.learning_unit_year.learning_unit.periodicity
+                "other_remark": self.learning_unit_year.learning_unit.other_remark
             }
         }
         for form_name, expected_initial in expected_initials.items():
@@ -342,7 +344,7 @@ class TestEditLearningUnit(TestCase):
             "acronym_1": self.learning_unit_year.acronym[1:],
             "credits": self.learning_unit_year.credits,
             "specific_title": self.learning_unit_year.specific_title,
-            "periodicity": learning_unit_periodicity.ANNUAL,
+            "periodicity": learning_unit_year_periodicity.ANNUAL,
             "campus": self.learning_unit_year.campus.pk,
             "language": self.learning_unit_year.language.pk,
             "status": True,
@@ -350,6 +352,16 @@ class TestEditLearningUnit(TestCase):
             'requirement_entity-entity': self.requirement_entity.id,
             'allocation_entity-entity': self.requirement_entity.id,
             'additional_requirement_entity_1-entity': '',
+            # Learning component year data model form
+            'form-TOTAL_FORMS': '2',
+            'form-INITIAL_FORMS': '0',
+            'form-MAX_NUM_FORMS': '2',
+            'form-0-hourly_volume_total_annual': 20,
+            'form-0-hourly_volume_partial_q1': 10,
+            'form-0-hourly_volume_partial_q2': 10,
+            'form-1-hourly_volume_total_annual': 20,
+            'form-1-hourly_volume_partial_q1': 10,
+            'form-1-hourly_volume_partial_q2': 10,
         }
         return form_data
 
@@ -456,14 +468,11 @@ class TestLearningUnitVolumesManagement(TestCase):
         setattr(request, '_messages', FallbackStorage(request))
 
         learning_unit_volumes_management(request, self.learning_unit_year.id)
-
-        self.assertTrue(mock_render.called)
-        request, template, context = mock_render.call_args[0]
-        self.assertEqual(template, 'learning_unit/volumes_management.html')
-        self.assertEqual(
-            context['formsets'][self.learning_unit_year_partim].errors[0].get('volume_total'),
-            [_('vol_tot_full_must_be_greater_or_equal_than_partim')]
-        )
+        # Volumes of partims can be greater than parent's
+        msg_level = [m.level for m in get_messages(request)]
+        msg = [m.message for m in get_messages(request)]
+        self.assertEqual(len(msg), 1)
+        self.assertIn(messages.SUCCESS, msg_level)
 
     @mock.patch('base.models.program_manager.is_program_manager')
     def test_learning_unit_volumes_management_post_wrong_data_ajax(self, mock_program_manager):
@@ -485,18 +494,8 @@ class TestLearningUnitVolumesManagement(TestCase):
         request.user = self.user
 
         response = learning_unit_volumes_management(request, self.learning_unit_year.id)
-        prefix = self.learning_unit_year_partim.acronym
-        self.assertJSONEqual(response.content.decode("utf-8"),
-                             {"errors":
-                                  {
-                                    prefix+"-0-volume_total":
-                                        [_("vol_tot_full_must_be_greater_or_equal_than_partim")],
-                                    prefix+"-0-volume_q2":
-                                        [_("vol_q2_full_must_be_greater_or_equal_to_partim")],
-                                    prefix+"-0-volume_requirement_entity":
-                                        [_("entity_requirement_full_must_be_greater_or_equal_to_partim")]
-                                  }
-                              })
+        # Volumes of partims can be greater than parent's
+        self.assertEqual(response.status_code, HttpResponse.status_code)
 
     def test_with_user_not_logged(self):
         self.client.logout()

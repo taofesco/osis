@@ -29,14 +29,17 @@ from django.conf import settings
 from django.utils.translation import ugettext_lazy as _
 
 from attribution.models import attribution
+from attribution.models.attribution import find_all_tutors_by_learning_unit_year
 from base import models as mdl_base
 from base.business.entity import get_entity_calendar
 from base.business.learning_unit_year_with_context import volume_learning_component_year
+from base.business.xls import get_name_or_username
 from base.models import entity_container_year
 from base.models import learning_achievement
 from base.models.academic_year import find_academic_year_by_year
 from base.models.entity_component_year import EntityComponentYear
 from base.models.enums import entity_container_year_link_type, academic_calendar_type
+from base.models.enums.entity_container_year_link_type import REQUIREMENT_ENTITIES
 from cms import models as mdl_cms
 from cms.enums import entity_name
 from cms.enums.entity_name import LEARNING_UNIT_YEAR
@@ -120,7 +123,7 @@ def get_cms_label_data(cms_label, user_language):
 
 def _learning_unit_usage(a_learning_component_year):
     components = mdl_base.learning_unit_component.find_by_learning_component_year(a_learning_component_year)
-    return ", ".join(["{} ({})".format(c.learning_unit_year.acronym, c.learning_unit_year.quadrimester or '?')
+    return ", ".join(["{} ({})".format(c.learning_unit_year.acronym, _(c.learning_unit_year.quadrimester or '?'))
                       for c in components])
 
 
@@ -140,11 +143,11 @@ def get_components_identification(learning_unit_yr):
         learning_component_year_list = mdl_base.learning_component_year.find_by_learning_container_year(
             a_learning_container_yr)
 
-        for indx, learning_component_year in enumerate(learning_component_year_list):
+        for learning_component_year in learning_component_year_list:
             if mdl_base.learning_unit_component.search(learning_component_year, learning_unit_yr).exists():
                 entity_components_yr = EntityComponentYear.objects.filter(
                     learning_component_year=learning_component_year)
-                if indx == 0:
+                if not additionnal_entities:
                     additionnal_entities = _get_entities(entity_components_yr)
 
                 components.append({'learning_component_year': learning_component_year,
@@ -180,36 +183,26 @@ def extract_xls_data_from_learning_unit(learning_unit_yr):
     ]
 
 
-def prepare_xls_parameters_list(user, workingsheets_data):
-    return {xls_build.LIST_DESCRIPTION_KEY: _(XLS_DESCRIPTION),
-            xls_build.FILENAME_KEY: _(XLS_FILENAME),
-            xls_build.USER_KEY: get_name_or_username(user),
-            xls_build.WORKSHEETS_DATA:
-                [{xls_build.CONTENT_KEY: workingsheets_data,
-                  xls_build.HEADER_TITLES_KEY: LEARNING_UNIT_TITLES,
-                  xls_build.WORKSHEET_TITLE_KEY: _(WORKSHEET_TITLE),
-                  }
-                 ]}
-
-
-def get_name_or_username(a_user):
-    person = mdl_base.person.find_by_user(a_user)
-    return "{}, {}".format(person.last_name, person.first_name) if person else a_user.username
-
-
 def get_entity_acronym(an_entity):
     return an_entity.acronym if an_entity else None
 
 
 def create_xls(user, found_learning_units, filters):
     working_sheets_data = prepare_xls_content(found_learning_units)
-    return xls_build.generate_xls(prepare_xls_parameters_list(user, working_sheets_data), filters)
+    parameters = {xls_build.DESCRIPTION: XLS_DESCRIPTION,
+                  xls_build.USER: get_name_or_username(user),
+                  xls_build.FILENAME: XLS_FILENAME,
+                  xls_build.HEADER_TITLES: LEARNING_UNIT_TITLES,
+                  xls_build.WS_TITLE: WORKSHEET_TITLE}
+
+    return xls_build.generate_xls(xls_build.prepare_xls_parameters_list(working_sheets_data, parameters), filters)
 
 
 def is_summary_submission_opened():
     current_academic_year = mdl_base.academic_year.current_academic_year()
-    return mdl_base.academic_calendar.is_academic_calendar_opened(current_academic_year,
-                                                                  academic_calendar_type.SUMMARY_COURSE_SUBMISSION)
+    return mdl_base.academic_calendar.\
+        is_academic_calendar_opened_for_specific_academic_year(current_academic_year,
+                                                               academic_calendar_type.SUMMARY_COURSE_SUBMISSION)
 
 
 def find_language_in_settings(language_code):
@@ -223,13 +216,9 @@ def _compose_components_dict(components, additional_entities):
 
 
 def _get_entities(entity_components_yr):
-    additional_requirement_entities_types = [entity_container_year_link_type.REQUIREMENT_ENTITY,
-                                             entity_container_year_link_type.ADDITIONAL_REQUIREMENT_ENTITY_1,
-                                             entity_container_year_link_type.ADDITIONAL_REQUIREMENT_ENTITY_2]
-
     return {e.entity_container_year.type: e.entity_container_year.entity.most_recent_acronym
             for e in entity_components_yr
-            if e.entity_container_year.type in additional_requirement_entities_types}
+            if e.entity_container_year.type in REQUIREMENT_ENTITIES}
 
 
 def _get_summary_status(a_calendar, cms_list, lu):
@@ -286,3 +275,8 @@ def get_achievements_group_by_language(learning_unit_year):
         key = 'achievements_{}'.format(achievement.language.code)
         achievement_grouped.setdefault(key, []).append(achievement)
     return achievement_grouped
+
+
+def get_no_summary_responsible_teachers(learning_unit_yr, summary_responsibles):
+    tutors = find_all_tutors_by_learning_unit_year(learning_unit_yr, "-summary_responsible")
+    return [tutor[0] for tutor in tutors if tutor[0] not in summary_responsibles]

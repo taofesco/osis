@@ -82,6 +82,7 @@ def get_valid_external_learning_unit_form_data(academic_year, person, learning_u
         'status': learning_unit_year.status,
         'campus': learning_unit_year.campus.id,
         'language': learning_unit_year.language.pk,
+        'periodicity': learning_unit_year.periodicity,
 
         # Learning unit data model form
         'faculty_remark': learning_unit_year.learning_unit.faculty_remark,
@@ -95,6 +96,17 @@ def get_valid_external_learning_unit_form_data(academic_year, person, learning_u
         'requesting_entity': requesting_entity.id,
         'external_acronym': 'Gorzyne',
         'external_credits': '5.5',
+
+        # Learning component year data model form
+        'form-TOTAL_FORMS': '2',
+        'form-INITIAL_FORMS': '0',
+        'form-MAX_NUM_FORMS': '2',
+        'form-0-hourly_volume_total_annual': 20,
+        'form-0-hourly_volume_partial_q1': 10,
+        'form-0-hourly_volume_partial_q2': 10,
+        'form-1-hourly_volume_total_annual': 20,
+        'form-1-hourly_volume_partial_q1': 10,
+        'form-1-hourly_volume_partial_q2': 10,
     }
 
 
@@ -135,10 +147,12 @@ class TestExternalLearningUnitSearchForm(TestCase):
     def setUp(self):
         self.academic_year = create_current_academic_year()
 
-        self.learning_unit_year_1 = LearningUnitYearFactory(academic_year=self.academic_year)
+        self.learning_unit_year_1 = LearningUnitYearFactory(academic_year=self.academic_year,
+                                                            acronym='XLDR1001')
         self.external_lu_1 = ExternalLearningUnitYearFactory(external_acronym='XLDR1001',
                                                              learning_unit_year=self.learning_unit_year_1)
-        self.learning_unit_year_2 = LearningUnitYearFactory(academic_year=self.academic_year)
+        self.learning_unit_year_2 = LearningUnitYearFactory(academic_year=self.academic_year,
+                                                            acronym='XLDR1002')
         self.external_lu_2 = ExternalLearningUnitYearFactory(external_acronym='XLDR1002',
                                                              learning_unit_year=self.learning_unit_year_2)
 
@@ -161,7 +175,7 @@ class TestExternalLearningUnitSearchForm(TestCase):
 
     def test_search_learning_units_on_acronym(self):
         form_data = {
-            "acronym": self.external_lu_1.external_acronym,
+            "acronym": self.external_lu_1.learning_unit_year.acronym,
         }
 
         form = ExternalLearningUnitYearForm(form_data)
@@ -170,7 +184,7 @@ class TestExternalLearningUnitSearchForm(TestCase):
 
     def test_search_learning_units_on_partial_acronym(self):
         form_data = {
-            "acronym": self.external_lu_1.external_acronym[:5],
+            "acronym": self.external_lu_1.learning_unit_year.acronym[:5],
         }
 
         form = ExternalLearningUnitYearForm(form_data)

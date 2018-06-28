@@ -66,4 +66,4 @@ class AttributionChargeNewTest(TestCase):
         self.assertCountEqual(result, [self.attribution_charge_new_practical, self.attribution_charge_new_lecturing])
 
     def test_str_function(self):
-        self.assertEqual(self.attribution_charge_new_lecturing.__str__(), "DOE, John  - PROFESSOR")
+        self.assertEqual(self.attribution_charge_new_lecturing.__str__(), "DOE, John - PROFESSOR")

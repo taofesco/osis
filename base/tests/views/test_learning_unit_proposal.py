@@ -47,7 +47,7 @@ from base.forms.learning_unit_proposal import ProposalLearningUnitForm
 from base.forms.proposal.learning_unit_proposal import LearningUnitProposalForm
 from base.models import entity_container_year, entity_version
 from base.models import proposal_learning_unit
-from base.models.enums import entity_container_year_link_type, learning_unit_periodicity
+from base.models.enums import entity_container_year_link_type, learning_unit_year_periodicity
 from base.models.enums import organization_type, entity_type, \
     learning_unit_year_subtypes, proposal_type, learning_container_year_types, proposal_state
 from base.models.enums.proposal_state import ProposalState
@@ -107,7 +107,8 @@ class TestLearningUnitModificationProposal(TestCase):
             learning_container_year=learning_container_year,
             quadrimester=None,
             specific_title_english="title english",
-            campus = CampusFactory(organization=an_organization, is_administration=True)
+            campus=CampusFactory(organization=an_organization, is_administration=True),
+            internship_subtype=None
         )
 
         an_entity = EntityFactory(organization=an_organization)
@@ -151,7 +152,7 @@ class TestLearningUnitModificationProposal(TestCase):
             "container_type": self.learning_unit_year.learning_container_year.container_type,
             "internship_subtype": "",
             "credits": self.learning_unit_year.credits,
-            "periodicity": self.learning_unit_year.learning_unit.periodicity,
+            "periodicity": self.learning_unit_year.periodicity,
             "status": self.learning_unit_year.status,
             "language": self.learning_unit_year.language.pk,
             "quadrimester": "",
@@ -164,6 +165,17 @@ class TestLearningUnitModificationProposal(TestCase):
             'allocation_entity-entity': self.entity_version.id,
             'additional_requirement_entity_1-entity': self.entity_version.id,
             'additional_requirement_entity_2-entity': self.entity_version.id,
+
+            # Learning component year data model form
+            'form-TOTAL_FORMS': '2',
+            'form-INITIAL_FORMS': '0',
+            'form-MAX_NUM_FORMS': '2',
+            'form-0-hourly_volume_total_annual': 20,
+            'form-0-hourly_volume_partial_q1': 10,
+            'form-0-hourly_volume_partial_q2': 10,
+            'form-1-hourly_volume_total_annual': 20,
+            'form-1-hourly_volume_partial_q1': 10,
+            'form-1-hourly_volume_partial_q2': 10,
         }
 
     def test_user_not_logged(self):
@@ -212,7 +224,7 @@ class TestLearningUnitModificationProposal(TestCase):
         self.assertEqual(lcy_initial['container_type'], self.learning_unit_year.
                          learning_container_year.container_type)
         self.assertEqual(luy_initial['credits'], self.learning_unit_year.credits)
-        self.assertEqual(lu_initial['periodicity'], self.learning_unit_year.learning_unit.periodicity)
+        self.assertEqual(luy_initial['periodicity'], self.learning_unit_year.periodicity)
         self.assertEqual(luy_initial['status'], self.learning_unit_year.status)
         self.assertEqual(luy_initial['language'], self.learning_unit_year.language.pk)
         self.assertEqual(luy_initial['campus'], self.learning_unit_year.campus.id)
@@ -250,10 +262,10 @@ class TestLearningUnitModificationProposal(TestCase):
                 "id", "acronym", "common_title", "container_type", "in_charge"
             ],
             'learning_unit': [
-                "id", "periodicity", "end_year"
+                "id", "end_year"
             ],
             'learning_unit_year': [
-                "id", "acronym", "specific_title", "internship_subtype", "credits", "campus", "language"
+                "id", "acronym", "specific_title", "internship_subtype", "credits", "campus", "language", "periodicity"
             ]
         }
         self.assertEqual(expected_initial_data_fields, INITIAL_DATA_FIELDS)
@@ -396,8 +408,7 @@ class TestLearningUnitSuppressionProposal(TestCase):
             container_type=learning_container_year_types.COURSE
         )
         self.learning_unit = LearningUnitFactory(
-            end_year=None,
-            periodicity=learning_unit_periodicity.ANNUAL,
+            end_year=None
         )
 
         self.learning_unit_year = LearningUnitYearFakerFactory(
@@ -410,7 +421,8 @@ class TestLearningUnitSuppressionProposal(TestCase):
             campus=CampusFactory(
                 organization=an_organization,
                 is_administration=True
-            )
+            ),
+            periodicity=learning_unit_year_periodicity.ANNUAL
         )
 
         an_entity = EntityFactory(organization=an_organization)
@@ -754,10 +766,10 @@ def _create_proposal_learning_unit():
             "credits": float(a_learning_unit_year.credits),
             "language": a_learning_unit_year.language.pk,
             "campus": a_learning_unit_year.campus.id,
+            "periodicity": a_learning_unit_year.periodicity
         },
         "learning_unit": {
             "id": a_learning_unit_year.learning_unit.id,
-            "periodicity": a_learning_unit_year.learning_unit.periodicity
         },
         "entities": {
             entity_container_year_link_type.REQUIREMENT_ENTITY: an_entity_container_year.entity.id,
@@ -877,12 +889,23 @@ class TestEditProposal(TestCase):
             "campus": self.campus.id,
             "common_title": "Common UE title",
             "language": self.language.pk,
-            "periodicity": learning_unit_periodicity.ANNUAL,
+            "periodicity": learning_unit_year_periodicity.ANNUAL,
             "entity": self.entity_version.id,
             "folder_id": 1,
             'requirement_entity-entity': self.entity_version.id,
             'allocation_entity-entity': self.entity_version.id,
             'additional_requirement_entity_1-entity': '',
+
+            # Learning component year data model form
+            'form-TOTAL_FORMS': '2',
+            'form-INITIAL_FORMS': '0',
+            'form-MAX_NUM_FORMS': '2',
+            'form-0-hourly_volume_total_annual': 20,
+            'form-0-hourly_volume_partial_q1': 10,
+            'form-0-hourly_volume_partial_q2': 10,
+            'form-1-hourly_volume_total_annual': 20,
+            'form-1-hourly_volume_partial_q1': 10,
+            'form-1-hourly_volume_partial_q2': 10,
         }
 
     def get_modify_data(self):
@@ -1067,10 +1090,10 @@ class TestLearningUnitProposalDisplay(TestCase):
 
     def test_get_the_old_value_with_translation(self):
         key = proposal_business.VALUES_WHICH_NEED_TRANSLATION[0]
-        initial_data = {key: learning_unit_periodicity.ANNUAL}
-        current_data = {key: learning_unit_periodicity.BIENNIAL_EVEN}
+        initial_data = {key: learning_unit_year_periodicity.ANNUAL}
+        current_data = {key: learning_unit_year_periodicity.BIENNIAL_EVEN}
         differences = proposal_business._get_the_old_value(key, current_data, initial_data)
-        self.assertEqual(differences.get(key), _(learning_unit_periodicity.ANNUAL))
+        self.assertEqual(differences.get(key), _(learning_unit_year_periodicity.ANNUAL))
 
     def test_get_str_representing_old_data_from_foreign_key(self):
         differences = proposal_business._get_str_representing_old_data_from_foreign_key('campus', self.campus.id)

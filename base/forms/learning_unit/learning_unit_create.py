@@ -29,24 +29,20 @@ from django.utils.translation import ugettext_lazy as _
 from base.forms.utils.acronym_field import AcronymField, PartimAcronymField, split_acronym
 from base.forms.utils.choice_field import add_blank
 from base.models.campus import find_main_campuses
-from base.models.entity_component_year import EntityComponentYear
 from base.models.enums import learning_unit_year_subtypes
 from base.models.enums.component_type import LECTURING, PRACTICAL_EXERCISES
-from base.models.enums.entity_container_year_link_type import REQUIREMENT_ENTITIES
 from base.models.enums.learning_container_year_types import CONTAINER_TYPE_WITH_DEFAULT_COMPONENT, \
     LEARNING_CONTAINER_YEAR_TYPES_WITHOUT_EXTERNAL, INTERNSHIP
 from base.models.enums.learning_container_year_types import LEARNING_CONTAINER_YEAR_TYPES_FOR_FACULTY
-from base.models.learning_component_year import LearningComponentYear
 from base.models.learning_container import LearningContainer
 from base.models.learning_container_year import LearningContainerYear
 from base.models.learning_unit import LearningUnit
-from base.models.learning_unit_component import LearningUnitComponent
 from base.models.learning_unit_year import LearningUnitYear, MAXIMUM_CREDITS
 from reference.models.language import find_all_languages
 
 DEFAULT_ACRONYM_COMPONENT = {
-    LECTURING: "CM1",
-    PRACTICAL_EXERCISES: "TP1",
+    LECTURING: "PM1",
+    PRACTICAL_EXERCISES: "PP1",
     None: "NT1"
 }
 
@@ -75,7 +71,7 @@ class LearningUnitModelForm(forms.ModelForm):
 
     class Meta:
         model = LearningUnit
-        fields = ('periodicity', 'faculty_remark', 'other_remark')
+        fields = ('faculty_remark', 'other_remark')
         widgets = {
             'faculty_remark': forms.Textarea(attrs={'rows': '5'}),
             'other_remark': forms.Textarea(attrs={'rows': '5'})
@@ -106,8 +102,13 @@ class LearningUnitYearModelForm(forms.ModelForm):
             self.fields['specific_title'].label = _('official_title_proper_to_partim')
             self.fields['specific_title_english'].label = _('official_english_title_proper_to_partim')
 
-        if kwargs.get('instance'):
+        # Disabled fields when it's an update
+        if self.instance.pk:
             self.fields['academic_year'].disabled = True
+
+            # we cannot edit the internship subtype if the container_type is not internship
+            if self.instance.learning_container_year.container_type != INTERNSHIP:
+                self.fields['internship_subtype'].disabled = True
 
         self.fields['campus'].queryset = find_main_campuses()
         self.fields['language'].queryset = find_all_languages()
@@ -116,7 +117,7 @@ class LearningUnitYearModelForm(forms.ModelForm):
         model = LearningUnitYear
         fields = ('academic_year', 'acronym', 'specific_title', 'specific_title_english', 'credits',
                   'session', 'quadrimester', 'status', 'internship_subtype', 'attribution_procedure',
-                  'professional_integration', 'campus', 'language')
+                  'professional_integration', 'campus', 'language', 'periodicity')
         field_classes = {'acronym': AcronymField}
         error_messages = {
             'credits': {
@@ -140,41 +141,8 @@ class LearningUnitYearModelForm(forms.ModelForm):
         self.instance.learning_container_year = kwargs.pop('learning_container_year')
         self.instance.academic_year = self.instance.learning_container_year.academic_year
         self.instance.learning_unit = kwargs.pop('learning_unit')
-        entity_container_years = kwargs.pop('entity_container_years')
         instance = super().save(**kwargs)
-        for learn_unit_year in self._find_learning_units_year_family():
-            self._save_learning_components(entity_container_years, learn_unit_year)
         return instance
-
-    def _find_learning_units_year_family(self):
-        return LearningUnitYear.objects.filter(learning_container_year=self.instance.learning_container_year)
-
-    def _save_learning_components(self, entity_container_years, learning_unit_year):
-        components_type = _get_default_components_type(self.instance.learning_container_year.container_type)
-        for component_type in components_type:
-            component, created = LearningComponentYear.objects.get_or_create(
-                learningunitcomponent__learning_unit_year=learning_unit_year,
-                type=component_type,
-                defaults={
-                    'acronym': DEFAULT_ACRONYM_COMPONENT[component_type],
-                    'learning_container_year': learning_unit_year.learning_container_year
-                }
-            )
-            self._save_learning_unit_component(component, learning_unit_year)
-            self._save_entity_components_year(component, entity_container_years)
-
-    @staticmethod
-    def _save_learning_unit_component(component, learning_unit_year):
-        return LearningUnitComponent.objects.get_or_create(learning_unit_year=learning_unit_year,
-                                                           learning_component_year=component)
-
-    @staticmethod
-    def _save_entity_components_year(component, entity_container_years):
-        requirement_entity_containers = filter(lambda ec: getattr(ec, 'type', None) in REQUIREMENT_ENTITIES,
-                                               entity_container_years)
-        for requirement_entity_container in requirement_entity_containers:
-            EntityComponentYear.objects.get_or_create(entity_container_year=requirement_entity_container,
-                                                      learning_component_year=component)
 
 
 class LearningUnitYearPartimModelForm(LearningUnitYearModelForm):

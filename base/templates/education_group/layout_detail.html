@@ -1,0 +1,25 @@
+{% extends "education_group/layout.html" %}
+
+{% block breadcrumb %}
+    {{ block.super }}
+    <li class="active">
+    {% if education_group_year.education_group_type.category == "TRAINING" %}
+        {{ education_group_year.acronym }}
+    {% else %}
+        {{ education_group_year.partial_acronym }}
+    {% endif %}
+    </li>
+{% endblock %}
+
+{% block header_content %}
+<div class="page-header">
+    <h2>
+        {% if education_group_year.education_group_type.category == "TRAINING" %}
+            {{ education_group_year.acronym }} - {{ education_group_year.title }}
+        {% else %}
+            {{ education_group_year.partial_acronym }} - {{ education_group_year.title }}
+        {% endif %}
+        <small style="color:black;font-family:Verdana;">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{{education_group_year.academic_year}}</small>
+    </h2>
+</div>
+{% endblock %}

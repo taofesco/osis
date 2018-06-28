@@ -37,6 +37,7 @@ from base.business.entity import get_entities_ids, get_entity_container_list, bu
 from base.business.entity_version import SERVICE_COURSE
 from base.business.learning_unit_year_with_context import append_latest_entities
 from base.forms.common import get_clean_data, treat_empty_or_str_none_as_none, TooManyResultsException
+from base.forms.search.search_form import BaseSearchForm
 from base.forms.utils.choice_field import add_blank
 from base.forms.utils.dynamic_field import DynamicChoiceField
 from base.forms.utils.uppercase import convert_to_uppercase
@@ -55,7 +56,7 @@ from reference.models.country import Country
 MAX_RECORDS = 1000
 
 
-class SearchForm(forms.Form):
+class LearningUnitSearchForm(BaseSearchForm):
     MAX_RECORDS = 1000
     ALL_LABEL = (None, _('all_label'))
     ALL_CHOICES = (ALL_LABEL,)
@@ -77,7 +78,7 @@ class SearchForm(forms.Form):
     )
 
     tutor = forms.CharField(
-        max_length=20,
+        max_length=40,
         label=_('tutor')
     )
 
@@ -96,9 +97,6 @@ class SearchForm(forms.Form):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.fields['academic_year_id'].initial = current_academic_year()
-        for field in self.fields.values():
-            # In a search form, the fields are never required
-            field.required = False
 
     def clean_requirement_entity_acronym(self):
         return convert_to_uppercase(self.cleaned_data.get('requirement_entity_acronym'))
@@ -106,42 +104,21 @@ class SearchForm(forms.Form):
     def clean_allocation_entity_acronym(self):
         return convert_to_uppercase(self.cleaned_data.get('allocation_entity_acronym'))
 
-    def get_research_criteria(self):
-        tuples_label_value = []
-        for field_name, field in self.fields.items():
-            if not self.cleaned_data[field_name]:
-                continue
-            tuple_to_append = (str(field.label), self.cleaned_data[field_name])
-            if type(field) == forms.ChoiceField:
-                dict_choices = {str(key): value for key, value in field.choices}
-                label_choice = dict_choices[self.cleaned_data[field_name]]
-                tuple_to_append = (str(field.label), label_choice)
-            tuples_label_value.append(tuple_to_append)
-        return tuples_label_value
 
-    def _has_criteria(self):
-        criteria_present = False
-        for name in self.fields:
-            if self.cleaned_data[name]:
-                criteria_present = True
-                break
-        return criteria_present
-
-
-class LearningUnitYearForm(SearchForm):
+class LearningUnitYearForm(LearningUnitSearchForm):
     container_type = forms.ChoiceField(
         label=_('type'),
-        choices=SearchForm.ALL_CHOICES + learning_container_year_types.LEARNING_CONTAINER_YEAR_TYPES,
+        choices=LearningUnitSearchForm.ALL_CHOICES + learning_container_year_types.LEARNING_CONTAINER_YEAR_TYPES,
     )
 
     subtype = forms.ChoiceField(
         label=_('subtype'),
-        choices=SearchForm.ALL_CHOICES + learning_unit_year_subtypes.LEARNING_UNIT_YEAR_SUBTYPES,
+        choices=LearningUnitSearchForm.ALL_CHOICES + learning_unit_year_subtypes.LEARNING_UNIT_YEAR_SUBTYPES,
     )
 
     status = forms.ChoiceField(
         label=_('status'),
-        choices=SearchForm.ALL_CHOICES + active_status.ACTIVE_STATUS_LIST[:-1],
+        choices=LearningUnitSearchForm.ALL_CHOICES + active_status.ACTIVE_STATUS_LIST[:-1],
     )
 
     title = forms.CharField(
@@ -170,44 +147,45 @@ class LearningUnitYearForm(SearchForm):
             self.fields["academic_year_id"].empty_label = None
 
     def clean_acronym(self):
-        data_cleaned = self.cleaned_data.get('acronym')
-        data_cleaned = treat_empty_or_str_none_as_none(data_cleaned)
-        if data_cleaned and learning_unit_year.check_if_acronym_regex_is_valid(data_cleaned) is None:
+        acronym = self.cleaned_data.get('acronym')
+        acronym = treat_empty_or_str_none_as_none(acronym)
+        if acronym and not learning_unit_year.check_if_acronym_regex_is_valid(acronym):
             raise ValidationError(_('LU_ERRORS_INVALID_REGEX_SYNTAX'))
-        return data_cleaned
+        return acronym
 
     def clean_allocation_entity_acronym(self):
-        data_cleaned = self.cleaned_data.get('allocation_entity_acronym')
-        if data_cleaned:
-            return data_cleaned.upper()
-        return data_cleaned
+        return convert_to_uppercase(self.cleaned_data.get('allocation_entity_acronym'))
+
+    def clean_faculty_borrowing_acronym(self):
+        return convert_to_uppercase(self.cleaned_data.get('faculty_borrowing_acronym'))
 
     def clean(self):
         return get_clean_data(self.cleaned_data)
 
     def get_activity_learning_units(self):
-        if self.service_course_search:
-            return self._get_service_course_learning_units()
-        else:
-            return self.get_learning_units()
+        return self._get_service_course_learning_units() if self.service_course_search else self.get_learning_units()
+
+    def _get_service_course_learning_units(self):
+        learning_units = self.get_learning_units(service_course_search=True)
+        return [lu for lu in learning_units if lu.entities.get(SERVICE_COURSE)]
 
     def get_learning_units(self, service_course_search=None, requirement_entities=None, luy_status=None):
         service_course_search = service_course_search or self.service_course_search
-        clean_data = self.cleaned_data
-        clean_data['status'] = self._set_status(luy_status)
+        search_criterias = self.cleaned_data.copy()
+        search_criterias['status'] = self._set_status(luy_status)
 
         if requirement_entities:
-            clean_data['requirement_entities'] = requirement_entities
+            search_criterias['requirement_entities'] = requirement_entities
 
         # TODO Use a queryset instead !!
-        clean_data['learning_container_year_id'] = get_filter_learning_container_ids(clean_data)
+        search_criterias['learning_container_year_id'] = get_filter_learning_container_ids(search_criterias)
 
         if not service_course_search \
-                and clean_data \
-                and mdl.learning_unit_year.count_search_results(**clean_data) > SearchForm.MAX_RECORDS:
+                and search_criterias \
+                and mdl.learning_unit_year.count_search_results(**search_criterias) > self.MAX_RECORDS:
             raise TooManyResultsException
 
-        learning_units = mdl.learning_unit_year.search(**clean_data) \
+        learning_units = mdl.learning_unit_year.search(**search_criterias) \
             .select_related('academic_year', 'learning_container_year', 'learning_container_year__academic_year') \
             .prefetch_related(build_entity_container_prefetch()) \
             .order_by('academic_year__year', 'acronym')
@@ -221,23 +199,14 @@ class LearningUnitYearForm(SearchForm):
     def _set_status(self, luy_status):
         return convert_status_bool(luy_status) if luy_status else self.cleaned_data['status']
 
-    def _get_service_course_learning_units(self):
-        service_courses = []
-
-        for learning_unit in self.get_learning_units(True):
-            if not learning_unit.entities.get(SERVICE_COURSE):
-                continue
-
-            service_courses.append(learning_unit)
-
-        return service_courses
-
     def _filter_borrowed_learning_units(self, learning_units):
-        try:
-            faculty_borrowing_id = EntityVersion.objects.current(self.cleaned_data["academic_year_id"].start_date).\
-                get(acronym=self.cleaned_data["faculty_borrowing_acronym"]).entity.id
-        except EntityVersion.DoesNotExist:
-            faculty_borrowing_id = None
+        faculty_borrowing_id = None
+        if self.cleaned_data["faculty_borrowing_acronym"]:
+            try:
+                faculty_borrowing_id = EntityVersion.objects.current(self.cleaned_data["academic_year_id"].start_date).\
+                    get(acronym=self.cleaned_data["faculty_borrowing_acronym"]).entity.id
+            except EntityVersion.DoesNotExist:
+                return []
         return filter_is_borrowed_learning_unit_year(learning_units, self.cleaned_data["academic_year_id"].start_date,
                                                      faculty_borrowing=faculty_borrowing_id)
 

@@ -138,10 +138,10 @@ class TestLearningUnitProposalCancel(TestCase):
                 "status": self.learning_unit_year.status,
                 "language": self.learning_unit_year.language.pk,
                 "campus": self.learning_unit_year.campus.id,
+                "periodicity": self.learning_unit_year.periodicity
             },
             "learning_unit": {
-                "id": self.learning_unit_year.learning_unit.id,
-                "periodicity": self.learning_unit_year.learning_unit.periodicity
+                "id": self.learning_unit_year.learning_unit.id
             },
             "entities": {
                 entity_container_year_link_type.REQUIREMENT_ENTITY: self.entity_container_year.entity.id,

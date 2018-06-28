@@ -1851,35 +1851,8 @@ msgstr "Classes prévues"
 msgid "planned_classes_pc"
 msgstr "P.C."
 
-msgid "total_volume"
-msgstr "Volume total annual"
-
 msgid "total_volume_voltot"
 msgstr "Vol.tot"
-
-msgid "vol_tot_not_equal_to_q1_q2"
-msgstr "Vol.tot = Q1 + Q2"
-
-msgid "vol_tot_req_entities_not_equal_to_entity"
-msgstr "Vol.tot requirement is not equals to sum of requirement volumes"
-
-msgid "vol_tot_req_entities_not_equal_to_vol_tot_mult_cp"
-msgstr "Vol.global = Vol.tot * C.P"
-
-msgid "vol_tot_full_must_be_greater_or_equal_than_partim"
-msgstr "Vol.tot [Full] >= Vol.tot [Partim]"
-
-msgid "vol_q1_full_must_be_greater_or_equal_to_partim"
-msgstr "Q1 [Full] >= Q1 [Partim]"
-
-msgid "vol_q2_full_must_be_greater_or_equal_to_partim"
-msgstr "Q2 [Full] >= Q2 [Partim]"
-
-msgid "planned_classes_full_must_be_greater_or_equal_to_partim"
-msgstr "C.P. [Full] >= C.P. [Partim]"
-
-msgid "entity_requirement_full_must_be_greater_or_equal_to_partim"
-msgstr "Requirement entity [Full] >= Requirement entity [Partim]"
 
 msgid "volumes_management"
 msgstr "Volumes management"
@@ -1891,7 +1864,7 @@ msgid "end_date_gt_begin_date"
 msgstr "The end year must be equals or upper than the start year"
 
 msgid "session_title"
-msgstr "Sessions"
+msgstr "Session derogation"
 
 msgid "remarks_title"
 msgstr "Remarks"
@@ -2248,7 +2221,7 @@ msgstr ""
 msgid "Delete from this academic year"
 msgstr ""
 
-msgid "Delete all the learning unit"
+msgid "Delete the learning unit for all academic years"
 msgstr ""
 
 msgid "publish_attribution_to_portal"
@@ -2452,22 +2425,19 @@ msgstr "Academic entity"
 msgid "folder_number"
 msgstr "Folder n°{}"
 
-msgid "produce_xls"
-msgstr "Produce an Excel file with the list of results"
-
-msgid "produce_xls_lu"
-msgstr "Xls with learning units"
+msgid "produce_xls_lus"
+msgstr "The learning units"
 
 msgid "%(date)s must be set within %(start_date)s and %(end_date)s"
 msgstr ""
 
-msgid "cancel_proposal"
-msgstr "Cancel proposal"
+msgid "Cancel the proposal"
+msgstr ""
 
-msgid "edit_proposal"
-msgstr "Edit proposal"
+msgid "Edit the proposal"
+msgstr ""
 
-msgid "Consolidate proposal"
+msgid "Consolidate the proposal"
 msgstr ""
 
 msgid "msg_confirm_cancel_proposal"
@@ -2503,11 +2473,14 @@ msgstr "Substitute"
 msgid "not_end_year"
 msgstr "no planned end"
 
-msgid "edit_learning_unit_end_date"
-msgstr "Edit learning unit end date"
+msgid "Modify"
+msgstr ""
 
-msgid "new_partim"
-msgstr "Create a new partim"
+msgid "Edit learning unit end date"
+msgstr ""
+
+msgid "Modify end date"
+msgstr ""
 
 msgid "learning_unit_successfuly_created"
 msgstr "Learning unit <a href='%(link)s'> %(acronym)s (%(academic_year)s) </a> successfuly created."
@@ -2554,8 +2527,8 @@ msgstr "Ensure this value is greater than %(limit_value)s."
 msgid "Entity_not_exist"
 msgstr "The entity %(entity_acronym)s does not exist for the selected academic year %(academic_year)s"
 
-msgid "edit_learning_unit"
-msgstr "Edit learning unit"
+msgid "Edit the learning unit"
+msgstr ""
 
 msgid "requirement_entity_end_date_too_short"
 msgstr "The requirement entity lifetime is too short."
@@ -2645,7 +2618,7 @@ msgid "in_proposal"
 msgstr "Existing proposal"
 
 msgid "summary_locked"
-msgstr "blocked update"
+msgstr "blocked update for tutor"
 
 msgid "get_back_to_initial"
 msgstr "Get back to initial data"
@@ -2713,18 +2686,24 @@ msgstr "Unupdated"
 msgid "summary_list"
 msgstr "Education information status"
 
-msgctxt "bibliography"
+msgctxt "teachingmaterial"
 msgid "title"
 msgstr ""
 
-msgctxt "bibliography"
+msgctxt "teachingmaterial"
 msgid "mandatory"
 msgstr ""
 
 msgid "Bibliography"
 msgstr ""
 
-msgid "Modalities specific to IN and OUT mobility"
+msgid "bibliography"
+msgstr ""
+
+msgid "Teaching material"
+msgstr ""
+
+msgid "Mobility"
 msgstr ""
 
 msgid "The periodicity of the parent and the partims do not match"
@@ -2863,7 +2842,7 @@ msgid "start_year"
 msgstr "Starting year"
 
 msgid "produce_xls_attributions"
-msgstr "Xls with learning units and attributions"
+msgstr "The learning units and attributions"
 
 msgid "produce_xls_proposals"
 msgstr "Xls with proposals"
@@ -2874,7 +2853,7 @@ msgstr "Proposals date"
 msgid "search_type"
 msgstr "Search type"
 
-msgid "The linked entity does not exist at the start date of the academic year linked to this learning unit"
+msgid "The linked %(entity)s does not exist at the start date of the academic year linked to this learning unit"
 msgstr ""
 
 msgid "COURSE_ENROLLMENT"
@@ -2886,10 +2865,10 @@ msgstr "Vol.global"
 msgid "volume_global"
 msgstr "volume total global"
 
-msgid "Vol. tot. annual"
+msgid "Vol. annual"
 msgstr ""
 
-msgid "Volume total annual"
+msgid "Volume annual"
 msgstr ""
 
 msgid "missing_internship_subtype"
@@ -2949,6 +2928,15 @@ msgstr ""
 msgid "planned classes cannot be 0"
 msgstr ""
 
+msgid "Vol_tot is not equal to vol_q1 + vol_q2"
+msgstr ""
+
+msgid "Vol_global is not equal to Vol_tot * planned_classes"
+msgstr "The overall volume must be equal to the annual volume multiplied by the number of classes"
+
+msgid "At least a partim volume value is greater than corresponding volume of parent"
+msgstr ""
+
 msgid "url of the learning unit"
 msgstr "URL of the learning unit"
 
@@ -2976,6 +2964,9 @@ msgstr ""
 msgid "New partim"
 msgstr ""
 
+msgid "middle_name"
+msgstr "Middle name"
+
 msgid "Select the missing term for the offer"
 msgstr "Select the missing term for the offer"
 
@@ -2990,6 +2981,90 @@ msgstr "Sorry but you can not remove the term of an offer"
 
 msgid "Do you want to remove the term?"
 msgstr "Do you want to remove the term?"
+
+msgid "Export"
+msgstr ""
+
+msgid "produce_xls_lus_desc"
+msgstr "Produce xls with a list of learning units"
+
+msgid "produce_xls_attributions_desc"
+msgstr "Produce xls with a list of learning units and attributions"
+
+msgid "hourly volume total annual"
+msgstr ""
+
+msgid "hourly volume partial q1"
+msgstr ""
+
+msgid "hourly volume partial q2"
+msgstr ""
+
+msgid "volume declared vacant"
+msgstr ""
+
+msgid "Xls with education groups"
+msgstr ""
+
+msgid "education_groups_filename"
+msgstr "education_groups"
+
+msgid "list_education_groups"
+msgstr "Education group's list"
+
+msgid "Q1 and Q2"
+msgstr ""
+
+msgid "Q1 or Q2"
+msgstr ""
+
+msgid "New Education Group"
+msgstr ""
+
+msgid "untyped"
+msgstr ""
+
+msgid "validity"
+msgstr ""
+
+msgid "Education group year <a href='%(link)s'> %(acronym)s (%(academic_year)s) </a> successfuly created."
+msgstr ""
+
+msgid "minimum credits"
+msgstr ""
+
+msgid "maximum credits"
+msgstr ""
+
+msgid "EDUCATION_GROUP_EDITION"
+msgstr "Edition group edition"
+
+msgid "The learning unit %(acronym)s is not included in any education group"
+msgstr ""
+
+msgid "No enrollment for this learning unit"
+msgstr ""
+
+msgid "Changed"
+msgstr ""
+
+msgid "Other teacher(s)"
+msgstr ""
+
+msgid "Summary responsible(s)"
+msgstr ""
+
+msgid "The annual volume must be equal to the sum of the volumes Q1 and Q2"
+msgstr ""
+
+msgid "The global volume corresponding to the product of the annual volume and the number of planned classes must be equal to the sum of the volumes for each entity"
+msgstr ""
+
+msgid "This partim is %(partim_periodicity)s and the parent is %(parent_periodicty)s"
+msgstr ""
+
+msgid "The parent is %(parent_periodicty)s and there is at least one partim which is not %(parent_periodicty)s"
+msgstr ""
 
 msgid "Admission Conditions for Bachelors"
 msgstr "Admission Conditions for Bachelors"

@@ -34,9 +34,11 @@ from django.db.models.functions import Concat, Lower
 from django.utils.functional import cached_property
 from django.utils.translation import ugettext_lazy as _
 
-from base.business.learning_units.perms import is_person_linked_to_entity_in_charge_of_learning_unit
+from base.models.entity import Entity
 from base.models.entity_version import find_main_entities_version
 from base.models.enums import person_source_type
+from base.models.enums.entity_container_year_link_type import REQUIREMENT_ENTITY
+from base.models.person_entity import is_attached_entities
 from base.models.utils.person_entity_filter import filter_by_attached_entities
 from osis_common.models.serializable_model import SerializableModel, SerializableModelAdmin
 
@@ -104,18 +106,16 @@ class Person(SerializableModel):
     def is_faculty_manager(self):
         return self.user.groups.filter(name=FACULTY_MANAGER_GROUP).exists()
 
-    def __str__(self):
-        first_name = ""
-        middle_name = ""
-        last_name = ""
-        if self.first_name:
-            first_name = self.first_name
-        if self.middle_name:
-            middle_name = self.middle_name
-        if self.last_name:
-            last_name = "{},".format(self.last_name)
+    @property
+    def full_name(self):
+        return " ".join([self.last_name or "", self.first_name or ""]).strip()
 
-        return u"%s %s %s" % (last_name.upper(), first_name, middle_name)
+    def __str__(self):
+        return " ".join([
+            ("{},".format(self.last_name) if self.last_name else "").upper(),
+            self.first_name or "",
+            self.middle_name or ""
+        ]).strip()
 
     class Meta:
         permissions = (
@@ -176,6 +176,8 @@ def count_by_email(email):
     return search_by_email(email).count()
 
 
+# FIXME Returns queryset.none() in place of None
+#       Also reuse search method and filter by employee then
 def search_employee(full_name):
     queryset = annotate_with_first_last_names()
     if full_name:
@@ -213,3 +215,11 @@ def calculate_age(person):
 
 def find_by_firstname_or_lastname(name):
     return Person.objects.filter(Q(first_name__icontains=name) | Q(last_name__icontains=name))
+
+
+def is_person_linked_to_entity_in_charge_of_learning_unit(learning_unit_year, person):
+    entity = Entity.objects.filter(
+        entitycontaineryear__learning_container_year=learning_unit_year.learning_container_year,
+        entitycontaineryear__type=REQUIREMENT_ENTITY)
+
+    return is_attached_entities(person, entity)

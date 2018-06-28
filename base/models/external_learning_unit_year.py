@@ -26,12 +26,12 @@
 
 from django.core.validators import MinValueValidator, MaxValueValidator
 from django.db import models
+from django.db.models import Q
 from django.utils.translation import ugettext_lazy as _
 
 from base.models.learning_unit_year import MINIMUM_CREDITS, MAXIMUM_CREDITS
-from osis_common.models.osis_model_admin import OsisModelAdmin
-from django.db.models import Q
 from base.models.organization_address import OrganizationAddress
+from osis_common.models.osis_model_admin import OsisModelAdmin
 
 
 class ExternalLearningUnitYearAdmin(OsisModelAdmin):
@@ -62,7 +62,7 @@ class ExternalLearningUnitYear(models.Model):
         ]
     )
 
-    url = models.URLField(max_length=255, blank=True, null=True)
+    url = models.URLField(max_length=255, blank=True, null=True, verbose_name=_('url of the learning unit'))
     learning_unit_year = models.OneToOneField('LearningUnitYear')
     requesting_entity = models.ForeignKey('Entity', verbose_name=_('requesting_entity'))
 
@@ -87,7 +87,7 @@ def search(academic_year_id=None, acronym=None, title=None, country=None, city=N
         queryset = queryset.filter(learning_unit_year__academic_year=academic_year_id)
 
     if acronym:
-        queryset = queryset.filter(external_acronym__icontains=acronym)
+        queryset = queryset.filter(learning_unit_year__acronym__icontains=acronym)
 
     if title:
         queryset = queryset. \
