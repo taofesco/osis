@@ -258,24 +258,7 @@ urlpatterns = [
             url(r'^admission_conditions/get_line$',
                 education_group.education_group_year_admission_condition_get_line,
                 name='education_group_year_admission_condition_get_line'),
-
-            # education_group_year_admission_condition_get_line
         ])),
-
-        # url(r'^admission_conditions/', include([
-        #     url(r'^$',
-        #         education_group.education_group_type_admission_conditions,
-        #         name='education_group_type_admission_conditions'),
-        #     url(r'^create/$',
-        #         education_group.education_group_type_admission_condition_new,
-        #         name='education_group_type_admission_condition_new'),
-        #     url(r'^(?P<admission_condition_id>[0-9]+)/$',
-        #         education_group.education_group_type_admission_condition,
-        #         name='education_group_type_admission_condition'),
-        #     url(r'^(?P<admission_condition_id>[0-9]+)/delete$',
-        #         education_group.education_group_type_admission_condition_delete,
-        #         name='education_group_type_admission_condition_delete'),
-        # ])),
     ])),
 
     url(r'^offer_year_calendars/([0-9]+)/$', offer.offer_year_calendar_read, name='offer_year_calendar_read'),

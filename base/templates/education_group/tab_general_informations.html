@@ -204,7 +204,7 @@
                 dataType: 'json',
                 success: function(data) {
                     var item = $("div[id^='translation_']:first");
-                    html = f(data.translated_texts);
+                    html = create_html_for_term(data.translated_texts);
                     item.before(html);
                     var modal = $("#pedagogy_add");
                     modal.modal('hide');
