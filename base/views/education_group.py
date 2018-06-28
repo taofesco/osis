@@ -556,7 +556,7 @@ def education_group_year_admission_condition_modify_text(request, education_grou
     admission_condition.refresh_from_db()
 
     response = {
-        'message': 'modified',
+        'message': 'updated',
         'text': getattr(admission_condition, column, '')
     }
     return JsonResponse(response)
