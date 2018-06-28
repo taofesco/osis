@@ -291,12 +291,13 @@ class Command(BaseCommand):
             raise Exception('This case is not handled')
 
     def load_admission_conditions_for_bachelor(self, item, year):
+        academic_year = AcademicYear.objects.get(year=year)
         education_group_year_common = EducationGroupYear.objects.get(
-            academic_year__year=year,
+            academic_year=academic_year,
             acronym='common'
         )
         education_group_year, created = EducationGroupYear.objects.get_or_create(
-            academic_year__year=year,
+            academic_year=academic_year,
             acronym='common-bacs',
             education_group=education_group_year_common.education_group
         )
