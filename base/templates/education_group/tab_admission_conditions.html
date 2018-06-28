@@ -1,15 +1,10 @@
-{% extends 'layout.html' %}
+{% extends 'education_group/layout_detail.html' %}
 {% load bootstrap3 %}
 {% load i18n %}
 {% load staticfiles %}
 {% load admission_conditions %}
-{% block breadcrumb %}
-    {% include 'education_group/breadcrumb.html' %}
-{% endblock %}
 
 {% block content %}
-    {% include 'education_group/header.html' %}
-
     <div class="panel panel-default">
         <div class="panel-body" id="tabs">
             <div class="tab-content" id="tab_content">
