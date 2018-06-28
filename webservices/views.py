@@ -290,10 +290,10 @@ def build_content_response(context, admission_condition, admission_condition_com
 
 
 def get_texts_for_section(column_name, admission_condition, admission_condition_common, lang):
+    column = column_name + lang
     return {
-        "text": getattr(admission_condition, 'text_adults_taking_up_university_training' + lang) or None,
-        "text-common": getattr(admission_condition_common,
-                               'text_adults_taking_up_university_training' + lang) if admission_condition_common else None
+        "text": getattr(admission_condition, column) or None,
+        "text-common": getattr(admission_condition_common, column) if admission_condition_common else None
     }
 
 
