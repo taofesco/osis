@@ -72,39 +72,6 @@ def import_offer_and_items(item, education_group_year, mapping_label_text_label,
             translated_text.save()
 
 
-def find_education_group_year_for_group(item):
-    qs = EducationGroupYear.objects.filter(
-        academic_year__year=item['year'],
-        partial_acronym__iexact=item['acronym']
-    )
-
-    if not qs.exists():
-        return
-
-    return qs.first()
-
-
-def find_education_group_year_for_offer(item):
-    qs = EducationGroupYear.objects.filter(
-        Q(acronym__iexact=item['acronym']) | Q(partial_acronym__iexact=item['acronym']),
-        academic_year__year=item['year']
-    )
-
-    if not qs.exists():
-        return
-
-    return qs.first()
-
-
-def find_education_group_year_for_common(item):
-    records = EducationGroupYear.objects.filter(
-        academic_year__year=item['year'],
-        acronym__iexact=item['acronym']
-    )
-
-    return records.first()
-
-
 LABEL_TEXTUALS = [
     (settings.LANGUAGE_CODE_FR, 'comp_acquis', 'Compétences et Acquis'),
     (settings.LANGUAGE_CODE_FR, 'pedagogie', 'Pédagogie'),
@@ -156,18 +123,16 @@ def import_offer(context, offer, mapping_label_text_label):
     if 'info' not in offer:
         return None
 
-    function = {
-        'group': find_education_group_year_for_group,
-        'common': find_education_group_year_for_common,
-        'offer': find_education_group_year_for_offer,
-    }.get(offer['type'])
 
-    if not function:
-        return None
+    qs = EducationGroupYear.objects.filter(
+        Q(acronym__iexact=offer['acronym']) | Q(partial_acronym__iexact=offer['acronym']),
+        academic_year__year=offer['year']
+    )
 
-    egy = function(offer)
-    if not egy:
-        return None
+    if not qs.exists():
+        return
+
+    egy = qs.first()
 
     import_offer_and_items(offer, egy, mapping_label_text_label, context)
 
