@@ -190,8 +190,11 @@
                     element.remove();
                 },
                 error: function(jqXHR, textStatus, errorThrown) {
-                    console.log(jqXHR, textStatus, errorThrown);
-                    alert("We can't remove this line of the section");
+                    if (jqXHR.status == 404) {
+                        alert("We can't remove this line of section because it does not exist on the server");
+                    } else if (jqXHR.status == 500) {
+                        alert("There is an error on the server, please contact the OSIS team.");
+                    }
                 }
             });
 
@@ -239,8 +242,11 @@
                     modal.modal('show');
                 },
                 error: function(jqXHR, textStatus, errorThrown) {
-                    console.log(jqXHR, textStatus, errorThrown);
-                    alert('Error');
+                    if (jqXHR.status == 404) {
+                        alert("We can't edit this line of section because it does not exist on the server");
+                    } else if (jqXHR.status == 500) {
+                        alert("There is an error on the server, please contact the OSIS team.");
+                    }
                 }
             });
         });
@@ -273,7 +279,11 @@
                     modal.modal('hide');
                 },
                 error: function (jqXHR, textStatus, errorThrown) {
-                    alert('Error');
+                    if (jqXHR.status == 404) {
+                        alert("We can't read the text because it does not exist on the server");
+                    } else if (jqXHR.status == 500) {
+                        alert("There is an error on the server, please contact the OSIS team.");
+                    }
                 }
             });
         });
@@ -303,8 +313,11 @@
                     text_ptr.setData(data.text);
                 },
                 error: function(jqXHR, textStatus, errorThrown) {
-                    console.log(jqXHR, textStatus, errorThrown);
-                    alert('Error');
+                    if (jqXHR.status == 404) {
+                        alert("We can't modify the text because it does not exist on the server");
+                    } else if (jqXHR.status == 500) {
+                        alert("There is an error on the server, please contact the OSIS team.");
+                    }
                 }
             })
             {#text_ptr.setData()#}
@@ -391,8 +404,11 @@
                     modal.modal('hide');
                 },
                 error: function (jqXHR, textStatus, errorThrown) {
-                    console.log(jqXHR, textStatus, errorThrown);
-                    alert('Error');
+                    if (jqXHR.status == 404) {
+                        alert("We can't save this line because it (the offer or the line) does not exist on the server");
+                    } else if (jqXHR.status == 500) {
+                        alert("There is an error on the server, please contact the OSIS team.");
+                    }
                 }
             });
 
