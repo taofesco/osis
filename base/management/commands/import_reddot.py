@@ -123,7 +123,6 @@ def import_offer(context, offer, mapping_label_text_label):
     if 'info' not in offer:
         return None
 
-
     qs = EducationGroupYear.objects.filter(
         Q(acronym__iexact=offer['acronym']) | Q(partial_acronym__iexact=offer['acronym']),
         academic_year__year=offer['year']
