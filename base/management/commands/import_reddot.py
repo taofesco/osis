@@ -146,7 +146,6 @@ def check_parameters(filename):
 
 class Command(BaseCommand):
     def add_arguments(self, parser):
-        print(type(parser))
         parser.add_argument('file', type=str)
         parser.add_argument('year', type=int)
         parser.add_argument('--language', type=str, default='fr-be',
