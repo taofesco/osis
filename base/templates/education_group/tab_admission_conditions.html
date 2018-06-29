@@ -17,17 +17,17 @@
 
                             <div class="row">
                                 {% if info.is_common and info.is_bachelor %}
-                                    {% render_condition_text 'bachelor' _('Admission Conditions for Bachelors') admission_condition.text_bachelor %}
+                                    {% render_condition_text 'bachelor' _('Admission Conditions for Bachelors') admission_condition.text_bachelor can_edit_information %}
                                 {% endif %}
                                 {% if info.is_common and info.is_master %}
-                                    {% render_condition_text 'alert_message' _('Alert Message') admission_condition.text_alert_message %}
+                                    {% render_condition_text 'alert_message' _('Alert Message') admission_condition.text_alert_message can_edit_information %}
                                 {% endif %}
                                 {% if info.show_free_text %}
-                                    {% render_condition_text 'standard' _('Free Text') admission_condition.text_standard %}
+                                    {% render_condition_text 'standard' _('Free Text') admission_condition.text_standard can_edit_information %}
                                 {% endif %}
                                 {% if info.is_specific and info.is_master %}
                                     <div id="university_bachelors">
-                                        <h3>{% trans 'University Bachelors' %} <a href="#" class="modify-text-btn button" role="button" data-section="university_bachelors" data-language="fr"><span class="glyphicon glyphicon-edit" style="font-size: 16px;" aria-hidden="true"></span></a></h3>
+                                        <h3>{% trans 'University Bachelors' %} {% if can_edit_information %}<a href="#" class="modify-text-btn button" role="button" data-section="university_bachelors" data-language="fr"><span class="glyphicon glyphicon-edit" style="font-size: 16px;" aria-hidden="true"></span></a>{% endif %}</h3>
                                         <div id="text_university_bachelors">{{ admission_condition.text_university_bachelors|safe }}</div>
 
                                         <table class="table table-bordered">
@@ -37,21 +37,21 @@
                                                 <th width="20%">{% trans 'Conditions' %}</th>
                                                 <th width="150px">{% trans 'Access' %}</th>
                                                 <th>{% trans 'Remarks' %}</th>
-                                                <th width="10%">{% trans 'Actions' %}</th>
+                                                {% if can_edit_information %}<th width="10%">{% trans 'Actions' %}</th>{% endif %}
                                             </tr>
                                             </thead>
                                             <tbody>
-                                            {% render_condition_rows 'ucl_bachelors' _('UCL Bachelors') record.ucl_bachelors %}
-                                            {% render_condition_rows 'others_bachelors_french' _('Others Bachelors of the French speaking Community of Belgium') record.others_bachelors_french %}
-                                            {% render_condition_rows 'bachelors_dutch' _('Bachelors of the Dutch speaking Community of Beligum') record.bachelors_dutch %}
-                                            {% render_condition_rows 'foreign_bachelors' _('Foreign Bachelors') record.foreign_bachelors %}
+                                            {% render_condition_rows 'ucl_bachelors' _('UCL Bachelors') record.ucl_bachelors can_edit_information %}
+                                            {% render_condition_rows 'others_bachelors_french' _('Others Bachelors of the French speaking Community of Belgium') record.others_bachelors_french can_edit_information %}
+                                            {% render_condition_rows 'bachelors_dutch' _('Bachelors of the Dutch speaking Community of Beligum') record.bachelors_dutch can_edit_information %}
+                                            {% render_condition_rows 'foreign_bachelors' _('Foreign Bachelors') record.foreign_bachelors can_edit_information %}
                                             </tbody>
                                         </table>
                                         <hr/>
                                     </div>
                                 {% endif %}
                                 {% if info.is_master %}
-                                    {% render_condition_text 'non_university_bachelors' _('Non university Bachelors') admission_condition.text_non_university_bachelors %}
+                                    {% render_condition_text 'non_university_bachelors' _('Non university Bachelors') admission_condition.text_non_university_bachelors can_edit_information %}
                                 {% endif %}
                                 {% if info.is_specific and info.is_master %}
                                     <div id="holders_second_university_degree">
@@ -63,21 +63,21 @@
                                                 <th width="20%">{% trans 'Conditions' %}</th>
                                                 <th width="150px">{% trans 'Access' %}</th>
                                                 <th>{% trans 'Remarks' %}</th>
-                                                <th width="10%">{% trans 'Actions' %}</th>
+                                                {% if can_edit_information %}<th width="10%">{% trans 'Actions' %}</th>{% endif %}
                                             </tr>
                                             </thead>
                                             <tbody>
-                                            {% render_condition_rows 'graduates' _('Graduates') record.graduates %}
-                                            {% render_condition_rows 'masters' _('Masters') record.masters %}
+                                            {% render_condition_rows 'graduates' _('Graduates') record.graduates can_edit_information %}
+                                            {% render_condition_rows 'masters' _('Masters') record.masters can_edit_information %}
                                             </tbody>
                                         </table>
                                     </div>
-                                    {% render_condition_text 'holders_non_university_second_degree' _('Holders of a non-University 2nd cycle degree') admission_condition.text_holders_non_university_second_degree %}
+                                    {% render_condition_text 'holders_non_university_second_degree' _('Holders of a non-University 2nd cycle degree') admission_condition.text_holders_non_university_second_degree can_edit_information %}
                                 {% endif %}
                                 {% if info.is_master %}
-                                    {% render_condition_text 'adults_taking_up_university_training' _('Adults taking up their university training') admission_condition.text_adults_taking_up_university_training %}
-                                    {% render_condition_text 'personalized_access' _('Personalized access') admission_condition.text_personalized_access %}
-                                    {% render_condition_text 'admission_enrollment_procedures' _('Admission and Enrolment Procedures for general registration') admission_condition.text_admission_enrollment_procedures %}
+                                    {% render_condition_text 'adults_taking_up_university_training' _('Adults taking up their university training') admission_condition.text_adults_taking_up_university_training can_edit_information %}
+                                    {% render_condition_text 'personalized_access' _('Personalized access') admission_condition.text_personalized_access can_edit_information %}
+                                    {% render_condition_text 'admission_enrollment_procedures' _('Admission and Enrolment Procedures for general registration') admission_condition.text_admission_enrollment_procedures can_edit_information %}
                                 {% endif %}
                             </div>
                         </div>
@@ -87,6 +87,7 @@
         </div>
     </div>
 
+    {% if can_edit_information %}
     <div class="modal fade" id="modify_text">
         <div class="modal-dialog modal-lg" role="document">
             <div class="modal-content">
@@ -143,11 +144,13 @@
             </div>
         </div>
     </div>
+    {% endif %}
 
 {% endblock %}
 
 {% block script %}
     <script src="{% static 'js/education_group/education_group_tree.js' %}"></script>
+    {% if can_edit_information %}
     <script>
         $(".line-add-btn").click(function (evt) {
             evt.preventDefault();
@@ -432,4 +435,5 @@
         }
 
     </script>
+    {% endif %}
 {% endblock %}

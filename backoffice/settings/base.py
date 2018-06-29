@@ -240,7 +240,7 @@ CKEDITOR_CONFIGS = {
             ['NumberedList', 'BulletedList'],
             ['Link', 'Unlink'],
             ['CreateDiv'],
-        ],
+        ]
     },
     'default': {
         "removePlugins": "stylesheetparser",

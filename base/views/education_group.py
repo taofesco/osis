@@ -453,6 +453,7 @@ def education_group_year_admission_condition_edit(request, education_group_year_
         'admission_condition_form': admission_condition_form,
         'education_group_year': education_group_year,
         'parent': parent,
+        'can_edit_information': request.user.has_perm('base.can_edit_educationgroup_pedagogy'),
         'info': {
             'is_specific': is_specific,
             'is_common': is_common,
