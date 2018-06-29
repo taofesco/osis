@@ -168,8 +168,6 @@ def parameters_validation(acronym, language, year):
     if not iso_language:
         raise Http404
     education_group_year = get_object_or_404(EducationGroupYear,
-                                             # Fixer pour utiliser aussi partial_acronym en plus de l'acronym
-                                             # example: LDVLD100I
                                              Q(acronym__iexact=acronym) | Q(partial_acronym__iexact=acronym),
                                              academic_year__year=year)
     return education_group_year, iso_language, year
