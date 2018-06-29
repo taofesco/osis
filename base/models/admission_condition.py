@@ -4,8 +4,7 @@ from osis_common.models import osis_model_admin
 
 
 class AdmissionCondition(models.Model):
-    education_group_year = models.OneToOneField('base.EducationGroupYear', on_delete=models.CASCADE, primary_key=True)
-    # education_group_year = models.ForeignKey('base.EducationGroupYear', unique=True, null=True)
+    education_group_year = models.OneToOneField('base.EducationGroupYear', on_delete=models.CASCADE)
 
     # texte pour les bacheliers (ba)
     text_bachelor = models.TextField(default='')
