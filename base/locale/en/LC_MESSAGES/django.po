@@ -3300,3 +3300,6 @@ msgstr ""
 
 msgid "List of trainings with administrative data"
 msgstr ""
+
+msgid "Validity"
+msgstr ""

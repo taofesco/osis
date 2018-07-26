@@ -178,3 +178,9 @@ def is_academic_calendar_has_started(academic_year, reference, date=None):
             reference=reference,
             start_date__lte=date,
     ).exists()
+
+def get_by_reference_and_education_group_years_and_academic_years(a_reference, academic_years):
+    try:
+        return AcademicCalendar.objects.filter(reference=a_reference,  academic_year__in=academic_years)
+    except AcademicCalendar.DoesNotExist:
+        return None

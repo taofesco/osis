@@ -3300,3 +3300,6 @@ msgstr "Liste des organisation de formation"
 
 msgid "List of trainings with administrative data"
 msgstr "Liste des formations avec données administratives"
+
+msgid "Validity"
+msgstr "Validité"

@@ -56,3 +56,9 @@ def find_by_education_group_year_function(an_education_group_year, a_function):
                                     start_date__lte=an_education_group_year.academic_year.start_date,
                                     end_date__gte=an_education_group_year.academic_year.end_date) \
         .order_by('person__last_name', 'person__first_name')
+
+
+def find_by_education_group_years_and_functions(ids, functions):
+    return Mandatary.objects.filter(mandate__education_group_id__in=ids,
+                                    mandate__function__in=functions) \
+        .order_by('person__last_name', 'person__first_name')

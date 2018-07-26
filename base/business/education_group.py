@@ -33,7 +33,7 @@ from base.models.program_manager import is_program_manager
 from base.models import person_entity
 from osis_common.document import xls_build
 from base.business.xls import get_name_or_username, convert_boolean
-
+from base.models.enums import academic_calendar_type
 
 # List of key that a user can modify
 DATE_FORMAT = '%d-%m-%Y'
@@ -55,7 +55,7 @@ EDUCATION_GROUP_TITLES_ADMINISTRATIVE = [
     str(_('management_entity')),
     str(_('TRAINING')),
     str(_('type')),
-    str(_('academic_year_small')),
+    str(_('Validity')),
     str(_('Begining of course registration')),
     str(_('Ending of course registration')),
 
@@ -186,6 +186,8 @@ def prepare_xls_content_administrative(found_education_groups):
 
 
 def extract_xls_administrative_data_from_education_group(an_education_group):
+    print('extract_xls_administrative_data_from_education_group')
+    print(an_education_group.administrative_data['representatives'])
     data = [
         an_education_group.management_entity_version.acronym,
         an_education_group.acronym,
@@ -200,15 +202,16 @@ def extract_xls_administrative_data_from_education_group(an_education_group):
     data.extend([
         convert_boolean(an_education_group.weighting),
         convert_boolean(an_education_group.default_learning_unit_enrollment),
-        names(an_education_group.administrative_data[PRESIDENTS]),
-        names(an_education_group.administrative_data[SECRETARIES]),
-        names(an_education_group.administrative_data[SIGNATORIES]),
-        qualification(an_education_group.administrative_data[SIGNATORIES])]
+        names(an_education_group.administrative_data['representatives']['PRESIDENT']),
+        names(an_education_group.administrative_data['representatives']['SECRETARY']),
+        names(an_education_group.administrative_data['representatives']['SIGNATORY']),
+        qualification(an_education_group.administrative_data['representatives']['SIGNATORY'])]
     )
     return data
 
 
 def names(representatives):
+    print(representatives)
     return ', '.join([str(mandatory.person) for mandatory in representatives])
 
 
@@ -219,7 +222,7 @@ def qualification(signatories):
 def _get_date(administrative_data, keys_attribute, date_form):
     key1, key2, attribute = keys_attribute.split(".")
 
-    if administrative_data[key1].get(key2):
+    if administrative_data[key1] and administrative_data[key1].get(key2):
         attr = getattr(administrative_data[key1].get(key2), attribute) or None
         if attr:
             return attr.strftime(date_form)
@@ -229,13 +232,13 @@ def _get_date(administrative_data, keys_attribute, date_form):
 def _get_dates_by_session(administrative_data, session_number):
     session_name = "session{}".format(session_number)
     return (
-        _get_date(administrative_data, "{}.{}.{}".format('exam_enrollments', session_name, 'start_date'), DATE_FORMAT),
-        _get_date(administrative_data, "{}.{}.{}".format('exam_enrollments', session_name, 'end_date'), DATE_FORMAT),
-        _get_date(administrative_data, "{}.{}.{}".format('scores_exam_submission', session_name, 'start_date'),
+        _get_date(administrative_data, "{}.{}.{}".format(academic_calendar_type.EXAM_ENROLLMENTS, session_name, 'start_date'), DATE_FORMAT),
+        _get_date(administrative_data, "{}.{}.{}".format(academic_calendar_type.EXAM_ENROLLMENTS, session_name, 'end_date'), DATE_FORMAT),
+        _get_date(administrative_data, "{}.{}.{}".format(academic_calendar_type.SCORES_EXAM_SUBMISSION, session_name, 'start_date'),
                   DATE_TIME_FORMAT),
-        _get_date(administrative_data, "{}.{}.{}".format('dissertation_submission', session_name, 'start_date'),
+        _get_date(administrative_data, "{}.{}.{}".format(academic_calendar_type.DISSERTATION_SUBMISSION, session_name, 'start_date'),
                   DATE_FORMAT),
-        _get_date(administrative_data, "{}.{}.{}".format('deliberation', session_name, 'start_date'), DATE_TIME_FORMAT),
-        _get_date(administrative_data, "{}.{}.{}".format('scores_exam_diffusion', session_name, 'start_date'),
+        _get_date(administrative_data, "{}.{}.{}".format(academic_calendar_type.DELIBERATION, session_name, 'start_date'), DATE_TIME_FORMAT),
+        _get_date(administrative_data, "{}.{}.{}".format(academic_calendar_type.SCORES_EXAM_DIFFUSION, session_name, 'start_date'),
                   DATE_TIME_FORMAT)
     )

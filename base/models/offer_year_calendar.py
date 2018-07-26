@@ -130,3 +130,16 @@ def search(**kwargs):
         queryset = queryset.filter(offer_year=kwargs['offer_year'])
 
     return queryset
+
+
+def get_by_education_group_years_and_academic_calendar(an_academic_calendars, an_education_group_years):
+    try:
+        return OfferYearCalendar.objects.filter(academic_calendar__in=an_academic_calendars,
+                                             education_group_year_id__in=an_education_group_years)
+    except ObjectDoesNotExist:
+        return None
+
+def get_by_education_group_years_and_academic_years_references(references, academic_years, education_group_years):
+    return OfferYearCalendar.objects.filter(academic_calendar__reference__in=references,
+                                         academic_calendar__academic_year__in=academic_years,
+                                         education_group_year_id__in=education_group_years)
