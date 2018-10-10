@@ -33,7 +33,7 @@ from osis_common.models.osis_model_admin import OsisModelAdmin
 class EducationGroupOrganizationAdmin(OsisModelAdmin):
     list_display = ('education_group_year', 'organization')
     raw_id_fields = ('education_group_year', 'organization')
-    search_fields = ['education_group_year']
+    search_fields = ['education_group_year__acronym']
 
 
 class EducationGroupOrganization(models.Model):
@@ -46,6 +46,8 @@ class EducationGroupOrganization(models.Model):
     diploma = models.CharField(max_length=40,
                                choices=diploma_coorganization.DiplomaCoorganizationTypes.choices(),
                                default=diploma_coorganization.DiplomaCoorganizationTypes.NOT_CONCERNED.value)
+    is_producing_cerfificate = models.BooleanField(default=False)
+    is_producing_annexe = models.BooleanField(default=False)
 
     _address = None
 

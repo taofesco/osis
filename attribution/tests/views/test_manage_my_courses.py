@@ -23,10 +23,10 @@
 #    see http://www.gnu.org/licenses/.
 #
 ##############################################################################
+import datetime
 from unittest import mock
 from unittest.mock import patch
 
-import datetime
 from django.contrib.auth.models import Permission
 from django.http import HttpResponse, HttpResponseNotFound
 from django.test import RequestFactory
@@ -47,6 +47,7 @@ from base.tests.factories.academic_year import create_current_academic_year, Aca
 from base.tests.factories.business.learning_units import GenerateAcademicYear
 from base.tests.factories.entity_container_year import EntityContainerYearFactory
 from base.tests.factories.entity_version import EntityVersionFactory
+from base.tests.factories.learning_container_year import LearningContainerYearFactory
 from base.tests.factories.learning_unit_year import LearningUnitYearFactory
 from base.tests.factories.person import PersonFactory
 from base.tests.factories.teaching_material import TeachingMaterialFactory
@@ -61,17 +62,25 @@ class ManageMyCoursesViewTestCase(TestCase):
         cls.user = cls.person.user
         cls.tutor = TutorFactory(person=cls.person)
         cls.current_ac_year = create_current_academic_year()
-        ac_year_in_future = GenerateAcademicYear(start_year=cls.current_ac_year.year+1,
-                                                 end_year=cls.current_ac_year.year+5)
+        ac_year_in_future = GenerateAcademicYear(start_year=cls.current_ac_year.year + 1,
+                                                 end_year=cls.current_ac_year.year + 5)
         cls.academic_calendar = AcademicCalendarFactory(academic_year=cls.current_ac_year,
                                                         reference=academic_calendar_type.SUMMARY_COURSE_SUBMISSION)
+
         # Create multiple attribution in different academic years
         for ac_year in [cls.current_ac_year] + ac_year_in_future.academic_years:
+            learning_container_year = LearningContainerYearFactory(
+                academic_year=ac_year
+            )
+            learning_unit_year = LearningUnitYearFactory(
+                summary_locked=False,
+                academic_year=ac_year,
+                learning_container_year=learning_container_year
+            )
             AttributionFactory(
                 tutor=cls.tutor,
                 summary_responsible=True,
-                learning_unit_year__summary_locked=False,
-                learning_unit_year__academic_year=ac_year,
+                learning_unit_year=learning_unit_year,
             )
         cls.url = reverse(list_my_attributions_summary_editable)
 
@@ -197,6 +206,7 @@ class TestManageEducationalInformation(TestCase):
 
 class ManageMyCoursesMixin(TestCase):
     """This mixin is used in context of edition of pedagogy data for tutor"""
+
     @classmethod
     def setUpTestData(cls):
         cls.current_academic_year = create_current_academic_year()

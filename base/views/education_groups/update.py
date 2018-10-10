@@ -23,10 +23,13 @@
 #    see http://www.gnu.org/licenses/.
 #
 ##############################################################################
+from dal import autocomplete
 from django import forms
 from django.contrib.auth.decorators import login_required
 from django.shortcuts import get_object_or_404, redirect
 from django.urls import reverse
+from django.utils.functional import lazy
+from django.utils.html import format_html
 from django.utils.translation import ugettext_lazy as _
 from waffle.decorators import waffle_flag
 
@@ -35,6 +38,9 @@ from base.forms.education_group.group import GroupForm
 from base.forms.education_group.mini_training import MiniTrainingForm
 from base.forms.education_group.training import TrainingForm
 from base import models as mdl_base
+from base.forms.utils.choice_field import BLANK_CHOICE, add_blank
+from base.models.certificate_aim import CertificateAim
+from base.models.education_group_certificate_aim import EducationGroupCertificateAim
 from base.models.education_group_year import EducationGroupYear
 from base.models.enums import education_group_categories
 from base.views import layout
@@ -149,6 +155,29 @@ def _update_training(request, education_group_year, root):
         "form_education_group_year": form_education_group_year.forms[forms.ModelForm],
         "form_education_group": form_education_group_year.forms[EducationGroupModelForm]
     })
+
+
+class CertificateAimAutocomplete(autocomplete.Select2QuerySetView):
+    def get_queryset(self):
+        if not self.request.user.is_authenticated():
+            return CertificateAim.objects.none()
+
+        qs = CertificateAim.objects.all()
+
+        if self.q:
+            if self.q.isdigit():
+                qs = qs.filter(code=self.q)
+            else:
+                qs = qs.filter(description__icontains=self.q)
+
+        section = self.forwarded.get('section', None)
+        if section:
+            qs = qs.filter(section=section)
+
+        return qs
+
+    def get_result_label(self, result):
+        return format_html('<p>{} - {} {}</p>', result.section, result.code, result.description)
 
 
 def _update_mini_training(request, education_group_year, root):

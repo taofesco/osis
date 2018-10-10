@@ -33,8 +33,7 @@ from django.views.generic import FormView
 
 from base.forms.education_group.common import SelectLanguage
 from base.models.education_group_year import EducationGroupYear
-from base.models.enums.link_type import REFERENCE
-from base.views.common_classes import FlagMixin, AjaxTemplateMixin
+from base.views.mixins import FlagMixin, AjaxTemplateMixin
 from osis_common.document.pdf_build import render_pdf
 
 
@@ -61,7 +60,7 @@ def pdf_content(request, root_id, education_group_year_id, language):
 def get_verbose_children(education_group_year):
     result = []
 
-    for group_element_year in education_group_year.children.exclude(link_type=REFERENCE):
+    for group_element_year in education_group_year.children:
         result.append(group_element_year)
         if group_element_year.child_branch:
             result.append(get_verbose_children(group_element_year.child_branch))

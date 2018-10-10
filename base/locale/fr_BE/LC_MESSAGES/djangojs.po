@@ -83,3 +83,6 @@ msgstr "Détacher"
 
 msgid "Select"
 msgstr "Sélectionner"
+
+msgid "Release"
+msgstr ""

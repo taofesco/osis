@@ -24,6 +24,7 @@
 #
 ##############################################################################
 from django import forms
+from django.db.models import QuerySet
 from django.forms import model_to_dict
 from django.utils.translation import ugettext as _
 
@@ -66,9 +67,12 @@ def _model_to_dict(instance, exclude=None):
         if fk_field.name in data:
             data[fk_field.name + "_id"] = data.pop(fk_field.name)
 
+    # TODO :: should move this code below into self.compare_objects ;
+    # TODO :: it's not the responsibility of _model_to_dict to evaluate queryset with a list
     for key, value in data.items():
-        if isinstance(value, SerializableQuerySet):
+        if isinstance(value, QuerySet):
             data[key] = list(value)
+
     return data
 
 

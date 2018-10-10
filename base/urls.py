@@ -40,7 +40,7 @@ import base.views.learning_units.update
 from attribution.views import attribution, tutor_application
 from base.views import learning_achievement, search, education_groups
 from base.views import learning_unit, offer, common, institution, organization, academic_calendar, \
-    my_osis, entity, student
+    my_osis, entity, student, notifications
 from base.views import teaching_material
 from base.views.learning_units.external import create as create_external
 from base.views.learning_units.external.search import filter_cities_by_country, filter_campus_by_city
@@ -56,11 +56,12 @@ urlpatterns = [
 
     url(r'^academic_calendars/', include([
         url(r'^$', academic_calendar.academic_calendars, name='academic_calendars'),
-        url(r'^search$', academic_calendar.academic_calendars_search, name='academic_calendars_search'),
         url(r'^(?P<academic_calendar_id>[0-9]+)/$', academic_calendar.academic_calendar_read,
             name='academic_calendar_read'),
         url(r'^form(?:/(?P<academic_calendar_id>[0-9]+))?/$', academic_calendar.academic_calendar_form,
             name='academic_calendar_form'),
+        url(r'^delete(?:/(?P<pk>[0-9]+))?/$', academic_calendar.AcademicCalendarDelete.as_view(),
+            name='academic_calendar_delete'),
     ])),
 
     url(r'^academic_year/$', common.academic_year, name='academic_year'),
@@ -264,6 +265,7 @@ urlpatterns = [
     ])),
     url(r'^ajax_select/', include(ajax_select_urls)),
     url(r'^clear_filter/$', base.views.search.clear_filter, name="clear_filter"),
+    url(r'^notifications/clear/$', base.views.notifications.clear_user_notifications, name="clear_notifications")
 
 ]
 

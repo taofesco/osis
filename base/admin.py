@@ -43,8 +43,14 @@ admin.site.register(admission_condition.AdmissionConditionLine,
 admin.site.register(campus.Campus,
                     campus.CampusAdmin)
 
+admin.site.register(certificate_aim.CertificateAim,
+                    certificate_aim.CertificateAimAdmin)
+
 admin.site.register(education_group.EducationGroup,
                     education_group.EducationGroupAdmin)
+
+admin.site.register(education_group_certificate_aim.EducationGroupCertificateAim,
+                    education_group_certificate_aim.EducationGroupCertificateAimAdmin)
 
 admin.site.register(education_group_language.EducationGroupLanguage,
                     education_group_language.EducationGroupLanguageAdmin)

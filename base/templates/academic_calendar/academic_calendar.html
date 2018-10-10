@@ -76,10 +76,23 @@
         </div>
 
         {% if request.user.is_superuser %}
+            <a href="#" data-toggle="modal" data-target="#modalDeleteCalendar" class="btn btn-danger pull-right"
+               role="button" id="bt_academic_calendar_delete" style="margin-left: 1em;">
+                <span class="glyphicon glyphicon-trash" aria-hidden="true"></span> {% trans 'delete'%}
+            </a>
             <a href="{% url 'academic_calendar_form' academic_calendar_id=academic_calendar.id %}" title="{%trans 'edit'%}"
-               class="btn btn-primary pull-right" role="button" id="bt_academic_calendar_edit">
-                <span class="glyphicon glyphicon-edit" aria-hidden="true"></span> {% trans 'edit'%}</a>
+               class="btn btn-primary pull-right" role="button" id="bt_academic_calendar_edit" style="margin-left: 1em;">
+                <span class="glyphicon glyphicon-edit" aria-hidden="true"></span> {% trans 'edit'%}
+            </a>
+
         {% endif %}
     </div>
 </div>
+
+{% if request.user.is_superuser %}
+    {% include "academic_calendar/blocks/modal/modal_confirm_delete.html" %}
+{% endif %}
+
 {% endblock %}
+
+

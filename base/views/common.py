@@ -38,6 +38,7 @@ from django.utils.translation import ugettext_lazy as _
 
 from base import models as mdl
 from base.models.utils import native
+from base.views import academic_calendar
 from . import layout
 
 ITEMS_PER_PAGE = 25
@@ -158,7 +159,13 @@ def data_maintenance(request):
 @login_required
 @permission_required('base.can_access_academicyear', raise_exception=True)
 def academic_year(request):
-    return layout.render(request, "academic_year.html", {'section': 'academic_year'})
+    return layout.render(
+        request,
+        "academic_year.html",
+        {
+            'section': 'academic_year',
+        }
+    )
 
 
 @login_required

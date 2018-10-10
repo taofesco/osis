@@ -23,15 +23,18 @@
 #    see http://www.gnu.org/licenses/.
 #
 ##############################################################################
+from unittest.mock import patch
+
+from django.core.mail.message import EmailMultiAlternatives
 from django.test import TestCase
 
+from base.models.learning_unit_year import LearningUnitYear
 from base.tests.factories.learning_unit_year import LearningUnitYearFactory
-from osis_common.models import message_template
-from base.utils import send_mail
-from unittest.mock import patch
-from base.tests.models import test_person, test_academic_year, test_learning_unit_year, test_offer_year, \
+from base.tests.factories.person import PersonWithPermissionsFactory
+from base.tests.models import test_person, test_academic_year, test_offer_year, \
     test_exam_enrollment
-from django.core.mail.message import EmailMultiAlternatives
+from base.utils import send_mail
+from osis_common.models import message_template
 
 LEARNING_UNIT_YEARS_VARIABLE_PARAGRAPH_ = "<p>{{ learning_unit_years }}/p>"
 
@@ -41,6 +44,8 @@ class TestSendMessage(TestCase):
         self.person_1 = test_person.create_person("person_1", last_name="test", email="person1@test.com")
         self.person_2 = test_person.create_person("person_2", last_name="test", email="person2@test.com")
         self.persons = [self.person_1, self.person_2]
+
+        self.person_3 = PersonWithPermissionsFactory("can_receive_emails_about_automatic_postponement")
 
         self.academic_year = test_academic_year.create_academic_year()
         self.learning_unit_year = LearningUnitYearFactory(acronym="TEST",
@@ -68,9 +73,12 @@ class TestSendMessage(TestCase):
             'The learning unit TEST has been successfully deleted for all years'
         ]
 
+        self.luys_to_postpone = LearningUnitYear.objects.all()
+        self.luys_already_existing = LearningUnitYear.objects.all()
+        self.luys_ending_this_year = LearningUnitYear.objects.all()
+
         add_message_template_html()
         add_message_template_txt()
-
 
     @patch("osis_common.messaging.send_message.EmailMultiAlternatives", autospec=True)
     def test_send_mail_after_the_learning_unit_year_deletion(self, mock_class):
@@ -86,6 +94,35 @@ class TestSendMessage(TestCase):
         attachments = call_args[1]
         self.assertIn(self.learning_unit_year.acronym, subject)
         self.assertEqual(len(recipients), 2)
+        self.assertIsNone(attachments['attachments'])
+
+    @patch("osis_common.messaging.send_message.EmailMultiAlternatives", autospec=True)
+    def test_send_mail_before_annual_procedure_of_automatic_postponement(self, mock_class):
+        mock_class.send.return_value = None
+        self.assertIsInstance(mock_class, EmailMultiAlternatives)
+        send_mail.send_mail_before_annual_procedure_of_automatic_postponement(self.academic_year,
+                                                                              self.luys_to_postpone,
+                                                                              self.luys_already_existing,
+                                                                              self.luys_ending_this_year)
+        call_args = mock_class.call_args
+        recipients = call_args[0][3]
+        attachments = call_args[1]
+        self.assertEqual(len(recipients), 1)
+        self.assertIsNone(attachments['attachments'])
+
+    @patch("osis_common.messaging.send_message.EmailMultiAlternatives", autospec=True)
+    def test_send_mail_after_annual_procedure_of_automatic_postponement(self, mock_class):
+        mock_class.send.return_value = None
+        self.assertIsInstance(mock_class, EmailMultiAlternatives)
+        send_mail.send_mail_after_annual_procedure_of_automatic_postponement(self.academic_year,
+                                                                             self.luys_to_postpone,
+                                                                             self.luys_already_existing,
+                                                                             self.luys_ending_this_year,
+                                                                             self.msg_list)
+        call_args = mock_class.call_args
+        recipients = call_args[0][3]
+        attachments = call_args[1]
+        self.assertEqual(len(recipients), 1)
         self.assertIsNone(attachments['attachments'])
 
     @patch("osis_common.messaging.send_message.EmailMultiAlternatives", autospec=True)

@@ -96,6 +96,8 @@ from cms.tests.factories.translated_text import TranslatedTextFactory
 from osis_common.document import xls_build
 from reference.tests.factories.country import CountryFactory
 from reference.tests.factories.language import LanguageFactory
+from base.business.learning_unit import LEARNING_UNIT_TITLES_PART1, LEARNING_UNIT_TITLES_PART2, get_entity_acronym
+from base.business.learning_unit_xls import _get_absolute_credits
 
 
 @override_flag('learning_unit_create', active=True)
@@ -895,7 +897,7 @@ class LearningUnitViewTestCase(TestCase):
         learning_component_yr = LearningComponentYearFactory(learning_container_year=learning_container_yr)
 
         learning_unit_compo = LearningUnitComponentFactory(learning_unit_year=learning_unit_yr_1,
-                                                               learning_component_year=learning_component_yr)
+                                                           learning_component_year=learning_component_yr)
         learning_class_year = LearningClassYearFactory(learning_component_year=learning_component_yr)
         LearningUnitComponentClassFactory(learning_unit_component=learning_unit_compo,
                                           learning_class_year=learning_class_year)
@@ -1447,23 +1449,18 @@ class TestCreateXls(TestCase):
 
 
 def _generate_xls_build_parameter(xls_data, user):
+    titles = LEARNING_UNIT_TITLES_PART1.copy()
+    titles.extend(LEARNING_UNIT_TITLES_PART2.copy())
     return {
         xls_build.LIST_DESCRIPTION_KEY: _(learning_unit_business.XLS_DESCRIPTION),
         xls_build.FILENAME_KEY: _(learning_unit_business.XLS_FILENAME),
         xls_build.USER_KEY: user.username,
         xls_build.WORKSHEETS_DATA: [{
             xls_build.CONTENT_KEY: xls_data,
-            xls_build.HEADER_TITLES_KEY: [str(_('academic_year_small')),
-                                          str(_('code')),
-                                          str(_('title')),
-                                          str(_('type')),
-                                          str(_('subtype')),
-                                          str(_('requirement_entity_small')),
-                                          str(_('allocation_entity_small')),
-                                          str(_('credits')),
-                                          str(_('active_title'))],
+            xls_build.HEADER_TITLES_KEY: titles,
             xls_build.WORKSHEET_TITLE_KEY: _(learning_unit_business.WORKSHEET_TITLE),
-            xls_build.STYLED_CELLS: None
+            xls_build.STYLED_CELLS: None,
+            xls_build.COLORED_ROWS: None,
         }]
     }
 

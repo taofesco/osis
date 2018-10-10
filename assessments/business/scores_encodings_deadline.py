@@ -43,12 +43,12 @@ def recompute_all_deadlines(academic_calendar):
 
 def compute_deadline_by_student(session_exam_deadline):
     # TODO :: replace usage of offer_year by education_group_year !
-    try:
-        off_year_calendar = offer_year_calendar.search(offer_year=session_exam_deadline.offer_enrollment.offer_year,
-                                                       academic_calendar_reference=ac_type.DELIBERATION,
-                                                       number_session=session_exam_deadline.number_session).first()
+    off_year_calendar = offer_year_calendar.search(offer_year=session_exam_deadline.offer_enrollment.offer_year,
+                                                   academic_calendar_reference=ac_type.DELIBERATION,
+                                                   number_session=session_exam_deadline.number_session).first()
+    if off_year_calendar:
         compute_deadline(off_year_calendar, session_exam_deadlines=[session_exam_deadline])
-    except offer_year_calendar.OfferYearCalendar.DoesNotExist:
+    else:
         msg = "No OfferYearCalendar found for OfferYear = {}, type = {} and number_session = {}"
         logger.warning(msg.format(session_exam_deadline.offer_enrollment.offer_year.acronym,
                                   ac_type.SCORES_EXAM_SUBMISSION,

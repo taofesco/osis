@@ -29,11 +29,9 @@ from django.utils.translation import ugettext_lazy as _
 
 from base.business.education_groups.perms import check_permission
 from base.business.xls import get_name_or_username, convert_boolean
-from base.models.entity import Entity
 from base.models.enums import academic_calendar_type
 from base.models.enums import education_group_categories
 from base.models.enums import mandate_type as mandate_types
-from base.models.enums import offer_year_entity_type
 from base.models.mandate import Mandate
 from base.models.offer_year_calendar import OfferYearCalendar
 from base.models.person import Person
@@ -133,10 +131,7 @@ def can_user_edit_administrative_data(a_user, an_education_group_year, raise_exc
 
 
 def _is_management_entity_linked_to_user(person, an_education_group_year):
-    entities = Entity.objects.filter(offeryearentity__education_group_year=an_education_group_year,
-                                     offeryearentity__type=offer_year_entity_type.ENTITY_MANAGEMENT)
-
-    return person.is_attached_entities(entities)
+    return person.is_attached_entity(an_education_group_year.management_entity)
 
 
 def assert_category_of_education_group_year(education_group_year, authorized_categories):

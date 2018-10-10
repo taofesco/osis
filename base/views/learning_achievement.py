@@ -32,7 +32,8 @@ from django.views.decorators.http import require_http_methods
 from base.business.learning_units.achievement import get_code_name, get_anchor_reference, DELETE, DOWN, UP, \
     AVAILABLE_ACTIONS, HTML_ANCHOR
 from base.models.learning_achievement import LearningAchievement, find_learning_unit_achievement
-from base.forms.learning_achievement import LearningAchievementEditForm, EN_CODE_LANGUAGE, FR_CODE_LANGUAGE
+from base.forms.learning_achievement import LearningAchievementEditForm
+from reference.models.language import EN_CODE_LANGUAGE, FR_CODE_LANGUAGE
 from base.models.learning_unit_year import LearningUnitYear
 from base.views.learning_units import perms
 from base.views.learning_unit import learning_unit_specifications

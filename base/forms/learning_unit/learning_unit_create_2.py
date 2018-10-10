@@ -42,6 +42,8 @@ from base.models.enums.learning_container_year_types import LEARNING_CONTAINER_Y
 from base.models.learning_component_year import LearningComponentYear
 from reference.models import language
 
+ID_FIELD = "id"
+
 FULL_READ_ONLY_FIELDS = {"acronym", "academic_year", "container_type"}
 FULL_PROPOSAL_READ_ONLY_FIELDS = {"academic_year", "container_type", "professional_integration"}
 
@@ -55,7 +57,7 @@ FACULTY_OPEN_FIELDS = {
     'specific_title_english',
     "status",
     "professional_integration",
-    "id"  # THIS IS A FIX, BUT A BETTER SOLUTION SHOULD BE FIND
+    ID_FIELD  # THIS IS A FIX, BUT A BETTER SOLUTION SHOULD BE FIND
 }
 
 
@@ -205,7 +207,7 @@ class FullForm(LearningUnitBaseForm):
     subtype = learning_unit_year_subtypes.FULL
 
     def __init__(self, person, academic_year, learning_unit_instance=None, data=None, start_year=None, proposal=False,
-                 *args, **kwargs):
+                 postposal=None, *args, **kwargs):
         if not learning_unit_instance and not start_year:
             raise AttributeError("Should set at least learning_unit_instance or start_year instance.")
         self.academic_year = academic_year
@@ -220,19 +222,21 @@ class FullForm(LearningUnitBaseForm):
         if self.instance:
             self._disable_fields()
         else:
-            self._restrict_academic_years_choice()
+            self._restrict_academic_years_choice(postposal)
 
-    def _restrict_academic_years_choice(self):
-        starting_academic_year = academic_year.starting_academic_year()
-        end_year_range = MAX_ACADEMIC_YEAR_FACULTY if self.person.is_faculty_manager() else MAX_ACADEMIC_YEAR_CENTRAL
+    def _restrict_academic_years_choice(self, postposal):
+        if postposal:
+            starting_academic_year = academic_year.starting_academic_year()
+            end_year_range = MAX_ACADEMIC_YEAR_FACULTY if self.person.is_faculty_manager() \
+                else MAX_ACADEMIC_YEAR_CENTRAL
 
-        self.fields["academic_year"].queryset = academic_year.find_academic_years(
-            start_year=starting_academic_year.year,
-            end_year=starting_academic_year.year + end_year_range
-        )
+            self.fields["academic_year"].queryset = academic_year.find_academic_years(
+                start_year=starting_academic_year.year,
+                end_year=starting_academic_year.year + end_year_range
+            )
 
     def _disable_fields(self):
-        if self.person.is_faculty_manager():
+        if self.person.is_faculty_manager() and not self.person.is_central_manager():
             self._disable_fields_as_faculty_manager()
         else:
             self._disable_fields_as_central_manager()
@@ -240,7 +244,9 @@ class FullForm(LearningUnitBaseForm):
     def _disable_fields_as_faculty_manager(self):
         faculty_type_not_restricted = [t[0] for t in LEARNING_CONTAINER_YEAR_TYPES_FOR_FACULTY]
         if self.proposal:
-            self.disable_fields(FACULTY_OPEN_FIELDS)
+            # ID FIELD CAN NOT BE DEACTIVATED WITH FACULTY MANAGER
+            # TODO: THIS IS A FIX, BUT A BETTER SOLUTION SHOULD BE FIND
+            self.disable_fields(FACULTY_OPEN_FIELDS - set([ID_FIELD]))
         elif self.instance.learning_container_year and \
                 self.instance.learning_container_year.container_type not in faculty_type_not_restricted:
             self.disable_fields(self.fields.keys() - set(FACULTY_OPEN_FIELDS))

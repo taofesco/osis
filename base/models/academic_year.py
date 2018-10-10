@@ -28,7 +28,6 @@ import datetime
 from django.db import models
 from django.utils import timezone
 
-from base.models.utils.utils import get_object_or_none
 from osis_common.models.serializable_model import SerializableModel, SerializableModelAdmin
 
 LEARNING_UNIT_CREATION_SPAN_YEARS = 6

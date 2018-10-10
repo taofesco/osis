@@ -134,7 +134,13 @@ class ScoreEncodingProgress:
     def __init__(self, **kwargs):
         self.learning_unit_year_id = kwargs.get('learning_unit_enrollment__learning_unit_year')
         self.learning_unit_year_acronym = kwargs.get('learning_unit_enrollment__learning_unit_year__acronym')
-        self.learning_unit_year_title = kwargs.get('learning_unit_enrollment__learning_unit_year__title')
+        self.learning_unit_year_title = ' - '.join(
+            filter(None,
+                   [kwargs.get('learning_unit_enrollment__learning_unit_year__learning_container_year__common_title'),
+                    kwargs.get('learning_unit_enrollment__learning_unit_year__specific_title')]
+                   )
+        )
+
         self.offer_year_id = kwargs.get('learning_unit_enrollment__offer_enrollment__offer_year')
         self.exam_enrollments_encoded = kwargs.get('exam_enrollments_encoded')
         self.scores_not_yet_submitted = kwargs.get('scores_not_yet_submitted')

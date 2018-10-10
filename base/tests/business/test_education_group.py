@@ -45,7 +45,6 @@ from base.models.education_group_year import EducationGroupYear
 from base.models.enums import academic_calendar_type
 from base.models.enums import education_group_categories
 from base.models.enums import mandate_type as mandate_types
-from base.models.enums import offer_year_entity_type
 from base.models.person import Person, CENTRAL_MANAGER_GROUP
 from base.tests.factories.academic_year import create_current_academic_year
 from base.tests.factories.education_group import EducationGroupFactory
@@ -56,7 +55,6 @@ from base.tests.factories.entity_version import EntityVersionFactory
 from base.tests.factories.group_element_year import GroupElementYearFactory
 from base.tests.factories.mandatary import MandataryFactory
 from base.tests.factories.offer_year_calendar import OfferYearCalendarFactory
-from base.tests.factories.offer_year_entity import OfferYearEntityFactory
 from base.tests.factories.organization import OrganizationFactory
 from base.tests.factories.person import PersonFactory
 from base.tests.factories.person_entity import PersonEntityFactory
@@ -81,10 +79,7 @@ class EducationGroupTestCase(TestCase):
         # Create structure
         self._create_basic_entity_structure()
         # Create education group with 'CHIM' as entity management
-        self.education_group_year = EducationGroupYearFactory()
-        OfferYearEntityFactory(education_group_year=self.education_group_year,
-                               type=offer_year_entity_type.ENTITY_MANAGEMENT,
-                               entity=self.chim_entity)
+        self.education_group_year = EducationGroupYearFactory(management_entity=self.chim_entity)
 
     def test_can_user_edit_administrative_data_no_permission(self):
         """Without permission/group, we cannot access to administrative data ==> Refused"""
@@ -382,6 +377,7 @@ def _generate_xls_build_parameter(xls_data, user):
             xls_build.HEADER_TITLES_KEY: EDUCATION_GROUP_TITLES,
             xls_build.WORKSHEET_TITLE_KEY: _(WORKSHEET_TITLE),
             xls_build.STYLED_CELLS: None,
+            xls_build.COLORED_ROWS: None,
         }]
     }
 
@@ -396,6 +392,7 @@ def _generate_xls_administrative_data_build_parameter(xls_data, user):
             xls_build.HEADER_TITLES_KEY: _get_translated_header_titles(),
             xls_build.WORKSHEET_TITLE_KEY: _(WORKSHEET_TITLE_ADMINISTRATIVE),
             xls_build.STYLED_CELLS: None,
+            xls_build.COLORED_ROWS: None,
         }]
     }
 

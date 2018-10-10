@@ -301,29 +301,30 @@ def get_progress_by_learning_unit_years_and_offer_years(user,
                                         with_session_exam_deadline=False)
 
     return queryset.values('session_exam','learning_unit_enrollment__learning_unit_year',
-                           'learning_unit_enrollment__offer_enrollment__offer_year')\
-        .annotate(total_exam_enrollments=Count('id'),
-                  learning_unit_enrollment__learning_unit_year__acronym=
-                  F('learning_unit_enrollment__learning_unit_year__acronym'),
-                  learning_unit_enrollment__learning_unit_year__title= Concat(
-                      'learning_unit_enrollment__learning_unit_year__learning_container_year__common_title',
-                      'learning_unit_enrollment__learning_unit_year__specific_title'
-                  ),
-                  exam_enrollments_encoded=Sum(Case(
-                      When(Q(score_final__isnull=False)|Q(justification_final__isnull=False),then=1),
-                      default=0,
-                      output_field=IntegerField())
-                  ),
-                  scores_not_yet_submitted=Sum(Case(
-                      When((Q(score_draft__isnull=False) &
-                            Q(score_final__isnull=True) &
-                            Q(justification_final__isnull=True)) | (Q(justification_draft__isnull=False) &
-                                                                    Q(score_final__isnull=True) &
-                                                                    Q(justification_final__isnull=True))
-                           ,then=1),
-                      default=0,
-                      output_field=IntegerField()))
-                  )
+                           'learning_unit_enrollment__offer_enrollment__offer_year') \
+        .annotate(
+        total_exam_enrollments=Count('id'),
+        learning_unit_enrollment__learning_unit_year__acronym=
+        F('learning_unit_enrollment__learning_unit_year__acronym'),
+        learning_unit_enrollment__learning_unit_year__specific_title=
+        F('learning_unit_enrollment__learning_unit_year__specific_title'),
+        learning_unit_enrollment__learning_unit_year__learning_container_year__common_title=
+        F('learning_unit_enrollment__learning_unit_year__learning_container_year__common_title'),
+        exam_enrollments_encoded=Sum(Case(
+            When(Q(score_final__isnull=False) | Q(justification_final__isnull=False), then=1),
+            default=0,
+            output_field=IntegerField())
+        ),
+        scores_not_yet_submitted=Sum(Case(
+            When((Q(score_draft__isnull=False) &
+                  Q(score_final__isnull=True) &
+                  Q(justification_final__isnull=True)) | (Q(justification_draft__isnull=False) &
+                                                          Q(score_final__isnull=True) &
+                                                          Q(justification_final__isnull=True))
+                 , then=1),
+            default=0,
+            output_field=IntegerField()))
+    )
 
 
 def find_for_score_encodings(session_exam_number,

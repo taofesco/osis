@@ -40,7 +40,7 @@ from base.models.education_group_year import EducationGroupYear
 from base.models.enums import education_group_categories
 from base.views import layout
 from base.views.common import display_success_messages
-from base.views.common_classes import FlagMixin, AjaxTemplateMixin
+from base.views.mixins import FlagMixin, AjaxTemplateMixin
 from base.views.education_groups.perms import can_create_education_group
 
 FORMS_BY_CATEGORY = {

@@ -132,7 +132,7 @@ class PersonTest(PersonTestCase):
         user.save()
         a_person = create_person_with_user(user)
         person.change_language(user, 'ru')
-        self.assertNotEquals(a_person.language, "ru")
+        self.assertNotEqual(a_person.language, "ru")
 
     def test_change_language(self):
         user = UserFactory()

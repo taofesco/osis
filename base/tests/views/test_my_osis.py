@@ -35,6 +35,7 @@ from attribution.tests.factories.attribution import AttributionFactory
 from base.models.enums import academic_calendar_type
 from base.tests.factories.academic_calendar import AcademicCalendarFactory
 from base.tests.factories.academic_year import create_current_academic_year
+from base.tests.factories.learning_container_year import LearningContainerYearFactory
 from base.tests.factories.learning_unit_year import LearningUnitYearFakerFactory
 from base.tests.factories.person import PersonFactory
 from base.tests.factories.tutor import TutorFactory
@@ -64,8 +65,10 @@ class MyOsisViewTestCase(TestCase):
             reference=academic_calendar_type.SUMMARY_COURSE_SUBMISSION)
 
         self.tutor = TutorFactory(person=self.person)
-
-        self.learning_unit_year = LearningUnitYearFakerFactory(academic_year=academic_year)
+        # FIXME CHANGE LEARNINGUNITYEARFACTORY FOR AVOID MULTI ACADEMIC YEAR
+        self.learning_container_year = LearningContainerYearFactory(academic_year=academic_year)
+        self.learning_unit_year = LearningUnitYearFakerFactory(academic_year=academic_year,
+                                                               learning_container_year=self.learning_container_year)
         self.attribution = AttributionFactory(learning_unit_year=self.learning_unit_year, summary_responsible=True,
                                               tutor=self.tutor)
 

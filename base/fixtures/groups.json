@@ -2938,6 +2938,21 @@
                 "educationgroup"
             ],
             [
+                "add_educationgroupachievement",
+                "base",
+                "educationgroupachievement"
+            ],
+            [
+                "change_educationgroupachievement",
+                "base",
+                "educationgroupachievement"
+            ],
+            [
+                "delete_educationgroupachievement",
+                "base",
+                "educationgroupachievement"
+            ],
+            [
                 "can_edit_educationgroup_pedagogy",
                 "base",
                 "educationgroup"
@@ -3089,6 +3104,21 @@
                 "delete_educationgroup",
                 "base",
                 "educationgroup"
+            ],
+                        [
+                "add_educationgroupachievement",
+                "base",
+                "educationgroupachievement"
+            ],
+            [
+                "change_educationgroupachievement",
+                "base",
+                "educationgroupachievement"
+            ],
+            [
+                "delete_educationgroupachievement",
+                "base",
+                "educationgroupachievement"
             ],
             [
                 "is_entity_manager",

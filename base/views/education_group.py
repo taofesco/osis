@@ -183,21 +183,19 @@ def get_content_of_admission_condition_line(message, admission_condition_line, l
         'id': admission_condition_line.id,
         'diploma': getattr(admission_condition_line, 'diploma' + lang, ''),
         'conditions': getattr(admission_condition_line, 'conditions' + lang, ''),
-        'access': getattr(admission_condition_line, 'access' + lang, ''),
+        'access': admission_condition_line.access,
         'remarks': getattr(admission_condition_line, 'remarks' + lang, ''),
     }
 
 
 def education_group_year_admission_condition_update_line_post(request, root_id, education_group_year_id):
     creation_mode = request.POST.get('admission_condition_line') == ''
-
     if creation_mode:
         # bypass the validation of the form
         request.POST = request.POST.copy()
         request.POST.update({'admission_condition_line': 0})
 
     form = UpdateLineForm(request.POST)
-
     if form.is_valid():
         save_form_to_admission_condition_line(education_group_year_id, creation_mode, form)
 
@@ -219,8 +217,12 @@ def save_form_to_admission_condition_line(education_group_year_id, creation_mode
         admission_condition_line = AdmissionConditionLine.objects.create(
             admission_condition=education_group_year.admissioncondition,
             section=section)
-    for key in ('diploma', 'conditions', 'access', 'remarks'):
+
+    admission_condition_line.access = form.cleaned_data['access']
+
+    for key in ('diploma', 'conditions', 'remarks'):
         setattr(admission_condition_line, key + lang, form.cleaned_data[key])
+
     admission_condition_line.save()
 
 
@@ -267,13 +269,12 @@ def education_group_year_admission_condition_update_text_post(request, root_id, 
 
     if form.is_valid():
         education_group_year = get_object_or_404(EducationGroupYear, pk=education_group_year_id)
-        language = form.cleaned_data['language']
-        lang = '' if language == 'fr' else '_en'
         section = form.cleaned_data['section']
 
         admission_condition = education_group_year.admissioncondition
 
-        setattr(admission_condition, 'text_' + section + lang, form.cleaned_data['text'])
+        setattr(admission_condition, 'text_' + section, form.cleaned_data['text_fr'])
+        setattr(admission_condition, 'text_' + section + '_en', form.cleaned_data['text_en'])
         admission_condition.save()
 
     return redirect(
@@ -284,13 +285,11 @@ def education_group_year_admission_condition_update_text_post(request, root_id, 
 def education_group_year_admission_condition_update_text_get(request, education_group_year_id):
     education_group_year = get_object_or_404(EducationGroupYear, pk=education_group_year_id)
     section = request.GET['section']
-    language = request.GET['language']
-    lang = '' if language == 'fr' else '_en'
 
     form = UpdateTextForm(initial={
         'section': section,
-        'language': language,
-        'text': getattr(education_group_year.admissioncondition, 'text_' + section + lang)
+        'text_fr': getattr(education_group_year.admissioncondition, 'text_' + section),
+        'text_en': getattr(education_group_year.admissioncondition, 'text_' + section + '_en'),
     })
 
     context = {

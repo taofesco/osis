@@ -46,6 +46,7 @@ from base.tests.factories.academic_year import create_current_academic_year
 from base.tests.factories.business.learning_units import GenerateAcademicYear, GenerateContainer
 from base.tests.factories.entity_container_year import EntityContainerYearFactory
 from base.tests.factories.external_learning_unit_year import ExternalLearningUnitYearFactory
+from base.tests.factories.learning_component_year import LearningComponentYearFactory
 from base.tests.factories.learning_container_year import LearningContainerYearFactory
 from base.tests.factories.learning_unit import LearningUnitFactory
 from base.tests.factories.learning_unit_year import LearningUnitYearFactory, create_learning_units_year
@@ -604,5 +605,50 @@ class LearningUnitYearWarningsTest(TestCase):
         """In this test, we ensure that the warning is not displayed when of credits is an interger"""
         self.luy_full.credits = Decimal(5)
         self.luy_full.save()
-        result = self.luy_full._check_credits_is_integer()
         self.assertFalse(self.luy_full._check_credits_is_integer())
+
+
+    def test_warning_planned_classes_zero_and_volume(self):
+
+        self.luy_full.credits = self.luy_full.credits + 1
+        self.luy_full.save()
+
+        test_cases = [
+            {'vol_q1': 10, 'vol_q2': 20, 'vol_tot_annual': 30, 'planned_classes': 0, 'vol_tot_global': 60}
+        ]
+
+        for case in test_cases:
+            with self.subTest(case=case):
+                self.learning_component_year_full_lecturing.hourly_volume_partial_q1 = case.get('vol_q1')
+                self.learning_component_year_full_lecturing.hourly_volume_partial_q2 = case.get('vol_q2')
+                self.learning_component_year_full_lecturing.hourly_volume_total_annual = case.get('vol_tot_annual')
+                self.learning_component_year_full_lecturing.planned_classes = case.get('planned_classes')
+                self.learning_component_year_full_lecturing.save()
+
+                self.entity_component_year_full_lecturing_requirement.repartition_volume = 0
+                self.entity_component_year_full_lecturing_requirement.save()
+        excepted_error = "{} ({})".format(
+            _('Volumes of {} are inconsistent').format(self.learning_component_year_full_lecturing.complete_acronym),
+            _('planned classes cannot be 0 while volume is greater than 0'))
+
+        self.assertCountEqual(
+            self.luy_full.warnings,
+            [excepted_error])
+        self.assertIn(excepted_error, self.luy_full.warnings)
+
+    def test_warning_planned_classes_and_volume_zero(self):
+        self.luy_full.credits = Decimal(5)
+        self.luy_full.save()
+        self.learning_component_year_full_lecturing.hourly_volume_partial_q1 = 0
+        self.learning_component_year_full_lecturing.hourly_volume_partial_q2 = 0
+        self.learning_component_year_full_lecturing.hourly_volume_total_annual = 0
+        self.learning_component_year_full_lecturing.planned_classes = 1
+        self.learning_component_year_full_lecturing.save()
+
+        excepted_error = "{} ({})".format(
+            _('Volumes of {} are inconsistent').format(self.learning_component_year_full_lecturing.complete_acronym),
+            _('planned classes cannot be greather than 0 while volume is equal to 0'))
+        self.assertCountEqual(
+            self.luy_full._check_learning_component_year_warnings(),
+            [excepted_error])
+        self.assertIn(excepted_error, self.luy_full._check_learning_component_year_warnings())

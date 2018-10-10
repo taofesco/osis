@@ -119,6 +119,9 @@ class EducationGroupYearModelForm(ValidationRuleEducationGroupTypeMixin, Permiss
             "education_group_type": EducationGroupTypeModelChoiceField,
         }
         fields = []
+        widgets = {
+            "duration": forms.NumberInput(attrs={'min': 1}),
+        }
 
     def __init__(self, *args, education_group_type=None, **kwargs):
         self.parent = kwargs.pop("parent", None)
@@ -172,6 +175,11 @@ class EducationGroupYearModelForm(ValidationRuleEducationGroupTypeMixin, Permiss
         field.disabled = True
         field.required = False
         field.required = False
+
+    def clean_acronym(self):
+        data_cleaned = self.cleaned_data.get('acronym')
+        if data_cleaned:
+            return data_cleaned.upper()
 
 
 class EducationGroupModelForm(PermissionFieldEducationGroupMixin, forms.ModelForm):

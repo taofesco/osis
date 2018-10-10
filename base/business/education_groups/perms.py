@@ -26,7 +26,6 @@
 from django.core.exceptions import PermissionDenied
 from django.utils.translation import ugettext_lazy as _, pgettext
 
-from base.models import group_element_year
 from base.models.academic_calendar import AcademicCalendar
 from base.models.education_group_type import find_authorized_types
 from base.models.enums import academic_calendar_type
@@ -61,6 +60,21 @@ def _is_eligible_to_add_education_group(person, education_group, category, raise
 def is_eligible_to_change_education_group(person, education_group, raise_exception=False):
     return check_permission(person, "base.change_educationgroup", raise_exception) and \
            _is_eligible_education_group(person, education_group, raise_exception)
+
+
+def is_eligible_to_add_achievement(person, education_group, raise_exception=False):
+    return check_permission(person, "base.add_educationgroupachievement", raise_exception) and \
+           check_link_to_management_entity(education_group, person, raise_exception)
+
+
+def is_eligible_to_change_achievement(person, education_group, raise_exception=False):
+    return check_permission(person, "base.change_educationgroupachievement", raise_exception) and \
+           check_link_to_management_entity(education_group, person, raise_exception)
+
+
+def is_eligible_to_delete_achievement(person, education_group, raise_exception=False):
+    return check_permission(person, "base.delete_educationgroupachievement", raise_exception) and \
+           check_link_to_management_entity(education_group, person, raise_exception)
 
 
 def is_eligible_to_delete_education_group(person, education_group, raise_exception=False):
@@ -154,9 +168,9 @@ def check_authorized_type(education_group, category, raise_exception=False):
 def get_education_group_year_eligible_management_entities(education_group):
     if education_group and education_group.management_entity:
         return [education_group.management_entity]
-    else:
-        eligible_entities = []
-        for group in group_element_year.find_by_child_branch(education_group).select_related('parent'):
-            eligible_entities = eligible_entities + get_education_group_year_eligible_management_entities(group.parent)
 
-        return eligible_entities
+    eligible_entities = []
+    for group in education_group.child_branch.all().select_related('parent'):
+        eligible_entities += get_education_group_year_eligible_management_entities(group.parent)
+
+    return eligible_entities

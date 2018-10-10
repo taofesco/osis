@@ -30,22 +30,47 @@ from django.db.models.fields import BLANK_CHOICE_DASH
 from django.utils.translation import ugettext_lazy as _
 
 from base.forms import bootstrap
-from base.models import academic_calendar, offer_year_calendar, academic_year
+from base.models import offer_year_calendar, academic_year
+from base.models.academic_calendar import AcademicCalendar
+from base.models.academic_year import AcademicYear
 from base.models.enums import academic_calendar_type
 
 
-class AcademicCalendarForm(bootstrap.BootstrapModelForm):
-    REFERENCE_CHOICE_FIELD = BLANK_CHOICE_DASH + \
-                             sorted([(a, _(b)) for (a, b) in academic_calendar_type.CALENDAR_TYPES],
-                                    key=itemgetter(1))
+def _get_sorted_choices(li):
+    return sorted(((a, _(b)) for (a, b) in li), key=itemgetter(1))
 
-    academic_year = forms.ModelChoiceField(queryset=academic_year.AcademicYear.objects.all().order_by('year'),
-                                           widget=forms.Select(), empty_label=None)
+
+class AcademicCalendarForm(bootstrap.BootstrapModelForm):
+    REFERENCE_CHOICE_FIELD = (
+        BLANK_CHOICE_DASH[0],
+        (
+            _("academic events").capitalize(),
+            _get_sorted_choices(academic_calendar_type.ACADEMIC_CALENDAR_TYPES)
+        ),
+        (
+            _("project events").capitalize(),
+            _get_sorted_choices(academic_calendar_type.PROJECT_CALENDAR_TYPES)
+        ),
+        (
+            _("ad hoc events").capitalize(),
+            _get_sorted_choices(academic_calendar_type.AD_HOC_CALENDAR_TYPES),
+        ),
+    )
+
+    academic_year = forms.ModelChoiceField(
+        queryset=AcademicYear.objects.all().order_by('year'),
+        widget=forms.Select(),
+        empty_label=None,
+    )
     reference = forms.ChoiceField(choices=REFERENCE_CHOICE_FIELD, required=False)
 
     class Meta:
-        model = academic_calendar.AcademicCalendar
+        model = AcademicCalendar
         exclude = ['external_id', 'changed']
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields['academic_year'].initial = academic_year.starting_academic_year()
 
     def save(self, commit=True):
         instance = super(AcademicCalendarForm, self).save(commit=False)

@@ -127,10 +127,22 @@ class LearningUnitPostponementForm:
                     if luy.academic_year.year <= max_postponement_year
                     ]
                 existing_ac_years = [luy.academic_year for luy in existing_learn_unit_years]
-                to_insert = [
-                    self._instantiate_base_form_as_insert(ac_year, data)
-                    for index, ac_year in enumerate(ac_year_postponement_range) if ac_year not in existing_ac_years
-                    ]
+                to_insert = []
+                # FIXME: We use data copy because data is immuniable and acronym, academic_year and container_type
+                # is not in data with edition form
+                for index, ac_year in enumerate(ac_year_postponement_range):
+                    if ac_year not in existing_ac_years:
+                        data_to_insert = None
+                        if data and existing_learn_unit_years:
+                            data_to_insert = data.copy()
+                            data_to_insert["acronym_0"] = existing_learn_unit_years[0].acronym[0]
+                            data_to_insert["acronym_1"] = existing_learn_unit_years[0].acronym[1:]
+                            data_to_insert["container_type"] = \
+                                existing_learn_unit_years[0].learning_container_year.container_type
+                            data_to_insert["academic_year"] = str(ac_year.id)
+                            to_insert.append(self._instantiate_base_form_as_insert(ac_year, data_to_insert))
+                        else:
+                            to_insert.append(self._instantiate_base_form_as_insert(ac_year, data))
             else:
                 to_insert = [
                     self._instantiate_base_form_as_insert(ac_year, data)
@@ -192,7 +204,8 @@ class LearningUnitPostponementForm:
             'academic_year': ac_year,
             'start_year': start_year,
             'data': data.copy() if data else None,
-            'learning_unit_full_instance': self.learning_unit_full_instance
+            'learning_unit_full_instance': self.learning_unit_full_instance,
+            'postposal': not data
         }
         return FullForm(**form_kwargs) if self.subtype == learning_unit_year_subtypes.FULL else \
             PartimForm(**form_kwargs)
@@ -242,7 +255,7 @@ class LearningUnitPostponementForm:
         form_kwargs = {'learning_unit_instance': self.learning_unit_instance,
                        'start_year': self.learning_unit_instance.start_year}
         current_form = self._get_learning_unit_base_form(self.start_postponement, **form_kwargs)
-        academic_years = sorted([form.instance.academic_year for form in self._forms_to_upsert],
+        academic_years = sorted([form.instance.academic_year for form in self._forms_to_upsert if form.instance],
                                 key=lambda ac_year: ac_year.year)
 
         self.consistency_errors = OrderedDict()

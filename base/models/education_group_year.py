@@ -24,7 +24,7 @@
 #
 ##############################################################################
 from django.core.exceptions import ValidationError
-from django.core.validators import RegexValidator
+from django.core.validators import RegexValidator, MinValueValidator
 from django.db import models
 from django.db.models import Count, OuterRef, Exists
 from django.urls import reverse
@@ -54,7 +54,13 @@ class EducationGroupYearAdmin(OsisModelAdmin):
     search_fields = ['acronym']
 
 
+class EducationGroupYearManager(models.Manager):
+    def look_for_common(self, **kwargs):
+        return self.filter(acronym__startswith='common-', **kwargs)
+
+
 class EducationGroupYear(models.Model):
+    objects = EducationGroupYearManager()
     external_id = models.CharField(max_length=100, blank=True, null=True, db_index=True)
     changed = models.DateTimeField(null=True, auto_now=True)
 
@@ -259,10 +265,12 @@ class EducationGroupYear(models.Model):
         verbose_name=_('keywords')
     )
 
-    duration = models.PositiveIntegerField(
+    duration = models.IntegerField(
         blank=True,
         null=True,
-        verbose_name=_('duration')
+        default=1,  # We must set a default value for duration because duration_unit have a default value
+        verbose_name=_('duration'),
+        validators=[MinValueValidator(1)]
     )
 
     duration_unit = models.CharField(
@@ -390,6 +398,13 @@ class EducationGroupYear(models.Model):
         verbose_name=_("comment (internal)"),
     )
 
+    certificate_aims = models.ManyToManyField(
+        "base.CertificateAim",
+        through="EducationGroupCertificateAim",
+        related_name="education_group_years",
+        blank=True,
+    )
+
     def __str__(self):
         return "{} - {} - {}".format(
             self.partial_acronym,
@@ -441,7 +456,9 @@ class EducationGroupYear(models.Model):
 
     @property
     def verbose_duration(self):
-        return "{} {}".format(self.duration, _(self.duration_unit))
+        if self.duration and self.duration_unit:
+            return "{} {}".format(self.duration, _(self.duration_unit))
+        return ""
 
     class Meta:
         verbose_name = _("education group year")
@@ -560,6 +577,7 @@ class EducationGroupYear(models.Model):
             self.clean_constraint_type()
         else:
             self.clean_min_max()
+        self.clean_duration_data()
 
     def clean_constraint_type(self):
         # If min or max has been set, constraint_type is required
@@ -585,6 +603,12 @@ class EducationGroupYear(models.Model):
                     "min": _("minimum constraint").title(),
                 }
             })
+
+    def clean_duration_data(self):
+        if self.duration_unit is not None and self.duration is None:
+            raise ValidationError({'duration': _("field_is_required")})
+        elif self.duration is not None and self.duration_unit is None:
+            raise ValidationError({'duration_unit': _("field_is_required")})
 
 
 def find_by_id(an_id):

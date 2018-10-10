@@ -43,7 +43,8 @@ from base.tests.factories.user import UserFactory
 from reference.tests.factories.language import LanguageFactory
 from base.views.learning_achievement import operation, management, create, update, create_first
 from base.business.learning_units.achievement import DELETE, DOWN, UP, HTML_ANCHOR
-from base.forms.learning_achievement import LearningAchievementEditForm, FR_CODE_LANGUAGE
+from base.forms.learning_achievement import LearningAchievementEditForm
+from reference.models.language import FR_CODE_LANGUAGE
 from base.tests.factories.user import SuperUserFactory
 
 

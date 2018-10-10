@@ -1,0 +1,36 @@
+{% load i18n %}
+{% load notifications %}
+{% get_notifications as list_notifications %}
+
+
+<div class="dropdown">
+    <button id="notifications_dropdown" type="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false"
+            class="btn btn-default btn-lg btn-link">
+        <span class="glyphicon glyphicon-bell {% if list_notifications %}notification{% endif %}"></span>
+    </button>
+    <ul class="dropdown-menu" aria-labelledby="dLabel">
+            <li>
+                <b>{% blocktrans with number_notifications=list_notifications|length%}{{ number_notifications }} notification(s){% endblocktrans %}
+                </b>
+            </li>
+        {% for notification in list_notifications %}
+            <li class="divider"></li>
+            <li>
+                <small>{{ notification }} </small>
+            </li>
+        {% endfor %}
+    </ul>
+</div>
+
+
+{% if list_notifications %}
+<script>
+    url = "{% url "clear_notifications" %}";
+    $("#notifications_dropdown").click(function(){
+        $.ajax({
+          method: "POST",
+          url: url
+        })
+    })
+</script>
+{% endif %}

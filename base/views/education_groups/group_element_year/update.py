@@ -48,7 +48,7 @@ from base.models.group_element_year import GroupElementYear
 from base.models.learning_unit_year import LearningUnitYear
 from base.models.utils.utils import get_object_or_none
 from base.views.common import display_success_messages, display_warning_messages
-from base.views.common_classes import AjaxTemplateMixin, FlagMixin, RulesRequiredMixin
+from base.views.mixins import AjaxTemplateMixin, FlagMixin, RulesRequiredMixin
 from base.views.education_groups import perms
 from base.views.education_groups.select import build_success_message, build_success_json_response
 

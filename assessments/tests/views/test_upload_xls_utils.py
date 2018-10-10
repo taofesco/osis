@@ -27,31 +27,25 @@ import datetime
 from unittest import mock
 
 from django.contrib.auth.models import Group
-from django.core.exceptions import PermissionDenied
-from django.db import IntegrityError
-from django.http import HttpResponseNotFound, Http404
+from django.http import Http404
 from django.test import TestCase, Client, TransactionTestCase
 from django.urls import reverse
 from django.utils.translation import ugettext_lazy as _
 
-from base.models.exam_enrollment import ExamEnrollment
 from base.tests.factories.academic_calendar import AcademicCalendarFactory
 
 from base.tests.factories.academic_year import AcademicYearFactory
-from base.tests.factories.person import PersonFactory
 from base.tests.factories.session_exam_calendar import SessionExamCalendarFactory
-from base.tests.factories.tutor import TutorFactory
 from base.tests.factories.student import StudentFactory
 from base.tests.factories.learning_unit_year import LearningUnitYearFakerFactory
 from attribution.tests.factories.attribution import AttributionFactory
 from base.tests.factories.session_examen import SessionExamFactory
-from base.tests.factories.offer_year import OfferYearFactory
 from base.tests.factories.offer_enrollment import OfferEnrollmentFactory
 from base.tests.factories.learning_unit_enrollment import LearningUnitEnrollmentFactory
 from base.tests.factories.exam_enrollment import ExamEnrollmentFactory
 
 from base.models.enums import number_session, academic_calendar_type, exam_enrollment_justification_type
-
+from base.tests.mixin.academic_year import AcademicYearMockMixin
 
 OFFER_ACRONYM = "OSIS2MA"
 LEARNING_UNIT_ACRONYM = "LOSIS1211"
@@ -75,7 +69,7 @@ def generate_exam_enrollments(year, with_different_offer=False):
                                                    start_date=datetime.datetime.today() - datetime.timedelta(days=20),
                                                    end_date=datetime.datetime.today() + datetime.timedelta(days=20),
                                                    reference=academic_calendar_type.SCORES_EXAM_SUBMISSION)
-    session_exam_calendar =  SessionExamCalendarFactory(number_session=number_session.ONE,
+    session_exam_calendar = SessionExamCalendarFactory(number_session=number_session.ONE,
                                                         academic_calendar=an_academic_calendar)
 
     learning_unit_year = LearningUnitYearFakerFactory(academic_year=academic_year,
@@ -102,10 +96,12 @@ def generate_exam_enrollments(year, with_different_offer=False):
                                                       learning_unit_enrollment=learning_unit_enrollment))
     return locals()
 
-class MixinTestUploadScoresFile:
-    def generate_data(self):
+
+class MixinTestUploadScoresFile(AcademicYearMockMixin):
+    def setUp(self):
         Group.objects.get_or_create(name="tutors")
         data = generate_exam_enrollments(2017)
+        self.academic_year = data["academic_year"]
         self.exam_enrollments = data["exam_enrollments"]
         self.attribution = data["attribution"]
         self.learning_unit_year = data["learning_unit_year"]
@@ -131,6 +127,12 @@ class MixinTestUploadScoresFile:
         self.client.force_login(user=self.attribution.tutor.person.user)
         self.url = reverse('upload_encoding', kwargs={'learning_unit_year_id': self.learning_unit_year.id})
 
+        # Mock academic_year in order to be decouple from system time
+        self.mock_academic_year(
+            current_academic_year=self.academic_year,
+            starting_academic_year=self.academic_year
+        )
+
     def assert_enrollments_equal(self, exam_enrollments, attribute_value_list):
         [enrollment.refresh_from_db() for enrollment in exam_enrollments]
         data = zip(exam_enrollments, attribute_value_list)
@@ -139,10 +141,7 @@ class MixinTestUploadScoresFile:
             self.assertEqual(getattr(exam_enrollment, attribute), value)
 
 
-class TestTransactionNonAtomicUploadXls(TransactionTestCase, MixinTestUploadScoresFile):
-    def setUp(self):
-        self.generate_data()
-
+class TestTransactionNonAtomicUploadXls(MixinTestUploadScoresFile, TransactionTestCase):
     @mock.patch("assessments.views.upload_xls_utils._show_error_messages", side_effect=Http404)
     def test_when_exception_occured_after_saving_scores(self, mock_method_that_raise_exception):
         SCORE_1 = 16
@@ -152,14 +151,11 @@ class TestTransactionNonAtomicUploadXls(TransactionTestCase, MixinTestUploadScor
             self.assertTrue(mock_method_that_raise_exception.called)
             self.assert_enrollments_equal(
                 self.exam_enrollments,
-                [("score_draft", 16), ("justification_draft", exam_enrollment_justification_type.ABSENCE_UNJUSTIFIED)]
+                [("score_draft", SCORE_1), ("justification_draft", SCORE_2)]
             )
 
 
-class TestUploadXls(TestCase, MixinTestUploadScoresFile):
-    def setUp(self):
-        self.generate_data()
-
+class TestUploadXls(MixinTestUploadScoresFile, TestCase):
     def test_with_no_file_uploaded(self):
         response = self.client.post(self.url, {'file': ''}, follow=True)
         messages = list(response.context['messages'])
@@ -220,7 +216,7 @@ class TestUploadXls(TestCase, MixinTestUploadScoresFile):
 
             self.assert_enrollments_equal(
                 self.exam_enrollments,
-                [("score_draft", 16), ("justification_draft", exam_enrollment_justification_type.ABSENCE_UNJUSTIFIED)]
+                [("score_draft", SCORE_1), ("justification_draft", SCORE_2)]
             )
 
     def test_with_formula(self):

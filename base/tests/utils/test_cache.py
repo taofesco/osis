@@ -27,7 +27,8 @@ from django.test import TestCase, RequestFactory
 from django.urls import reverse
 
 from base.tests.factories.user import UserFactory
-from base.utils.cache import cache, clear_cached_filter, _get_filter_key
+from base.utils.cache import cache, clear_cached_filter, _get_filter_key, _restore_filter_from_cache, \
+    _save_filter_to_cache
 
 
 class TestClearCachedFilter(TestCase):
@@ -53,3 +54,44 @@ class TestClearCachedFilter(TestCase):
         # Clear fitler cache
         clear_cached_filter(self.request)
         self.assertIsNone(cache.get(key))
+
+
+class TestSaveAndRestoreFilterFromCache(TestCase):
+    def setUp(self):
+        cache.clear()
+        self.data_cached = {
+            "name":"Axandre",
+            "city": "City25",
+        }
+        self.user = UserFactory()
+
+        request_factory = RequestFactory()
+        self.request_without_get_data = request_factory.get("www.url.com")
+        self.request_without_get_data.user = self.user
+
+        self.request = request_factory.get("www.url.com", data=self.data_cached)
+        self.request.user = self.user
+
+    def tearDown(self):
+        cache.clear()
+
+    def test_use_default_values_if_nothing_in_cache(self):
+        default_values = {
+            "name":"A name",
+            "city": "A city",
+        }
+        _restore_filter_from_cache(self.request_without_get_data, **default_values)
+        self.assertEqual(self.request_without_get_data.GET.dict(),
+                         default_values)
+
+    def test_use_cache_values_and_not_default_ones_if_values_in_cache(self):
+        _save_filter_to_cache(self.request)
+        default_values = {
+            "name": "A name",
+            "city": "A city",
+        }
+        _restore_filter_from_cache(self.request, **default_values)
+        self.assertNotEqual(self.request.GET.dict(),
+                            default_values)
+        self.assertEqual(self.request.GET.dict(),
+                         self.data_cached)

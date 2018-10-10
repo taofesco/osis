@@ -78,3 +78,9 @@ def url_add_query(url, **kwargs):
     querystring = QueryDict(parsed.query, mutable=True)
     querystring.update(kwargs)
     return urlunsplit(parsed._replace(query=querystring.urlencode()))
+
+
+@register.filter
+def db_table_with_pk(prefix, obj):
+    """ Use to generate html ids"""
+    return "{}_{}_{}".format(prefix, obj._meta.db_table, obj.pk)

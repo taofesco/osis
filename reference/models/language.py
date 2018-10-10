@@ -30,6 +30,10 @@ from django.db import models
 from osis_common.models.serializable_model import SerializableModel, SerializableModelAdmin
 
 
+EN_CODE_LANGUAGE = 'EN'
+FR_CODE_LANGUAGE = 'FR'
+
+
 class LanguageAdmin(SerializableModelAdmin):
     list_display = ('code', 'name', 'recognized')
     list_filter = ('recognized',)
@@ -53,6 +57,12 @@ class Language(SerializableModel):
 
     def __str__(self):
         return self.name
+
+    def is_french(self):
+        return self.code == FR_CODE_LANGUAGE
+
+    def is_english(self):
+        return self.code == EN_CODE_LANGUAGE
 
 
 def find_by_id(language_id):

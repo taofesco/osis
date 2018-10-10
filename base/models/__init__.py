@@ -29,7 +29,9 @@ from base.models import academic_year
 from base.models import admission_condition
 from base.models import authorized_relationship
 from base.models import campus
+from base.models import certificate_aim
 from base.models import education_group
+from base.models import education_group_certificate_aim
 from base.models import education_group_language
 from base.models import education_group_organization
 from base.models import education_group_type

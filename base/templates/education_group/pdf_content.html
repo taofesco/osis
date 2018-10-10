@@ -121,6 +121,15 @@
             </tr>
             </thead>
             <tbody>
+            {% if root.constraint_type %}
+            <tr>
+                <td>
+                    <div style="font-style: italic;font-size: 11px;">
+                        {{ root.verbose_constraint }}
+                    </div>
+                </td>
+            </tr>
+            {% endif %}
             <tr>
                 <td>
                     <img src="{% static 'img/education_group_year/mandatory.png' %}" height="10" width="10">
@@ -145,15 +154,20 @@
                 {% trans 'on' %} ......./......./.......
             </div>&emsp; &emsp;
             {% if root.is_minor %}
-                <div style="display: inline;margin-left: 150px;">
+                <div style="display: inline;margin-left: 110px;">
                     {% trans 'For approval' %}
                 </div>
             {% endif %}
+            <br>&emsp;
             <br>
-            <br>
-            <div style="margin-left: 50px;">
+            <div style="display: inline;margin-left: 50px;">
                 {% trans "Student's signature"  %}
             </div>
+            {% if root.is_minor %}
+                <div style="display: inline;margin-left: 227px;">
+                    {% trans "Name of the teacher responsible"  %}
+                </div>
+            {% endif %}
         </div>
     </div>
 </div>

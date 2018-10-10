@@ -22,9 +22,13 @@ django-waffle==0.14.0
 django-redis==4.9.0
 beautifulsoup4==4.6.3
 pypom==2.1.0
-selenium==3.14.0
+selenium==3.11.0
 python-magic==0.4.15
-django-ajax-selects==1.7.1
+django-ajax-selects==1.7.0
+celery==4.2.0
+django-celery-beat==1.1.1
+django-celery-results==1.0.1
+django-notifications-hq==1.5.0
 
 -r ./osis_common/requirements.txt
 -r ./internship/requirements.txt

@@ -85,3 +85,6 @@ msgstr ""
 
 msgid "Select"
 msgstr ""
+
+msgid "Release"
+msgstr ""

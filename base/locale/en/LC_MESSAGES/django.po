@@ -105,6 +105,9 @@ msgstr "Administration"
 msgid "after_submission_a_message_must_be_sent"
 msgstr "If scores are submitted , a message is sent to all the professors of the learning unit"
 
+msgid "aim number"
+msgstr ""
+
 msgid "all"
 msgstr "All"
 
@@ -158,6 +161,9 @@ msgstr "Cancel"
 
 msgid "catalogue"
 msgstr "Catalogue"
+
+msgid "certificate aims"
+msgstr ""
 
 msgid "chair_of_the_exam_board"
 msgstr "Chair of the exam board"
@@ -439,6 +445,9 @@ msgstr "The file must be a valid 'XLSX' excel file"
 
 msgid "file_production_date"
 msgstr "Excel file production date"
+
+msgid "filter by section"
+msgstr ""
 
 msgid "students_deliberated_are_not_shown"
 msgstr "Students deliberated are not shown"
@@ -1031,6 +1040,9 @@ msgstr "Search for an entity"
 
 msgid "search_for_an_organization"
 msgstr "Search for an organization"
+
+msgid "section"
+msgstr ""
 
 msgid "SECTOR"
 msgstr "Sector"
@@ -2955,7 +2967,7 @@ msgstr ""
 msgid "Volumes of {} are inconsistent"
 msgstr ""
 
-msgid "planned classes cannot be 0"
+msgid "planned classes cannot be 0 while volume is greater than 0"
 msgstr ""
 
 msgid "Vol_tot is not equal to vol_q1 + vol_q2"
@@ -2965,6 +2977,9 @@ msgid "Vol_global is not equal to Vol_tot * planned_classes"
 msgstr "The overall volume must be equal to the annual volume multiplied by the number of classes"
 
 msgid "At least a partim volume value is greater than corresponding volume of parent"
+msgstr ""
+
+msgid "planned classes cannot be greather than 0 while volume is equal to 0"
 msgstr ""
 
 msgid "url of the learning unit"
@@ -3879,4 +3894,126 @@ msgid "education group achievement"
 msgstr ""
 
 msgid "education group detailed achievement"
+msgstr ""
+
+msgid "text in English"
+msgstr ""
+
+msgid "text in French"
+msgstr ""
+
+msgid "on successful completion of this program, each student is able to"
+msgstr ""
+
+msgid "the program aims"
+msgstr ""
+
+msgid "additional informations"
+msgstr ""
+
+msgid "skills and achievements"
+msgstr ""
+
+msgid "academic events"
+msgstr ""
+
+msgid "project events"
+msgstr ""
+
+msgid "ad hoc events"
+msgstr ""
+
+msgid "%(count)d learning unit has been postponed with success"
+msgid_plural "%(count)d learning units have been postponed with success"
+msgstr[0] ""
+msgstr[1] ""
+
+msgid "The following learning units ended with error"
+msgstr ""
+
+msgid "Apply postponement on learning unit year"
+msgstr ""
+
+msgid "Produce a customizable xls of learning units"
+msgstr ""
+
+msgid "Configurable list of learning units"
+msgstr ""
+
+msgid "Do you want to export the following informations"
+msgstr ""
+
+msgid "Programs/gathering"
+msgstr ""
+
+msgid "List of teachers"
+msgstr ""
+
+msgid "Beg. of attribution"
+msgstr ""
+
+msgid "Attribution duration"
+msgstr ""
+
+msgid "Attrib. vol1"
+msgstr ""
+
+msgid "Attrib. vol2"
+msgstr ""
+
+msgid "Absolute credits"
+msgstr ""
+
+msgid "Hourly vol."
+msgstr ""
+
+msgid "1st quadri"
+msgstr ""
+
+msgid "2nd quadri"
+msgstr ""
+
+msgid "Suppression proposal"
+msgstr ""
+
+msgid "Transformation proposal"
+msgstr ""
+
+msgid "Transformation/modification proposal"
+msgstr ""
+
+msgid "fac. level"
+msgstr ""
+
+msgid "Are you sure you want to delete the event"
+msgstr ""
+
+msgid "The event \"%(event)s\" has been deleted successfully"
+msgstr ""
+
+msgid "Name of the teacher responsible"
+msgstr ""
+
+msgid "On the file: direct access or access with additional training"
+msgstr ""
+
+msgid "Direct Access"
+msgstr ""
+
+msgid "Access with additional training"
+msgstr ""
+
+msgid "%(number_notifications)s notification(s)"
+msgstr ""
+
+msgid "Producing certificat"
+msgstr ""
+
+msgid "Producing annexe"
+msgstr ""
+
+msgid "UCL Diploma"
+msgstr ""
+
+msgid "Reference institution"
 msgstr ""

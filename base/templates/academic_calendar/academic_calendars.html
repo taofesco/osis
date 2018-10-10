@@ -29,6 +29,10 @@
  * see http://www.gnu.org/licenses/.
 {% endcomment %}
 
+{% block style %}
+    <link rel="stylesheet" href="{% static 'css/toggle-switch.css' %}">
+{% endblock %}
+
 {% block breadcrumb %}
   <li><a href="{% url 'catalog' %}" id="lnk_catalog">{% trans 'formation_catalogue'%}</a></li>
   <li><a href="{% url 'academic_year' %}" id="lnk_academic_year">{% trans 'academic_year'%}</a></li>
@@ -42,22 +46,53 @@
 <div class="panel panel-default">
   <div class="panel-body">
     <div class="row">
-      <form  method="get" action="{% url 'academic_calendars_search'%}" >
+      <form  method="get" action="{% url 'academic_calendars' %}" >
         <div class="col-md-2">
           <label for="slt_academic_year" >{% trans 'academic_year'%}</label>
-          <select class="form-control" id="slt_academic_year"  name="academic_year" value="{{ academic_year }}">
+          <select class="form-control" id="slt_academic_year"  name="academic_year" value="{{ academic_year }}" onchange='this.form.submit();'>
             {% for v in academic_years %}
-              {% if v.id == academic_year %}
-                <option selected value="{{ v.id }}">{{ v }}</option>
-              {% else %}
-                <option value="{{ v.id }}">{{ v }}</option>
-              {% endif %}
+              <option value="{{ v.id }}" {% if v.id == academic_year %}selected {% endif %} >
+                  {{ v }}
+              </option>
             {% endfor %}
           </select>
         </div>
-        <div class="col-md-10">
-            <br>
-            <button type="submit" id="bt_submit_academic_calendar_search" class="btn btn-primary" role="button"><span class="glyphicon glyphicon-search" aria-hidden="true"></span></button>
+        <div class="col-md-2">
+            {% if request.user.is_superuser %}
+                <table>
+                    <tr>
+                        <td><label>{% trans "academic events" as academic_events %}{{ academic_events|title }}</label></td>
+                        <td style="padding-left: 0.5em; padding-top: 4px;">
+                            <label class="switch">
+                              <input type="checkbox" name="show_academic_events" title="{{ academic_events|title }}" onclick='this.form.submit();' {% if show_academic_events %}checked{% endif %} />
+                              <span class="slider round"></span>
+                            </label>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td><label>{% trans "project events" as project_events %}{{ project_events|title }}</label><br></td>
+                        <td style="padding-left: 0.5em; padding-top: 4px;">
+                            <label class="switch">
+                              <input type="checkbox" name="show_project_events" title="{{ project_events|title }}" onclick='this.form.submit();' {% if show_project_events %}checked{% endif %} />
+                              <span class="slider round"></span>
+                            </label>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td><label>{% trans "ad hoc events" as ad_hoc_events %}{{ ad_hoc_events|title }}</label><br></td>
+                        <td style="padding-left: 0.5em; padding-top: 4px;">
+                            <label class="switch">
+                                <input type="checkbox" name="show_ad_hoc_events" title="{{ ad_hoc_events|title }}" onclick='this.form.submit();' {% if show_ad_hoc_events %}checked{% endif %} />
+                                <span class="slider round"></span>
+                            </label>
+                        </td>
+                    </tr>
+                </table>
+            {% else %}
+                <input type="hidden" name="show_academic_events" title="{{ academic_events|title }}" value="on" />
+            {% endif %}
+        </div>
+        <div class="col-md-8">
             {% if request.user.is_superuser %}
                 <a href="{% url 'academic_calendar_form' %}" id="lnk_academic_calendar_create" class="btn btn-default" role="button"><span class="glyphicon glyphicon-plus" aria-hidden="true"></span></a>
             {% endif %}
@@ -66,14 +101,13 @@
     </div>
     <br>
     <div id="gantt">
-      {% if academic_calendar_list|length == 0 %}
-        <label class="alert alert-info" style="margin:5px">{% trans 'no_result' %}</label>
-      {% endif %}
-      {% if academic_calendar_list|length > 0%}
+      {% if show_gantt_diagram %}
         <div id="gantt_div"></div>
+      {% else %}
+          <label class="alert alert-info" style="margin:5px">{% trans 'no_result' %}</label>
       {% endif %}
     </div>
-    {% if undated_calendars_list|length > 0%}
+    {% if undated_calendars_list|length > 0 %}
       <div id="undated_calendars">
         <br>{% trans 'undated_events' %} :
         <ul>
@@ -99,7 +133,7 @@
 
     <script type="text/javascript">
         function formatDate(date){
-            month = date.getMonth() + 1
+            month = date.getMonth() + 1;
             return date.getDate() + "/" + month + "/" + date.getFullYear()
         }
 
@@ -111,7 +145,7 @@
 
         gantt.config.readonly = true;
         gantt.config.columns = [
-            {name:"text", label:" ", width:"*", align: "left" },
+            {name:"text", label:" ", width:"*", align: "left"},
         ];
 
         gantt.templates.task_text=function(start,end,task){
@@ -120,7 +154,7 @@
 
         gantt.config.tooltip_hide_timeout = 500;
         gantt.templates.tooltip_text = function(start,end,task){
-            days = task.duration + 1 // include end_date in duration
+            days = task.duration + 1; // include end_date in duration
             if(days <= 1){
                 duration = days + " {% trans 'day'%}"
             }
@@ -128,18 +162,46 @@
                 duration = days + " {% trans 'days'%}"
             }
 
-            return "<b>" + task.text + "</b><br>" + formatDate(task.start_date) + " - " + formatDate(task.end_date)
+            return "<b>" + task.text + "</b><br>"
+            + formatDate(task.start_date) + " - " + formatDate(task.end_date)
             + " (" + duration +  ") <br>"
             + "<a href=\"{% url 'academic_calendars' %}" + task.id + "\">"
             + "{% trans 'details'%}</a>";
         };
 
-        var markerId = gantt.addMarker({
+        /* Update lines style for project events */
+        let setRowStyleFunction = function (start, end, task) {
+            if (task.category === 'PROJECT')
+                return "projectRow";
+        };
+        gantt.templates.grid_row_class = setRowStyleFunction; // update first cell style
+        gantt.templates.task_row_class = setRowStyleFunction; // update end of row style
+
+        gantt.addMarker({
             start_date: new Date() // this is today
         });
+
+        var data = {{ ad_hoc_list|safe }}['ad_hoc_events'];
+        for (var i=0;i<data.length;i++) {
+            var parts =data[i]['start_date'].split('-');
+            var mm = parts[1]-1;
+
+            gantt.addMarker({
+                start_date: new Date(parts[2],mm , parts[0]),
+                css: 'releaseCol',
+                text: get_release_title(parts[0], parts[1], parts[2], data[i]['id']),
+            });
+        }
 
         gantt.config.autosize = "y";
         gantt.init("gantt_div");
         gantt.parse({{ academic_calendar_json|safe }},"json");
+
+        function get_release_title(d,m,y, id){
+            return "<b>" + gettext('Release') + " : " + d + "/" + m + "/" +  y + "</b>"
+                    + "<br>"
+                    + "<a href=\"{% url 'academic_calendars' %}" + id + "\">"
+                    + "{% trans 'details'%}</a>";
+        }
     </script>
 {% endblock %}

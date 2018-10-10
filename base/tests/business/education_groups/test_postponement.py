@@ -123,7 +123,7 @@ class TestComputeEndPostponement(EducationGroupPostponementTestCase):
 
         # Create data in future
         lastest_academic_year = self.generated_ac_years.academic_years[-1]
-        field_to_exclude = ['id', 'external_id', 'academic_year', 'languages', 'secondary_domains']
+        field_to_exclude = ['id', 'external_id', 'academic_year', 'languages', 'secondary_domains', 'certificate_aims']
         defaults = _model_to_dict(self.education_group_year, exclude=field_to_exclude)
         EducationGroupYear.objects.update_or_create(
             education_group=self.education_group_year.education_group,

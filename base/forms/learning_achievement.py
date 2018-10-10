@@ -28,9 +28,7 @@ from django import forms
 
 from base.models.learning_achievement import LearningAchievement, search
 from reference.models import language
-
-EN_CODE_LANGUAGE = 'EN'
-FR_CODE_LANGUAGE = 'FR'
+from reference.models.language import EN_CODE_LANGUAGE, FR_CODE_LANGUAGE
 
 
 class LearningAchievementEditForm(forms.ModelForm):

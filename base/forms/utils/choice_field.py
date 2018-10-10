@@ -23,10 +23,14 @@
 #    see http://www.gnu.org/licenses/.
 #
 ##############################################################################
+from django.db.models import QuerySet
+
 BLANK_CHOICE = [(None, "---------")]
 
 
 def add_blank(choices):
+    if isinstance(choices, QuerySet):
+        choices = list(choices)
     if isinstance(choices, list):
         return BLANK_CHOICE + choices
 

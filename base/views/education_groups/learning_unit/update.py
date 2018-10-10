@@ -41,7 +41,7 @@ from base.models.education_group_year import EducationGroupYear
 from base.models.learning_unit_year import LearningUnitYear
 from base.models.person import Person
 from base.models.prerequisite import Prerequisite
-from base.views.common_classes import RulesRequiredMixin
+from base.views.mixins import RulesRequiredMixin
 from base.views.education_groups import perms
 
 

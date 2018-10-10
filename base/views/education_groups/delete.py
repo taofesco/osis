@@ -27,9 +27,8 @@ from django.urls import reverse_lazy
 
 from base.business.education_groups import shorten
 from base.models.education_group import EducationGroup
-from base.models.education_group_year import EducationGroupYear
-from base.views.common_classes import DeleteViewWithDependencies
 from base.views.education_groups.perms import can_delete_all_education_group
+from base.views.mixins import DeleteViewWithDependencies
 
 
 class DeleteGroupEducationView(DeleteViewWithDependencies):

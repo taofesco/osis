@@ -41,14 +41,14 @@ except InvalidCacheBackendError:
     cache = caches["default"]
 
 
-def cache_filter(exclude_params=None):
+def cache_filter(exclude_params=None, **default_values):
     def decorator(func):
         @wraps(func)
         def inner(request, *args, **kwargs):
             try:
                 if request.GET:
                     _save_filter_to_cache(request, exclude_params=exclude_params)
-                _restore_filter_from_cache(request)
+                _restore_filter_from_cache(request, **default_values)
             except Exception:
                 logger.exception('An error occurred with cache system')
             return func(request, *args, **kwargs)
@@ -64,12 +64,14 @@ def _save_filter_to_cache(request, exclude_params=None):
     cache.set(key, param_to_cache, timeout=CACHE_FILTER_TIMEOUT)
 
 
-def _restore_filter_from_cache(request):
+def _restore_filter_from_cache(request, **default_values):
     cached_value = _get_from_cache(request)
-    if cached_value:
-        new_get_request = QueryDict(mutable=True)
+    new_get_request = QueryDict(mutable=True)
+    if cached_value is None:
+        new_get_request.update({**request.GET.dict(), **default_values})
+    else:
         new_get_request.update({**request.GET.dict(), **cached_value})
-        request.GET = new_get_request
+    request.GET = new_get_request
 
 
 def _get_from_cache(request):

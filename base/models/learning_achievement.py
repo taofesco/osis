@@ -43,7 +43,7 @@ class LearningAchievementAdmin(AbstractAchievementAdmin):
 class LearningAchievement(AbstractAchievement):
     learning_unit_year = models.ForeignKey(
         'LearningUnitYear',
-        verbose_name=_('learning_unit'),
+        verbose_name=_('learning unit year'),
         on_delete=models.CASCADE,
     )
     order_with_respect_to = ('learning_unit_year', 'language')

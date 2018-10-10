@@ -162,9 +162,9 @@ class GroupElementYear(OrderedModel):
 
             return _("%(acronym)s %(title)s [%(volumes)s] (%(credits)s credits)") % {
                 "acronym": self.child_leaf.acronym,
-                "title": self.child.specific_title_english
-                if self.child.specific_title_english and translation.get_language() == 'en'
-                else self.child.specific_title,
+                "title": self.child.complete_title_english
+                if self.child.complete_title_english and translation.get_language() == 'en'
+                else self.child.complete_title,
                 "volumes": volume_total_verbose(components),
                 "credits": self.relative_credits or self.child_leaf.credits or 0
             }

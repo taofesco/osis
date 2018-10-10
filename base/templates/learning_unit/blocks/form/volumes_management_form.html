@@ -60,6 +60,7 @@
                     <tr>
                         <td>
                             <abbr title="{{ form.title_help }}">
+                                {# FIXME :: Temporary solution - waiting for business clarification about "components" concept (untyped, ...)#}
                                 {% if form.title == 'NT' %}PM{% else %}{{ form.title }}{% endif %}
                             </abbr>
                         </td>

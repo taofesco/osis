@@ -119,8 +119,10 @@
                             <th>{% trans 'institution' %}</th>
                             <th></th>
                             <th>{% trans 'for_all_students' %}</th>
-                            <th>{% trans 'enrollment_campus' %}</th>
-                            <th>{% trans 'diploma' %}</th>
+                            <th>{% trans 'Reference institution' %}</th>
+                            <th>{% trans 'UCL Diploma' %}</th>
+                            <th>{% trans 'Producing certificat' %}</th>
+                            <th>{% trans 'Producing annexe' %}</th>
                         </tr>
                         {% for c in education_group_year.coorganizations %}
                             <tr>
@@ -133,23 +135,21 @@
                                 {% endif %}
                                 </td>
                                 <td>
-                                    {% if c.all_students %}
-                                        {% trans 'yes' %}
-                                    {% else %}
-                                        {% trans 'no' %}
+                                    {{ c.all_students | yesno | title}}
+                                </td>
+                                <td>
+                                    {{ c.enrollment_place | yesno | title}}
+                                </td>
+                                <td>
+                                    {% if c.diploma and c.diploma != 'NOT_CONCERNED' %}
+                                        {% trans c.diploma %}
                                     {% endif %}
                                 </td>
                                 <td>
-                                    {% if c.enrollment_place %}
-                                        {% trans 'yes' %}
-                                    {% else %}
-                                        {% trans 'no' %}
-                                    {% endif %}
+                                    {{ c.is_producing_cerfificate | yesno |title}}
                                 </td>
                                 <td>
-                                    {% if c.diploma %}
-                                        {% trans coorganization.diploma %}
-                                    {% endif %}
+                                    {{ c.is_producing_annexe | yesno | title}}
                                 </td>
                             </tr>
                         {% endfor %}
@@ -164,23 +164,21 @@
                                 {% endif %}
                                 </td>
                                 <td>
-                                    {% if c.all_students%}
-                                        {% trans 'yes' %}
-                                    {% else %}
-                                        {% trans 'no' %}
+                                    {{ c.all_students | yesno | title}}
+                                </td>
+                                <td>
+                                    {{ c.enrollment_place | yesno | title}}
+                                </td>
+                                <td>
+                                    {% if c.diploma and c.diploma != 'NOT_CONCERNED' %}
+                                        {% trans c.diploma %}
                                     {% endif %}
                                 </td>
                                 <td>
-                                    {% if c.enrollment_place %}
-                                        {% trans 'yes' %}
-                                    {% else %}
-                                        {% trans 'no' %}
-                                    {% endif %}
+                                    {{ c.is_producing_cerfificate | yesno |title}}
                                 </td>
                                 <td>
-                                    {% if c.diploma %}
-                                        {% trans coorganization.diploma %}
-                                    {% endif %}
+                                    {{ c.is_producing_annexe | yesno | title}}
                                 </td>
                             </tr>
                         {% endfor %}

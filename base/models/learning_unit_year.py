@@ -30,7 +30,7 @@ from django.core.validators import MinValueValidator, MaxValueValidator, RegexVa
 from django.db import models
 from django.db.models import Q
 from django.utils.functional import cached_property
-from django.utils.translation import ugettext_lazy as _
+from django.utils.translation import ugettext_lazy as _, ngettext
 
 from base.models import entity_container_year as mdl_entity_container_year
 from base.models.academic_year import compute_max_academic_year_adjournment, AcademicYear, \
@@ -61,6 +61,31 @@ class LearningUnitYearAdmin(SerializableModelAdmin):
                     'status')
     list_filter = ('academic_year', 'decimal_scores', 'summary_locked')
     search_fields = ['acronym', 'structure__acronym', 'external_id']
+    actions = [
+        'resend_messages_to_queue',
+        'apply_learning_unit_year_postponement'
+    ]
+
+    def apply_learning_unit_year_postponement(self, request, queryset):
+        # Potential circular imports
+        from base.business.learning_units.automatic_postponement import fetch_learning_unit_to_postpone
+        from base.views.common import display_success_messages, display_error_messages
+
+        result, errors = fetch_learning_unit_to_postpone(queryset.filter(learning_container_year__isnull=False))
+        count = len(result)
+        display_success_messages(
+            request, ngettext(
+                '%(count)d learning unit has been postponed with success',
+                '%(count)d learning units have been postponed with success', count
+            ) % {'count': count}
+        )
+        if errors:
+            display_error_messages(request, "{} : {}".format(
+                _("The following learning units ended with error"),
+                ", ".join([str(error) for error in errors])
+            ))
+
+    apply_learning_unit_year_postponement.short_description = _("Apply postponement on learning unit year")
 
 
 class LearningUnitYearWithContainerManager(models.Manager):
@@ -123,6 +148,10 @@ class LearningUnitYear(SerializableModel, ExtraManagerLearningUnitYear):
     class Meta:
         unique_together = ('learning_unit', 'academic_year',)
 
+        permissions = (
+            ("can_receive_emails_about_automatic_postponement", "Can receive emails about automatic postponement"),
+        )
+
     def __str__(self):
         return u"%s - %s" % (self.academic_year, self.acronym)
 
@@ -157,13 +186,20 @@ class LearningUnitYear(SerializableModel, ExtraManagerLearningUnitYear):
 
     @property
     def complete_title(self):
-        if self.specific_title:
-            complete_title = self.specific_title
-            if self.learning_container_year:
-                complete_title = ' - '.join(
-                    filter(None, [self.learning_container_year.common_title, self.specific_title]))
-            return complete_title
-        return ""
+        complete_title = self.specific_title
+        if self.learning_container_year:
+            complete_title = ' - '.join(filter(None, [self.learning_container_year.common_title, self.specific_title]))
+        return complete_title
+
+    @property
+    def complete_title_english(self):
+        complete_title_english = self.specific_title_english
+        if self.learning_container_year:
+            complete_title_english = ' - '.join(filter(None, [
+                self.learning_container_year.common_title_english,
+                self.specific_title_english,
+            ]))
+        return complete_title_english
 
     @property
     def container_common_title(self):

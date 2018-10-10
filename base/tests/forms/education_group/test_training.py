@@ -40,6 +40,7 @@ from base.models.enums.schedule_type import DAILY
 from base.tests.factories.academic_calendar import AcademicCalendarEducationGroupEditionFactory
 from base.tests.factories.academic_year import create_current_academic_year, get_current_year
 from base.tests.factories.business.learning_units import GenerateAcademicYear
+from base.tests.factories.certificate_aim import CertificateAimFactory
 from base.tests.factories.education_group_type import EducationGroupTypeFactory
 from base.tests.factories.education_group_year import TrainingFactory, EducationGroupYearFactory
 from base.tests.factories.education_group_year_domain import EducationGroupYearDomainFactory
@@ -167,8 +168,11 @@ class TestPostponementEducationGroupYearMixin(TestCase):
         self.assertEqual(len(form.warnings), 0, form.warnings)
 
     def test_save_with_postponement_error(self):
-        EducationGroupYearFactory(academic_year=self.list_acs[4],
-                                  education_group=self.education_group_year.education_group)
+        EducationGroupYearFactory(
+            academic_year=self.list_acs[4],
+            education_group=self.education_group_year.education_group,
+            duration=100
+        )
 
         form = TrainingForm(
             self.data,
@@ -184,12 +188,14 @@ class TestPostponementEducationGroupYearMixin(TestCase):
             EducationGroupYear.objects.filter(
                 education_group=self.education_group_year.education_group).count(), 7
         )
-        self.assertEqual(len(form.warnings), 13)
+        self.assertEqual(len(form.warnings), 15)
 
     def test_save_with_postponement_m2m(self):
         domains = [DomainFactory(name="Alchemy"), DomainFactory(name="Muggle Studies")]
-
         self.data["secondary_domains"] = '|'.join([str(domain.pk) for domain in domains])
+
+        certificate_aims = [CertificateAimFactory(code=code) for code in range(100, 103)]
+        self.data["certificate_aims"] = [str(aim.pk) for aim in certificate_aims]
 
         form = TrainingForm(
             self.data,
@@ -212,6 +218,7 @@ class TestPostponementEducationGroupYearMixin(TestCase):
         self.education_group_year.refresh_from_db()
         self.assertEqual(self.education_group_year.secondary_domains.count(), 2)
         self.assertEqual(last.secondary_domains.count(), 2)
+        self.assertEqual(last.certificate_aims.count(), 3)
         self.assertEqual(len(form.warnings), 0)
 
         # update with a conflict

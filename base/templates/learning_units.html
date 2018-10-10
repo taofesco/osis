@@ -83,14 +83,11 @@
             {% trans 'external_search'%}
         </a>
     </li>
-    {% if is_faculty_manager %}
-        <li role="presentation" {% if search_type == 4 %} class="active" {% endif %}>
-            <a href="{% url 'learning_units_summary' %}" role="tab" id="lnk_summary_list">
-                {% trans 'summary_list' %}
-            </a>
-        </li>
-    {% endif %}
-
+    <li role="presentation" {% if search_type == 4 %} class="active" {% endif %}>
+        <a href="{% url 'learning_units_summary' %}" role="tab" id="lnk_summary_list">
+            {% trans 'summary_list' %}
+        </a>
+    </li>
 </ul>
 {% if search_type == 3 %}
     {% include 'learning_unit/by_proposal.html' %}
@@ -102,6 +99,7 @@
     {% include 'learning_unit/by_activity.html' %}
 {% endif %}
 {% include "learning_unit/blocks/modal/modal_comparison.html" %}
+{% include "learning_unit/blocks/modal/modal_xls_with_parameters.html" %}
 {% endblock %}
 
 {% block script %}
@@ -148,7 +146,13 @@
 
     $("#comparison_xls").click(function(e) {
         prepare_xls(e, 'xls_comparison');
-        comparison_year.val('');
+        $("#comparison_year").val('');
+    });
+
+    $("#btn_xls_with_parameters").click(function(e) {
+        prepare_xls(e, 'xls_with_parameters');
+        $("#hdn_with_grp").val('');
+        $("#hdn_with_attributions").val('');
     });
 
     function prepare_xls(e, action_value){

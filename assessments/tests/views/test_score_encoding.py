@@ -37,6 +37,8 @@ from django.utils.translation import ugettext_lazy as _
 from assessments.business.score_encoding_list import ScoresEncodingList
 from assessments.tests.views.test_upload_xls_utils import generate_exam_enrollments
 from base.models.enums import exam_enrollment_justification_type
+from base.tests.mixin.academic_year import AcademicYearMockMixin
+from base.tests.mixin.session_exam_calendar import SessionExamCalendarMockMixin
 
 from base.tests.models import test_exam_enrollment, test_offer_enrollment, \
     test_learning_unit_enrollment, test_session_exam, test_offer_year
@@ -57,13 +59,14 @@ from base.tests.factories.offer_year_calendar import OfferYearCalendarFactory
 from base.tests.factories.student import StudentFactory
 
 
-class MixinSetupOnlineEncoding:
-    def generate_online_encoding_data(self):
+class MixinSetupOnlineEncoding(AcademicYearMockMixin, SessionExamCalendarMockMixin):
+    def setUp(self):
         Group.objects.get_or_create(name="tutors")
         Group.objects.get_or_create(name="program_managers")
         self.request_factory = RequestFactory()
         data = generate_exam_enrollments(2017, with_different_offer=True)
-
+        self.academic_year = data["academic_year"]
+        self.session_exam_calendar = data["session_exam_calendar"]
         self.learning_unit_year = data["learning_unit_year"]
         self.enrollments = data["exam_enrollments"]
         self.attribution = data["attribution"]
@@ -72,6 +75,13 @@ class MixinSetupOnlineEncoding:
         add_permission(self.tutor.person.user, "can_access_scoreencoding")
         self.program_managers = [ProgramManagerFactory(offer_year=self.offer_years[i]) for i in range(0,2)]
         [add_permission(self.program_managers[i].person.user, "can_access_scoreencoding") for i in range(0,2)]
+
+        # Mock academic_year / session_exam_calendar in order to be decouple test from system time
+        self.mock_academic_year(
+            current_academic_year=self.academic_year,
+            starting_academic_year=self.academic_year,
+        )
+        self.mock_session_exam_calendar(current_session_exam=self.session_exam_calendar)
 
     def assert_exam_enrollments(self, exam_enrollment, score_draft, score_final, justification_draft,
                                 justification_final):
@@ -138,10 +148,8 @@ class MixinSetupOnlineEncoding:
                 "program": str(offer_year.id)
                 }
 
-class TestOnlineEncodingTransaction(TransactionTestCase, MixinSetupOnlineEncoding):
-    def setUp(self):
-        self.generate_online_encoding_data()
 
+class TestOnlineEncodingTransaction(MixinSetupOnlineEncoding, TransactionTestCase):
     @mock.patch("assessments.views.score_encoding._get_common_encoding_context", side_effect=Http404)
     def test_with_online_encoding_form_is_non_atomic(self, mock_method_to_raise_error):
         self.client.force_login(self.tutor.person.user)
@@ -162,10 +170,7 @@ class TestOnlineEncodingTransaction(TransactionTestCase, MixinSetupOnlineEncodin
         self.assert_exam_enrollments(self.enrollments[1], None, None, None, None)
 
 
-class OnlineEncodingTest(TestCase, MixinSetupOnlineEncoding):
-    def setUp(self):
-        self.generate_online_encoding_data()
-
+class OnlineEncodingTest(MixinSetupOnlineEncoding, TestCase):
     def test_filter_enrollments_by_offer_year(self):
         enrollments = self.enrollments
 
@@ -306,7 +311,7 @@ class OnlineEncodingTest(TestCase, MixinSetupOnlineEncoding):
         self.assertEqual(offer_acronym, offer_year.acronym)
 
 
-class OutsideEncodingPeriodTest(TestCase):
+class OutsideEncodingPeriodTest(AcademicYearMockMixin, SessionExamCalendarMockMixin, TestCase):
     def setUp(self):
         self.user = User.objects.create_user(username='score_encoding', password='score_encoding')
         add_permission(self.user, "can_access_scoreencoding")
@@ -319,14 +324,20 @@ class OutsideEncodingPeriodTest(TestCase):
                                                          reference=academic_calendar_type.SCORES_EXAM_SUBMISSION)
         self.session_exam_calendar = SessionExamCalendarFactory(academic_calendar=self.academic_calendar,
                                                                 number_session=number_session.ONE)
+        # Mock academic_year / session_exam_calendar in order to be decouple test from system time
+        self.mock_academic_year(
+            current_academic_year=self.academic_year,
+            starting_academic_year=self.academic_year,
+        )
+        self.mock_session_exam_calendar(current_session_exam=None)
 
     def test_redirection_to_current_exam_session(self):
+        self.mock_session_exam_calendar(current_session_exam=self.session_exam_calendar)
         url = reverse('outside_scores_encodings_period')
         response = self.client.get(url)
         self.assertRedirects(response, "%s?next=%s" % (reverse('scores_encoding'), reverse('outside_scores_encodings_period')))  # Redirection
 
     def test_redirection_to_outside_encoding_period(self):
-        self.session_exam_calendar.delete()
         url = reverse('scores_encoding')
         response = self.client.get(url)
         self.assertRedirects(response, "%s?next=%s" % (reverse('outside_scores_encodings_period'), reverse('scores_encoding')))  # Redirection
@@ -335,6 +346,7 @@ class OutsideEncodingPeriodTest(TestCase):
         self.session_exam_calendar.delete()
         url = reverse('outside_scores_encodings_period')
         response = self.client.get(url)
+        self.assertEqual(response.status_code, 200)
         messages = list(response.context['messages'])
         self.assertEqual(len(messages), 1)
         self.assertEqual(messages[0].tags, 'warning')
@@ -370,7 +382,7 @@ class OutsideEncodingPeriodTest(TestCase):
         self.assertEqual(messages[1].message, _('outside_scores_encodings_period_closest_session') % (2, start_date_str))
 
 
-class GetScoreEncodingViewProgramManagerTest(TestCase):
+class GetScoreEncodingViewProgramManagerTest(AcademicYearMockMixin, SessionExamCalendarMockMixin, TestCase):
     def setUp(self):
         self.user = User.objects.create_user(username='score_encoding', password='score_encoding')
         self.person = PersonFactory(user=self.user)
@@ -389,8 +401,6 @@ class GetScoreEncodingViewProgramManagerTest(TestCase):
         # Create an score submission event - with an session exam
         academic_calendar = AcademicCalendarFactory(title="Submission of score encoding - 1",
                                                     academic_year=academic_year,
-                                                    start_date=academic_year.start_date,
-                                                    end_date=academic_year.end_date,
                                                     reference=academic_calendar_type.SCORES_EXAM_SUBMISSION)
         academic_calendar.save()
         self.session_exam_calendar = SessionExamCalendarFactory(academic_calendar=academic_calendar,
@@ -418,20 +428,26 @@ class GetScoreEncodingViewProgramManagerTest(TestCase):
                                                                           self.offer_year_bio2bac)
 
         self._create_context_exam_enrollment()
+        # Mock academic_year / session_exam_calendar in order to be decouple from system time
+        self.mock_academic_year(
+            current_academic_year=academic_year,
+            starting_academic_year=academic_year,
+        )
+        self.mock_session_exam_calendar(current_session_exam=self.session_exam_calendar)
 
     def test_get_score_encoding_list_empty(self):
-        ExamEnrollment.objects.all().delete() #remove all exam enrolment [No subscription to exam]
+        ExamEnrollment.objects.all().delete()  # remove all exam enrolment [No subscription to exam]
         url = reverse('scores_encoding')
         response = self.client.get(url)
-        context = response.context[-1]
         self.assertEqual(response.status_code, 200)
+        context = response.context[-1]
         self.assertFalse(context['notes_list'])
 
     def test_get_score_encoding(self):
         url = reverse('scores_encoding')
         response = self.client.get(url)
-        context = response.context[-1]
         self.assertEqual(response.status_code, 200)
+        context = response.context[-1]
         self.assertEqual(len(context['notes_list']), 3)
 
     def _create_context_exam_enrollment(self):

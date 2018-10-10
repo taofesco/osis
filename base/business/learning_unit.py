@@ -33,6 +33,7 @@ from attribution.models import attribution
 from attribution.models.attribution import find_all_tutors_by_learning_unit_year
 from base import models as mdl_base
 from base.business.entity import get_entity_calendar
+
 from base.business.learning_unit_year_with_context import volume_learning_component_year
 from base.business.learning_units.comparison import get_entity_by_type
 from base.business.xls import get_name_or_username
@@ -48,22 +49,40 @@ from cms.models import translated_text
 from osis_common.document import xls_build
 from osis_common.utils.datetime import convert_date_to_datetime
 from base.models.enums import entity_container_year_link_type
-
-
 # List of key that a user can modify
+
 WORKSHEET_TITLE = 'learning_units'
 XLS_FILENAME = 'learning_units_filename'
 XLS_DESCRIPTION = "List_activities"
-LEARNING_UNIT_TITLES = [
-    str(_('academic_year_small')),
+LEARNING_UNIT_TITLES_PART1 = [
     str(_('code')),
+    str(_('academic_year_small')),
     str(_('title')),
     str(_('type')),
     str(_('subtype')),
     str(_('requirement_entity_small')),
-    str(_('allocation_entity_small')),
+    str(_('proposal_type')),
+    str(_('proposal_status')),
     str(_('credits')),
-    str(_('active_title'))
+    str(_('allocation_entity_small')),
+    str(_('title_in_english')),
+]
+
+LEARNING_UNIT_TITLES_PART2 = [
+    str(_('periodicity')),
+    str(_('active_title')),
+    "{} 1 - {}".format(_('Hourly vol.'), _('ANNUAL')),
+    "{} 1 - {}".format(_('Hourly vol.'), _('1st quadri')),
+    "{} 1 - {}".format(_('Hourly vol.'), _('2nd quadri')),
+    "{} 1".format(_('PLANNED_CLASSES')),
+    "{} 2 - {}".format(_('Hourly vol.'), _('ANNUAL')),
+    "{} 2 - {}".format(_('Hourly vol.'), _('1st quadri')),
+    "{} 2 - {}".format(_('Hourly vol.'), _('2nd quadri')),
+    "{} 2".format(_('PLANNED_CLASSES')),
+    str(_('quadrimester')),
+    str(_('session_title')),
+    str(_('language')),
+    str(_('Absolute credits')),
 ]
 CMS_LABEL_SPECIFICATIONS = ['themes_discussed', 'prerequisite']
 
@@ -73,6 +92,8 @@ CMS_LABEL_PEDAGOGY_FR_ONLY = ['bibliography', 'mobility']
 CMS_LABEL_PEDAGOGY = CMS_LABEL_PEDAGOGY_FR_AND_EN + CMS_LABEL_PEDAGOGY_FR_ONLY
 
 CMS_LABEL_SUMMARY = ['resume']
+
+COLORED = 'COLORED_ROW'
 
 
 def get_same_container_year_components(learning_unit_year, with_classes=False):
@@ -205,11 +226,12 @@ def get_entity_acronym(an_entity):
 
 
 def create_xls(user, found_learning_units, filters):
+    titles = LEARNING_UNIT_TITLES_PART1 + LEARNING_UNIT_TITLES_PART2
     working_sheets_data = prepare_xls_content(found_learning_units)
     parameters = {xls_build.DESCRIPTION: XLS_DESCRIPTION,
                   xls_build.USER: get_name_or_username(user),
                   xls_build.FILENAME: XLS_FILENAME,
-                  xls_build.HEADER_TITLES: LEARNING_UNIT_TITLES,
+                  xls_build.HEADER_TITLES: titles,
                   xls_build.WS_TITLE: WORKSHEET_TITLE}
 
     return xls_build.generate_xls(xls_build.prepare_xls_parameters_list(working_sheets_data, parameters), filters)

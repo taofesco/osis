@@ -23,19 +23,19 @@
 #    see http://www.gnu.org/licenses/.
 #
 ##############################################################################
-import collections
 import itertools
 
+import collections
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required, permission_required
 from django.contrib.messages import WARNING
 from django.shortcuts import get_object_or_404, redirect
 from django.urls import reverse
 from django.utils.translation import ugettext_lazy as _
-
 from attribution.business.xls_build import create_xls_attribution
 from base.utils.cache import cache_filter
 from base.business.learning_unit import create_xls
+from base.business.learning_unit_xls import create_xls_with_parameters, WITH_ATTRIBUTIONS, WITH_GRP
 from base.business.proposal_xls import create_xls_proposal
 from base.forms.common import TooManyResultsException
 from base.forms.learning_unit.comparison import SelectComparisonYears
@@ -70,7 +70,7 @@ def learning_units_search(request, search_type):
     form = LearningUnitYearForm(request.GET or None,
                                 service_course_search=service_course_search,
                                 borrowed_course_search=borrowed_course_search,
-                                initial={'academic_year_id': current_academic_year()})
+                                initial={'academic_year_id': starting_academic_year()})
     found_learning_units = []
     try:
         if form.is_valid():
@@ -90,6 +90,13 @@ def learning_units_search(request, search_type):
             _get_filter(form, search_type),
             request.POST.get('comparison_year')
         )
+
+    if request.POST.get('xls_status') == "xls_with_parameters":
+        return create_xls_with_parameters(request.user,
+                                          found_learning_units,
+                                          _get_filter(form, search_type),
+                                          {WITH_GRP: request.POST.get('with_grp') == 'true',
+                                           WITH_ATTRIBUTIONS: request.POST.get('with_attributions') == 'true'})
 
     a_person = find_by_user(request.user)
     form_comparison = SelectComparisonYears(academic_year=get_academic_year_of_reference(found_learning_units))

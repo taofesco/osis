@@ -83,6 +83,7 @@ class LearningComponentYear(SerializableModel):
     def complete_acronym(self):
         queryset = self.learningunitcomponent_set
         learning_unit_acronym = queryset.all().values_list('learning_unit_year__acronym', flat=True).get()
+        # FIXME :: Temporary solution - waiting for business clarification about "components" concept (untyped, ...)
         if self.acronym == 'NT':
             return '{}/PM'.format(learning_unit_acronym)
         else:
@@ -116,10 +117,14 @@ class LearningComponentYear(SerializableModel):
             _warnings.append("{} ({})".format(
                 inconsitent_msg,
                 _('Vol_global is not equal to Vol_tot * planned_classes')))
-        if self.planned_classes == 0:
+        if planned_classes == 0 and vol_total_annual > 0:
             _warnings.append("{} ({})".format(
                 inconsitent_msg,
-                _('planned classes cannot be 0')))
+                _('planned classes cannot be 0 while volume is greater than 0')))
+        if planned_classes > 0 and vol_total_annual == 0:
+            _warnings.append("{} ({})".format(
+                inconsitent_msg,
+                _('planned classes cannot be greather than 0 while volume is equal to 0')))
         return _warnings
 
 

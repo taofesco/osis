@@ -134,6 +134,18 @@ table.volumes thead{
     background-color: #d9534f;
 }
 
+.notification:after {
+    content: "";
+    display: block;
+    position: absolute;
+    width: 11px;
+    height: 11px;
+    background: red;
+    top: -3px;
+    right: 0;
+    border-radius: 50%;
+}
+
 .no_label{
     font-weight: normal;
 }
@@ -183,4 +195,16 @@ input[type="text"].ui-autocomplete-input:disabled ~ .results_on_deck .ui-icon{
 }
 .navbar-fixed-bottom {
     z-index: 10;
+}
+
+/* Styles for dhtmlxGantt (calendar) */
+.projectRow{
+  	background-color: lightgray!important
+}
+
+.releaseCol{
+    background-color: teal!important
+}
+.releaseCol a{
+    color: white;
 }

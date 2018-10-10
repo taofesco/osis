@@ -125,8 +125,13 @@ def process_message(context, education_group_year, items):
 
 
 def process_section(context, education_group_year, item):
+    assert isinstance(context, Context)
+    assert isinstance(education_group_year, EducationGroupYear)
+    assert isinstance(item, str) and item.strip()
+
     m_intro = re.match(INTRO_PATTERN, item)
     m_common = re.match(COMMON_PATTERN, item)
+
     if m_intro:
         egy = EducationGroupYear.objects.filter(partial_acronym__iexact=m_intro.group('acronym'),
                                                 academic_year__year=context.year).first()
@@ -135,9 +140,14 @@ def process_section(context, education_group_year, item):
 
         return insert_section_if_checked(context, egy, text_label)
     elif m_common:
-        egy = EducationGroupYear.objects.filter(acronym__iexact='common',
-                                                academic_year__year=context.year).first()
-        text_label = TextLabel.objects.filter(entity=OFFER_YEAR, label=m_common.group('section_name')).first()
+        egy = EducationGroupYear.objects.look_for_common(
+            education_group_type=education_group_year.education_group_type,
+            academic_year__year=context.year
+        ).first()
+        text_label = TextLabel.objects.filter(
+            entity=OFFER_YEAR,
+            label=m_common.group('section_name')
+        ).first()
         return insert_section_if_checked(context, egy, text_label)
     else:
         text_label = TextLabel.objects.filter(entity=OFFER_YEAR, label=item).first()
@@ -147,6 +157,11 @@ def process_section(context, education_group_year, item):
 
 
 def new_context(education_group_year, iso_language, language, original_acronym):
+    assert isinstance(education_group_year, EducationGroupYear)
+    assert isinstance(iso_language, str) and iso_language in ('fr-be', 'en')
+    assert isinstance(language, str) and language in ('fr', 'en')
+    assert isinstance(original_acronym, str)
+
     title = get_title_of_education_group_year(education_group_year, iso_language)
     partial_acronym = education_group_year.partial_acronym.upper()
     acronym = education_group_year.acronym.upper()
@@ -169,6 +184,10 @@ def new_context(education_group_year, iso_language, language, original_acronym):
 
 
 def parameters_validation(acronym, language, year):
+    assert isinstance(acronym, str)
+    assert isinstance(language, str)
+    assert isinstance(year, (str, int))
+
     year = int(year)
     iso_language = LANGUAGES.get(language)
     if not iso_language:
@@ -180,6 +199,10 @@ def parameters_validation(acronym, language, year):
 
 
 def insert_section(context, education_group_year, text_label):
+    assert isinstance(context, Context)
+    assert isinstance(education_group_year, EducationGroupYear)
+    assert isinstance(text_label, TextLabel)
+
     translated_text_label = TranslatedTextLabel.objects.filter(text_label=text_label,
                                                                language=context.language).first()
 
@@ -201,12 +224,15 @@ def insert_section_if_checked(context, education_group_year, text_label):
 
 
 def admission_condition_line_to_dict(context, admission_condition_line):
-    fields = ('diploma', 'conditions', 'access', 'remarks')
+    fields = ('diploma', 'conditions', 'remarks')
 
-    return {
+    result = {
         field: (getattr(admission_condition_line, field + context.suffix_language) or '').strip()
         for field in fields
     }
+
+    result['access'] = admission_condition_line.access
+    return result
 
 
 def get_value_from_ac(admission_condition, field, context):
@@ -214,7 +240,7 @@ def get_value_from_ac(admission_condition, field, context):
 
 
 def response_for_bachelor(context):
-    education_group_year = EducationGroupYear.objects.filter(acronym__iexact='common-bacs',
+    education_group_year = EducationGroupYear.objects.filter(acronym__iexact='common-1ba',
                                                              academic_year=context.academic_year).first()
 
     result = {

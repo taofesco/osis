@@ -27,7 +27,6 @@ from django.db.models import OuterRef, Exists
 from django.urls import reverse
 
 from base.business.group_element_years.management import EDUCATION_GROUP_YEAR, LEARNING_UNIT_YEAR
-from base.models.enums.education_group_categories import TRAINING
 from base.models.prerequisite import Prerequisite
 
 

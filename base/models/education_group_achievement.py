@@ -23,13 +23,15 @@
 #    see http://www.gnu.org/licenses/.
 #
 ##############################################################################
-from django.utils.translation import ugettext_lazy as _
 from django.db import models
+from django.utils.translation import ugettext_lazy as _
+from ordered_model.models import OrderedModel
 
-from base.models.abstracts.abstract_achievement import AbstractAchievement, AbstractAchievementAdmin
+from base.models.abstracts.abstract_education_group_achievement import AbstractEducationGroupAchievement, \
+    AbstractEducationGroupAchievementAdmin
 
 
-class EducationGroupAchievementAdmin(AbstractAchievementAdmin):
+class EducationGroupAchievementAdmin(AbstractEducationGroupAchievementAdmin):
     raw_id_fields = ('education_group_year',)
 
     def get_list_display(self, request):
@@ -39,16 +41,16 @@ class EducationGroupAchievementAdmin(AbstractAchievementAdmin):
         return ['education_group_year__acronym'] + super().get_search_fields(request)
 
 
-class EducationGroupAchievement(AbstractAchievement):
+class EducationGroupAchievement(AbstractEducationGroupAchievement):
     education_group_year = models.ForeignKey(
         'EducationGroupYear',
         verbose_name=_("education group year"),
         on_delete=models.CASCADE,
     )
-    order_with_respect_to = ('education_group_year', 'language')
+    order_with_respect_to = ('education_group_year',)
 
-    class Meta:
-        unique_together = ("code_name", "education_group_year", "language")
+    class Meta(OrderedModel.Meta):
+        unique_together = ("code_name", "education_group_year")
         verbose_name = _("education group achievement")
 
     def __str__(self):

@@ -27,3 +27,5 @@ ghostdriver.log
 .DS_Store
 /geckodriver.log
 **/*.orig
+
+celerybeat-schedule

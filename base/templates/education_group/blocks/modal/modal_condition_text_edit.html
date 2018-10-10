@@ -34,23 +34,37 @@
             </div>
             <div class="modal-body">
                 {% csrf_token %}
-                {% bootstrap_field form.text show_label=False %}
                 {% bootstrap_field form.section %}
-                {% bootstrap_field form.language %}
+                <ul class="nav nav-tabs" id="modification_tabs" role="tablist">
+                    <li role="presentation" class="active"><a href="#modification_french">{% trans 'French' %}</a></li>
+                    <li role="presentation"><a href="#modification_english">{% trans 'English' %}</a></li>
+                </ul>
+                <div class="tab-content">
+                    <div role="tabpanel" class="tab-pane active" id="modification_french">
+                        {% bootstrap_field form.text_fr show_label=False %}
+                    </div>
+                    <div role="tabpanel" class="tab-pane" id="modification_english">
+                        {% bootstrap_field form.text_en show_label=False %}
+                    </div>
+                </div>
             </div>
             <div class="modal-footer">
-               <button class="btn btn-primary" type="submit">{% trans 'save' %}</button>
-               <button type="submit" class="btn" data-dismiss="modal">{% trans 'cancel' %}</button>
-          </div>
+                <button class="btn btn-primary" type="submit">{% trans 'save' %}</button>
+                <button type="submit" class="btn" data-dismiss="modal">{% trans 'cancel' %}</button>
+            </div>
         </form>
     </div>
 </div>
 
 <script>
     $(function () {
-        var richText = $('#id_text');
+        var richText = $('#id_text_fr');
         var config = richText.data('config');
-        CKEDITOR.replace('id_text', config);
+        CKEDITOR.replace('id_text_fr', config);
+
+        var richText = $('#id_text_en');
+        var config = richText.data('config');
+        CKEDITOR.replace('id_text_en', config);
     });
 
     $('#modification_tabs a').click(function (e) {

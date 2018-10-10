@@ -1,11 +1,26 @@
+import unittest
 from unittest import mock
 
 from django.test import TestCase
 
 from base.management.commands import import_reddot
-from base.models.admission_condition import AdmissionCondition, AdmissionConditionLine
+from base.models.admission_condition import AdmissionCondition, AdmissionConditionLine, CONDITION_ADMISSION_ACCESSES
+from base.models.education_group import EducationGroup
+from base.models.education_group_type import EducationGroupType
 from base.models.education_group_year import EducationGroupYear
-from base.tests.factories.education_group_year import EducationGroupYearFactory
+from base.models.enums import education_group_types, education_group_categories
+from base.tests.factories.academic_year import AcademicYearFactory
+from base.tests.factories.education_group import EducationGroupFactory
+from base.tests.factories.education_group_year import (
+    EducationGroupYearFactory,
+    EducationGroupYearCommonMasterFactory,
+    EducationGroupYearCommonBachelorFactory
+)
+
+OFFERS = [
+    {'name': education_group_types.BACHELOR, 'category': education_group_categories.TRAINING, 'code': '1BA'},
+    {'name': education_group_types.PGRM_MASTER_120, 'category': education_group_categories.TRAINING, 'code': '2M'},
+]
 
 
 class ImportReddotTestCase(TestCase):
@@ -15,10 +30,10 @@ class ImportReddotTestCase(TestCase):
         self.command.suffix_language = '' if lang == 'fr-be' else '_en'
 
     def test_load_admission_conditions_for_bachelor(self):
-        education_group_year_common = EducationGroupYearFactory(acronym='common')
+        education_group_year_common = EducationGroupYearCommonBachelorFactory()
         item = {
             'year': education_group_year_common.academic_year.year,
-            'acronym': 'bacs',
+            'acronym': '1ba',
             'info': {
                 'alert_message': {'text-common': 'Alert Message'},
                 'ca_bacs_cond_generales': {'text-common': 'General Conditions'},
@@ -28,22 +43,28 @@ class ImportReddotTestCase(TestCase):
             }
         }
 
-        self.command.load_admission_conditions_for_bachelor(item, education_group_year_common.academic_year.year)
+        self.command.load_admission_conditions_for_bachelor(
+            item,
+            education_group_year_common.academic_year.year
+        )
 
-        common_bacs = EducationGroupYear.objects.filter(academic_year=education_group_year_common.academic_year,
-                                                        acronym='common-bacs').first()
+        common_bacs = EducationGroupYear.objects.filter(
+            academic_year=education_group_year_common.academic_year,
+            acronym='common-1ba'
+        ).first()
 
         admission_condition = AdmissionCondition.objects.get(education_group_year=common_bacs)
+        info = item['info']
         self.assertEqual(admission_condition.text_alert_message,
-                         item['info']['alert_message']['text-common'])
+                         info['alert_message']['text-common'])
         self.assertEqual(admission_condition.text_ca_bacs_cond_generales,
-                         item['info']['ca_bacs_cond_generales']['text-common'])
+                         info['ca_bacs_cond_generales']['text-common'])
         self.assertEqual(admission_condition.text_ca_bacs_cond_particulieres,
-                         item['info']['ca_bacs_cond_particulieres']['text-common'])
+                         info['ca_bacs_cond_particulieres']['text-common'])
         self.assertEqual(admission_condition.text_ca_bacs_examen_langue,
-                         item['info']['ca_bacs_examen_langue']['text-common'])
+                         info['ca_bacs_examen_langue']['text-common'])
         self.assertEqual(admission_condition.text_ca_bacs_cond_speciales,
-                         item['info']['ca_bacs_cond_speciales']['text-common'])
+                         info['ca_bacs_cond_speciales']['text-common'])
 
     def test_save_condition_line_of_row_with_no_admission_condition_line(self):
         education_group_year = EducationGroupYearFactory()
@@ -57,7 +78,7 @@ class ImportReddotTestCase(TestCase):
             'title': 'ucl_bachelors',
             'diploma': 'Diploma',
             'conditions': 'Conditions',
-            'access': 'Access',
+            'access': CONDITION_ADMISSION_ACCESSES[2][0],
             'remarks': 'Remarks',
             'external_id': '1234567890'
         }
@@ -81,7 +102,7 @@ class ImportReddotTestCase(TestCase):
             'title': 'ucl_bachelors',
             'diploma': 'Diploma',
             'conditions': 'Conditions',
-            'access': 'Access',
+            'access': CONDITION_ADMISSION_ACCESSES[2][0],
             'remarks': 'Remarks',
             'external_id': '1234567890'
         }
@@ -193,3 +214,61 @@ class ImportReddotTestCase(TestCase):
         self.command.save_diplomas(None, item)
         mock_save_condition.assert_called_with(None, {'type': 'table'})
         mock_set_values.assert_called_with(None, {'type': 'text'})
+
+    @mock.patch('base.management.commands.import_reddot.import_offer_and_items')
+    def test_import_common_offer(self, mocker):
+        education_group_year_list = [EducationGroupYearCommonMasterFactory()]
+        from base.management.commands.import_reddot import import_common_offer
+        context = None
+        offer = {'year': education_group_year_list[0].academic_year.year}
+        import_common_offer(context, offer, None)
+        mocker.assert_called_with(offer, education_group_year_list[0], None, context)
+
+
+@mock.patch('base.management.commands.import_reddot.OFFERS', OFFERS)
+class CreateCommonOfferForAcademicYearTest(TestCase):
+    def test_with_existing_education_group_year(self):
+        academic_year = AcademicYearFactory()
+        self.assertEqual(EducationGroup.objects.count(), 0)
+
+        from base.management.commands.import_reddot import OFFERS
+        for offer in OFFERS:
+            EducationGroupType.objects.create(name=offer['name'], category=offer['category'])
+
+        from base.management.commands.import_reddot import create_common_offer_for_academic_year
+        education_group = EducationGroupFactory(start_year=academic_year.year, end_year=academic_year.year + 1)
+        self.assertEqual(EducationGroupYear.objects.count(), 0)
+        create_common_offer_for_academic_year(academic_year.year)
+        self.assertEqual(EducationGroupYear.objects.count(), 2)
+
+    def test_without_education_group_year(self):
+        academic_year = AcademicYearFactory()
+        self.assertEqual(EducationGroup.objects.count(), 0)
+
+        from base.management.commands.import_reddot import OFFERS
+        for offer in OFFERS:
+            EducationGroupType.objects.create(name=offer['name'], category=offer['category'])
+
+        from base.management.commands.import_reddot import create_common_offer_for_academic_year
+        education_group = EducationGroupFactory(start_year=academic_year.year, end_year=academic_year.year + 1)
+        self.assertEqual(EducationGroupYear.objects.count(), 0)
+        EducationGroupYearCommonMasterFactory(academic_year=academic_year)
+        self.assertEqual(EducationGroupYear.objects.count(), 1)
+        create_common_offer_for_academic_year(academic_year.year)
+        self.assertEqual(EducationGroupYear.objects.count(), 2)
+
+
+class CreateOffersTest(unittest.TestCase):
+    @mock.patch('base.management.commands.import_reddot.import_common_offer')
+    def test_import_common_offer(self, mock_import_offer):
+        context, offers = None, [{'type': 'common'}]
+        from base.management.commands.import_reddot import create_offers
+        create_offers(context, offers, None)
+        mock_import_offer.assert_called_with(None, offers[0], None)
+
+    @mock.patch('base.management.commands.import_reddot.import_offer')
+    def test_import_offer(self, mock_import_offer):
+        context, offers = None, [{'type': 'not-common'}]
+        from base.management.commands.import_reddot import create_offers
+        create_offers(context, offers, None)
+        mock_import_offer.assert_called_with(None, offers[0], None)

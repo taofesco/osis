@@ -39,20 +39,37 @@
                 <div class="row" style="display:flex;">
                     {% include "education_group/training_tree.html" %}
                     <div id="panel-data" class="col-md-12" style="height: 100%;">
+
                         {% include "education_group/tabs.html" %}
+
                         <br>
+
                         <label>{% trans 'university_certificate_desc' %}</label><br>
                         {% if education_group_year.university_certificate %}
                             {% trans 'yes'%}
                         {% else %}
                             {% trans 'no'%}
                         {% endif %}
+
                         <br><br>
+
                         <label>{% trans 'diploma_title'%}</label><br>
                         {{education_group_year.diploma_printing_title | default_if_none:'-'}}
+
                         <br><br>
+
                         <label>{% trans 'professionnal_title'%}</label><br>
                         {{education_group_year.professional_title | default_if_none:'-'}}
+
+                        <br><br>
+
+                        <label>{% trans 'certificate aims'|capfirst %}</label><br>
+                        <ul>
+                            {% for aim in education_group_year.certificate_aims.all %}
+                                <li>{{ aim.section }} - {{ aim.code }} {{ aim.description }}</li>
+                            {% endfor %}
+                        </ul>
+
                     </div>
                 </div>
             </div>

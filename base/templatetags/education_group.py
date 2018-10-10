@@ -38,7 +38,8 @@ from backoffice.settings import base
 from base.business.education_group import can_user_edit_administrative_data
 from base.business.education_groups.perms import is_eligible_to_delete_education_group, \
     is_eligible_to_change_education_group, is_eligible_to_add_training, \
-    is_eligible_to_add_mini_training, is_eligible_to_add_group
+    is_eligible_to_add_mini_training, is_eligible_to_add_group, is_eligible_to_change_achievement, \
+    is_eligible_to_delete_achievement
 from base.models.enums.learning_unit_year_periodicity import BIENNIAL_EVEN, BIENNIAL_ODD, ANNUAL
 
 OPTIONAL_PNG = base.STATIC_URL + 'img/education_group_year/optional.png'
@@ -297,7 +298,7 @@ def append_output(item, output, padding, sublist):
                               icon_list_2=mandatory_picture,
                               icon_list_3=get_status_picture(item),
                               icon_list_4=get_biennial_picture(item),
-                              value=escaper(force_text(item.verbose)),
+                              value=force_text(item.verbose),
                               comment=comment,
                               sublist=sublist,
                               an_1=check_block(item, "1"),
@@ -316,7 +317,7 @@ def append_output(item, output, padding, sublist):
             CHILD_BRANCH.format(padding=padding,
                                 constraint=constraint,
                                 icon_list_2=get_mandatory_picture(item),
-                                value=escaper(force_text(item.verbose)),
+                                value=force_text(item.verbose),
                                 remark=remark,
                                 comment=comment,
                                 sublist=sublist
@@ -354,10 +355,6 @@ def get_case_picture(item):
 
 def check_block(item, value):
     return "X" if item.block and value in item.block else ""
-
-
-def escaper(x):
-    return x
 
 
 @register.simple_tag(takes_context=True)
@@ -480,3 +477,18 @@ def _fetch_value_with_attrgetter(obj, attrs):
         return obj and operator.attrgetter(attrs)(obj)
     except AttributeError:
         return None
+
+
+@register.simple_tag(takes_context=True)
+def permission_change_achievement(context):
+    return _get_permission(context, is_eligible_to_change_achievement)[1]
+
+
+@register.simple_tag(takes_context=True)
+def permission_delete_achievement(context):
+    return _get_permission(context, is_eligible_to_delete_achievement)[1]
+
+
+@register.simple_tag(takes_context=True)
+def permission_create_achievement(context):
+    return _get_permission(context, is_eligible_to_change_achievement)[1]

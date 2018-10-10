@@ -28,18 +28,22 @@
 Utility files for mail sending
 """
 import datetime
+
+from django.contrib.auth.models import Permission
 from django.contrib.messages import ERROR
+from django.db.models import Q
 from django.utils.translation import ugettext as _
 from openpyxl import Workbook
-from openpyxl.writer.excel import save_virtual_workbook, save_workbook
+from openpyxl.writer.excel import save_virtual_workbook
 
 from assessments.business import score_encoding_sheet
-from osis_common.document.xls_build import _adjust_column_width
-
-from osis_common.models import message_history as message_history_mdl
-from osis_common.messaging import message_config, send_message as message_service
 from base.models import person as person_mdl
+from base.models.academic_year import current_academic_year
+from base.models.person import Person
 from osis_common.document import paper_sheet, xls_build
+from osis_common.document.xls_build import _adjust_column_width
+from osis_common.messaging import message_config, send_message as message_service
+from osis_common.models import message_history as message_history_mdl
 
 EDUCATIONAL_INFORMATION_UPDATE_TXT = 'educational_information_update_txt'
 
@@ -93,6 +97,49 @@ def send_mail_after_the_learning_unit_year_deletion(managers, acronym, academic_
                           }
     message_content = message_config.create_message_content(html_template_ref, txt_template_ref, None, receivers,
                                                             template_base_data, suject_data, None)
+    return message_service.send_messages(message_content)
+
+
+def send_mail_before_annual_procedure_of_automatic_postponement(
+        end_academic_year, luys_to_postpone, luys_already_existing, luys_ending_this_year):
+    html_template_ref = 'luy_before_auto_postponement_html'
+    txt_template_ref = 'luy_before_auto_postponement_txt'
+
+    permission = Permission.objects.filter(codename='can_receive_emails_about_automatic_postponement')
+    managers = Person.objects.filter(Q(user__groups__permissions=permission) | Q(user__user_permissions=permission))\
+        .distinct()
+
+    receivers = [message_config.create_receiver(manager.id, manager.email, manager.language) for manager in managers]
+    template_base_data = {'academic_year': current_academic_year().year,
+                          'end_academic_year': end_academic_year.year,
+                          'luys_to_postpone': luys_to_postpone.count(),
+                          'luys_already_existing': luys_already_existing.count(),
+                          'luys_ending_this_year': luys_ending_this_year.count(),
+                          }
+    message_content = message_config.create_message_content(html_template_ref, txt_template_ref, None, receivers,
+                                                            template_base_data, None, None)
+    return message_service.send_messages(message_content)
+
+
+def send_mail_after_annual_procedure_of_automatic_postponement(
+        end_academic_year, luys_postponed, luys_already_existing, luys_ending_this_year, luys_with_errors):
+    html_template_ref = 'luy_after_auto_postponement_html'
+    txt_template_ref = 'luy_after_auto_postponement_txt'
+
+    permission = Permission.objects.filter(codename='can_receive_emails_about_automatic_postponement')
+    managers = Person.objects.filter(Q(user__groups__permissions=permission) | Q(user__user_permissions=permission))\
+        .distinct()
+
+    receivers = [message_config.create_receiver(manager.id, manager.email, manager.language) for manager in managers]
+    template_base_data = {'academic_year': current_academic_year().year,
+                          'end_academic_year': end_academic_year.year,
+                          'luys_postponed': len(luys_postponed),
+                          'luys_already_existing': luys_already_existing.count(),
+                          'luys_ending_this_year': luys_ending_this_year.count(),
+                          'luys_with_errors': luys_with_errors
+                          }
+    message_content = message_config.create_message_content(html_template_ref, txt_template_ref, None, receivers,
+                                                            template_base_data, None, None)
     return message_service.send_messages(message_content)
 
 

@@ -31,7 +31,7 @@ from django import forms
 from django.conf import settings
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.mixins import PermissionRequiredMixin
-from django.db.models import F, Case, When
+from django.db.models import F, Case, When, Prefetch
 from django.shortcuts import get_object_or_404
 from django.utils.decorators import method_decorator
 from django.utils.translation import ugettext_lazy as _
@@ -42,13 +42,24 @@ from base.business.education_group import assert_category_of_education_group_yea
 from base.business.education_groups import perms
 from base.business.education_groups.group_element_year_tree import NodeBranchJsTree
 from base.models.admission_condition import AdmissionCondition, AdmissionConditionLine
+from base.models.certificate_aim import CertificateAim
+from base.models.education_group_certificate_aim import EducationGroupCertificateAim
 from base.models.education_group_year import EducationGroupYear
-from base.models.enums import education_group_categories, academic_calendar_type
+from base.models.enums import education_group_categories, academic_calendar_type, education_group_types
 from base.models.person import Person
 from cms import models as mdl_cms
 from cms.enums import entity_name
 from cms.models.translated_text import TranslatedText
 from cms.models.translated_text_label import TranslatedTextLabel
+
+SECTIONS_WITH_TEXT = (
+    'ucl_bachelors',
+    'others_bachelors_french',
+    'bachelors_dutch',
+    'foreign_bachelors',
+    'graduates',
+    'masters'
+)
 
 CODE_SCS = 'code_scs'
 TITLE = 'title'
@@ -133,6 +144,9 @@ class EducationGroupDiplomas(EducationGroupGenericDetailView):
     template_name = "education_group/tab_diplomas.html"
     limited_by_category = (education_group_categories.TRAINING,)
 
+    def get_queryset(self):
+        return super().get_queryset().prefetch_related('certificate_aims')
+
 
 class EducationGroupGeneralInformation(EducationGroupGenericDetailView):
     template_name = "education_group/tab_general_informations.html"
@@ -141,7 +155,7 @@ class EducationGroupGeneralInformation(EducationGroupGenericDetailView):
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
 
-        is_common_education_group_year = self.object.acronym == 'common'
+        is_common_education_group_year = self.object.acronym.startswith('common-')
 
         context.update({
             'is_common_education_group_year': is_common_education_group_year,
@@ -151,13 +165,13 @@ class EducationGroupGeneralInformation(EducationGroupGenericDetailView):
 
         return context
 
-    def get_sections_with_translated_labels(self, is_common_education_group_year):
+    def get_sections_with_translated_labels(self, is_common_education_group_year=None):
         # Load the info from the common education group year
         common_education_group_year = None
         if not is_common_education_group_year:
-            common_education_group_year = EducationGroupYear.objects.filter(
-                acronym__iexact='common',
-                academic_year=self.object.academic_year
+            common_education_group_year = EducationGroupYear.objects.look_for_common(
+                education_group_type=self.object.education_group_type,
+                academic_year=self.object.academic_year,
             ).first()
 
         # Load the labels
@@ -175,13 +189,20 @@ class EducationGroupGeneralInformation(EducationGroupGenericDetailView):
     def get_translated_labels_and_content(self, section, user_language, common_education_group_year):
         records = []
         for label, selectors in section.labels:
-            selectors = set(selectors.split(','))
-            if 'specific' in selectors:
+            records.extend(
+                self.get_selectors(common_education_group_year, label, selectors, user_language)
+            )
+        return records
+
+    def get_selectors(self, common_education_group_year, label, selectors, user_language):
+        records = []
+        for selector in selectors.split(','):
+            if selector == 'specific':
                 translations = self.get_content_translations_for_label(
                     self.object, label, user_language, 'specific')
                 records.append(translations)
 
-            if 'common' in selectors and common_education_group_year is not None:
+            if selector == 'common' and common_education_group_year is not None:
                 translations = self.get_content_translations_for_label(
                     common_education_group_year, label, user_language, 'common')
                 records.append(translations)
@@ -329,8 +350,7 @@ class EducationGroupYearAdmissionCondition(EducationGroupGenericDetailView):
         admission_condition, created = AdmissionCondition.objects.get_or_create(education_group_year=self.object)
 
         record = {}
-        for section in ('ucl_bachelors', 'others_bachelors_french', 'bachelors_dutch', 'foreign_bachelors',
-                        'graduates', 'masters'):
+        for section in SECTIONS_WITH_TEXT:
             record[section] = AdmissionConditionLine.objects.filter(admission_condition=admission_condition,
                                                                     section=section)
 
@@ -340,7 +360,7 @@ class EducationGroupYearAdmissionCondition(EducationGroupGenericDetailView):
             'info': {
                 'is_specific': is_specific,
                 'is_common': is_common,
-                'is_bachelor': acronym == 'common-bacs',
+                'is_bachelor': is_common and self.object.education_group_type.name == education_group_types.BACHELOR,
                 'is_master': is_master,
                 'show_components_for_agreg_and_mc': is_common and use_standard_text,
                 'show_free_text': is_specific and (is_master or use_standard_text),
