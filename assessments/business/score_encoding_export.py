@@ -26,7 +26,7 @@
 from django.http import HttpResponse
 from openpyxl import Workbook
 from openpyxl.writer.excel import save_virtual_workbook
-from openpyxl.styles import Color, PatternFill, Font, colors, NamedStyle
+from openpyxl.styles import Color, PatternFill, Font, colors, Style
 from django.utils.translation import ugettext_lazy as _
 from django.utils import timezone
 
@@ -130,7 +130,7 @@ def __coloring_non_editable(ws, row_number, score, justification):
     Coloring of the non-editable columns
     """
     pattern_fill_grey = PatternFill(patternType='solid', fgColor=Color('C1C1C1'))
-    style_no_modification = NamedStyle(name="style_no_modification", fill=pattern_fill_grey)
+    style_no_modification = Style(fill=pattern_fill_grey)
     column_number = 1
     while column_number < 12:
         if column_number < 9 or column_number > 10:
